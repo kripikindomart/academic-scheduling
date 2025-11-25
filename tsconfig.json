@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es2015",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@/*": ["./resources/js/*"],
+      "@/components/*": ["./resources/js/components/*"],
+      "@/lib/*": ["./resources/js/lib/*"]
+    }
+  },
+  "include": [
+    "resources/js/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "vendor"
+  ]
+}

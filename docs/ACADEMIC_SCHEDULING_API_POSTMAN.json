@@ -1,0 +1,844 @@
+{
+  "info": {
+    "_postman_id": "academic-scheduling-api",
+    "name": "Academic Scheduling System API",
+    "description": "Complete API collection for Academic Scheduling System with authentication, course management, student records, lecturer management, and room allocation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api",
+      "description": "Base URL for the API (change for production)",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "admin@university.edu",
+      "description": "Your email for authentication",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "password",
+      "description": "Your password",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@university.edu\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"role\": \"student\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/user",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users?per_page=10",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"newuser@university.edu\",\n  \"password\": \"password123\",\n  \"role\": \"lecturer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated User Name\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/1",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Course Management",
+      "item": [
+        {
+          "name": "List Courses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/courses?per_page=10",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_code\": \"CS101\",\n  \"course_name\": \"Computer Science Fundamentals\",\n  \"description\": \"Introduction to Computer Science\",\n  \"credits\": 3,\n  \"semester\": \"ganjil\",\n  \"academic_year\": \"2023/2024\",\n  \"course_type\": \"mandatory\",\n  \"level\": \"undergraduate\",\n  \"capacity\": 40,\n  \"program_study_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/courses",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Course Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/courses/1",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Course",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_name\": \"Updated Course Name\",\n  \"credits\": 4\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/courses/1",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Course Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/courses/statistics",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Program Study Management",
+      "item": [
+        {
+          "name": "List Programs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/program-studies?per_page=10",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Program",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"CS\",\n  \"name\": \"Computer Science\",\n  \"faculty\": \"Fakultas Sains dan Teknologi\",\n  \"description\": \"Computer Science Program\",\n  \"duration_years\": 4,\n  \"degree\": \"S1\",\n  \"accreditation\": \"A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/program-studies",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Program Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/program-studies/1",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Program Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/program-studies/statistics",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Student Management",
+      "item": [
+        {
+          "name": "List Students",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/students?per_page=10",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_number\": \"2024101001\",\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@student.university.edu\",\n  \"phone\": \"+62812345678\",\n  \"gender\": \"male\",\n  \"birth_date\": \"2000-01-01\",\n  \"birth_place\": \"Jakarta\",\n  \"address\": \"Jl. Address 123\",\n  \"city\": \"Jakarta\",\n  \"province\": \"DKI Jakarta\",\n  \"postal_code\": \"12345\",\n  \"program_study_id\": 1,\n  \"class\": \"1A\",\n  \"batch_year\": \"2024\",\n  \"enrollment_date\": \"2024-09-01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/students",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Student Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/students/1",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Student Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/students/statistics",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Student Academic Progress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/students/1/academic-progress",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Update Students",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_ids\": [1, 2, 3],\n  \"updates\": {\n    \"status\": \"active\",\n    \"current_semester\": 2\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/students/bulk-update",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Lecturer Management",
+      "item": [
+        {
+          "name": "List Lecturers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lecturers?per_page=10",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Lecturer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_number\": \"D001\",\n  \"name\": \"Dr. John Smith\",\n  \"email\": \"john.smith@university.edu\",\n  \"phone\": \"+628987654321\",\n  \"gender\": \"male\",\n  \"birth_date\": \"1975-03-15\",\n  \"position\": \"Professor\",\n  \"rank\": \"Professor\",\n  \"specialization\": [\"Artificial Intelligence\", \"Machine Learning\"],\n  \"department\": \"Computer Science\",\n  \"faculty\": \"FST\",\n  \"employment_type\": \"permanent\",\n  \"hire_date\": \"2005-08-01\",\n  \"academic_load\": 12,\n  \"program_study_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/lecturers",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lecturer Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lecturers/1",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lecturer Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lecturers/statistics",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Lecturer Teaching Load",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lecturers/1/teaching-load",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Room Management",
+      "item": [
+        {
+          "name": "List Rooms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rooms?per_page=10",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Room",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"room_code\": \"A101\",\n  \"name\": \"Computer Lab 1\",\n  \"building\": \"A\",\n  \"floor\": 1,\n  \"room_type\": \"laboratory\",\n  \"capacity\": 30,\n  \"department\": \"Computer Science\",\n  \"faculty\": \"FST\",\n  \"facilities\": [\"projector\", \"whiteboard\", \"computer\", \"wifi\", \"ac\"],\n  \"equipment\": [\"30 computers\", \"multimedia projector\"],\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rooms",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Room Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rooms/1",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Available Rooms for Schedule",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rooms/available-for-schedule?date=2024-01-15&start_time=08:00&end_time=10:00&capacity=50&room_type=classroom",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Room Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rooms/statistics",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Room Utilization Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rooms/utilization-report?period=month",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Dashboard Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard",
+              "host": [
+                "{{base_url}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
