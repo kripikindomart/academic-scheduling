@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Room\StoreRoomRequest;
 use App\Http\Requests\Room\UpdateRoomRequest;
+use App\Services\ResponseService;
 use App\Services\RoomService;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class RoomController extends Controller
 {
@@ -24,29 +26,45 @@ class RoomController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $filters = [
-            'search' => $request->input('search'),
-            'building' => $request->input('building'),
-            'floor' => $request->input('floor'),
-            'room_type' => $request->input('room_type'),
-            'min_capacity' => $request->input('min_capacity'),
-            'max_capacity' => $request->input('max_capacity'),
-            'department' => $request->input('department'),
-            'faculty' => $request->input('faculty'),
-            'availability_status' => $request->input('availability_status'),
-            'maintenance_status' => $request->input('maintenance_status'),
-            'is_active' => $request->input('is_active'),
-            'has_facilities' => $request->input('has_facilities'),
-        ];
+        try {
+            $filters = $request->only([
+                'building',
+                'floor',
+                'room_type',
+                'capacity',
+                'department',
+                'faculty',
+                'availability_status',
+                'maintenance_status',
+                'is_active',
+                'status',
+                'search'
+            ]);
 
-        $result = $this->roomService->getRooms(
-            $filters,
-            $request->input('per_page', 15),
-            $request->input('sort_by', 'name'),
-            $request->input('sort_direction', 'asc')
-        );
+            // Map frontend status to backend is_active
+            if (isset($filters['status'])) {
+                if ($filters['status'] === 'active') {
+                    $filters['is_active'] = 1;
+                } elseif ($filters['status'] === 'inactive') {
+                    $filters['is_active'] = 0;
+                }
+                unset($filters['status']);
+            }
 
-        return response()->success($result['data'], $result['message'], $result['meta']);
+            $perPage = $request->get('per_page', 20);
+            $rooms = $this->roomService->getAllRooms($perPage, $filters);
+
+            return ResponseService::paginated(
+                $rooms,
+                'Rooms retrieved successfully'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to retrieve rooms: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
     }
 
     /**
@@ -54,9 +72,21 @@ class RoomController extends Controller
      */
     public function store(StoreRoomRequest $request): JsonResponse
     {
-        $room = $this->roomService->createRoom($request->validated());
+        try {
+            $room = $this->roomService->createRoom($request->validated());
 
-        return response()->success($room, 'Room created successfully');
+            return ResponseService::success(
+                $room,
+                'Room created successfully',
+                201
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to create room: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
     }
 
     /**

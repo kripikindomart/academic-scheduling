@@ -59,6 +59,8 @@ class Room extends Model
         'schedule_rules' => 'array',
     ];
 
+    protected $appends = ['status'];
+
     protected $dates = [
         'last_maintenance_date',
         'next_maintenance_date',
@@ -72,6 +74,11 @@ class Room extends Model
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function getStatusAttribute()
+    {
+        return $this->is_active ? 'active' : 'inactive';
     }
 
     public function schedules()
