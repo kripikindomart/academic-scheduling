@@ -36,12 +36,14 @@ return new class extends Migration
             // Audit
             $table->foreignId('created_by')->constrained('users')->onDelete('restrict');
             $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('deleted_by')->nullable()->constrained('users')->onDelete('set null');
             $table->softDeletes();
 
             // Indexes
             $table->index(['program_study_id', 'academic_year', 'semester']);
             $table->index(['class_code']);
             $table->index(['is_active']);
+            $table->index('deleted_at');
 
             $table->timestamps();
         });

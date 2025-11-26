@@ -56,7 +56,9 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('deleted_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['employee_number']);
             $table->index(['program_study_id', 'status']);
@@ -67,6 +69,7 @@ return new class extends Migration
             $table->index(['is_active']);
             $table->index(['name']);
             $table->index(['email']);
+            $table->index('deleted_at');
         });
     }
 
