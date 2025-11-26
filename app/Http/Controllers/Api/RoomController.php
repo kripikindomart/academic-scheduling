@@ -52,11 +52,12 @@ class RoomController extends Controller
             }
 
             $perPage = $request->get('per_page', 20);
-            $rooms = $this->roomService->getAllRooms($perPage, $filters);
+            $result = $this->roomService->getRooms($filters, $perPage, 'name', 'asc');
 
             return ResponseService::paginated(
-                $rooms,
-                'Rooms retrieved successfully'
+                $result['data'],
+                $result['message'],
+                $result['meta']
             );
         } catch (\Exception $e) {
             return ResponseService::error(
@@ -114,9 +115,20 @@ class RoomController extends Controller
      */
     public function update(UpdateRoomRequest $request, Room $room): JsonResponse
     {
-        $updatedRoom = $this->roomService->updateRoom($room, $request->validated());
+        try {
+            $updatedRoom = $this->roomService->updateRoom($room, $request->validated());
 
-        return response()->success($updatedRoom, 'Room updated successfully');
+            return ResponseService::success(
+                $updatedRoom,
+                'Room updated successfully'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to update room: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
     }
 
     /**
@@ -124,9 +136,20 @@ class RoomController extends Controller
      */
     public function destroy(Room $room): JsonResponse
     {
-        $this->roomService->deleteRoom($room);
+        try {
+            $this->roomService->deleteRoom($room);
 
-        return response()->success(null, 'Room deleted successfully');
+            return ResponseService::success(
+                null,
+                'Room deleted successfully'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to delete room: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
     }
 
     /**
@@ -134,9 +157,20 @@ class RoomController extends Controller
      */
     public function statistics(): JsonResponse
     {
-        $statistics = $this->roomService->getRoomStatistics();
+        try {
+            $statistics = $this->roomService->getRoomStatistics();
 
-        return response()->success($statistics, 'Room statistics retrieved successfully');
+            return ResponseService::success(
+                $statistics,
+                'Room statistics retrieved successfully'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to retrieve room statistics: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
     }
 
     /**
