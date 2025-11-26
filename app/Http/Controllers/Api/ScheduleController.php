@@ -10,7 +10,6 @@ use App\Models\Schedule;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\JsonResponse;
 
 class ScheduleController extends Controller
 {

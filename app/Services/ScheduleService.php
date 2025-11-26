@@ -194,12 +194,16 @@ class ScheduleService
         // This week schedules
         $weekStart = now()->startOfWeek();
         $weekEnd = now()->endOfWeek();
-        $stats['this_week'] = Schedule::whereBetween('date', [$weekStart, $weekEnd])->count();
+        $stats['this_week'] = Schedule::whereDate('start_date', '<=', $weekEnd)
+                                   ->whereDate('end_date', '>=', $weekStart)
+                                   ->count();
 
         // This month schedules
-        $stats['this_month'] = Schedule::whereMonth('date', $currentMonth)
-            ->whereYear('date', $currentYear)
-            ->count();
+        $monthStart = now()->startOfMonth();
+        $monthEnd = now()->endOfMonth();
+        $stats['this_month'] = Schedule::whereDate('start_date', '<=', $monthEnd)
+                                     ->whereDate('end_date', '>=', $monthStart)
+                                     ->count();
 
         return $stats;
     }
@@ -333,11 +337,12 @@ class ScheduleService
             'course:id,course_code,course_name',
             'lecturer:id,name',
             'room:id,room_code,name,building',
-        ])->whereBetween('date', [$startDate, $endDate]);
+        ])->whereDate('start_date', '<=', $endDate)
+           ->whereDate('end_date', '>=', $startDate);
 
         $this->applyFilters($query, $filters);
 
-        $schedules = $query->orderBy('date')->orderBy('start_time')->get();
+        $schedules = $query->orderBy('start_date')->orderBy('start_time')->get();
 
         return [
             'data' => $schedules,
@@ -363,10 +368,11 @@ class ScheduleService
         $endDate = Carbon::create($year, $month, 1)->endOfMonth();
 
         $schedules = Schedule::with(['course:id,course_code', 'lecturer:id,name', 'room:id,room_code'])
-            ->whereBetween('date', [$startDate, $endDate])
+            ->whereDate('start_date', '<=', $endDate)
+            ->whereDate('end_date', '>=', $startDate)
             ->where('status', '!=', 'cancelled')
             ->where('is_published', true)
-            ->orderBy('date')
+            ->orderBy('start_date')
             ->orderBy('start_time')
             ->get();
 
@@ -546,10 +552,10 @@ class ScheduleService
                     $query->where('is_online', $value);
                     break;
                 case 'date_from':
-                    $query->whereDate('date', '>=', $value);
+                    $query->whereDate('start_date', '>=', $value);
                     break;
                 case 'date_to':
-                    $query->whereDate('date', '<=', $value);
+                    $query->whereDate('end_date', '<=', $value);
                     break;
                 case 'conflict_status':
                     $query->where('conflict_status', $value);

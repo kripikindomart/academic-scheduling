@@ -1,8 +1,8 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <div class="flex h-screen relative">
+    <div class="flex relative">
       <!-- Sidebar -->
-      <Sidebar class="fixed lg:relative z-40 h-full" />
+      <Sidebar id="main-sidebar" class="fixed lg:relative z-40 transition-all duration-300" @sidebar-collapsed="handleSidebarCollapse" />
 
       <!-- Mobile Sidebar Overlay -->
       <div
@@ -12,13 +12,13 @@
       ></div>
 
       <!-- Main Content -->
-      <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
+      <div class="flex-1 flex flex-col min-w-0 transition-all duration-300">
         <!-- Header -->
         <Header @toggle-mobile-sidebar="toggleMobileSidebar" />
 
         <!-- Main Content Area -->
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
-          <div class="p-6">
+        <main class="flex-1 overflow-x-hidden bg-gray-50" :class="isSidebarCollapsed ? 'lg:ml-0' : 'lg:ml-4'">
+          <div class="max-w-full">
             <slot />
           </div>
         </main>
@@ -33,6 +33,7 @@ import Sidebar from './Sidebar.vue';
 import Header from './Header.vue';
 
 const showMobileSidebar = ref(false);
+const isSidebarCollapsed = ref(false);
 
 const toggleMobileSidebar = () => {
   showMobileSidebar.value = !showMobileSidebar.value;
@@ -40,6 +41,10 @@ const toggleMobileSidebar = () => {
 
 const closeMobileSidebar = () => {
   showMobileSidebar.value = false;
+};
+
+const handleSidebarCollapse = (collapsed) => {
+  isSidebarCollapsed.value = collapsed;
 };
 
 const handleEscape = (event) => {

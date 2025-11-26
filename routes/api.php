@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\ProgramStudyController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\LecturerController;
+use App\Http\Controllers\Api\BuildingController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\ScheduleController;
 
@@ -132,10 +133,37 @@ Route::middleware(['auth:sanctum'])->prefix('lecturers')->group(function () {
     Route::post('/{lecturer}/assign-course/{course}', [LecturerController::class, 'assignCourse'])->middleware('permission:lecturers.edit');
 });
 
+// Building management routes
+Route::middleware(['auth:sanctum'])->prefix('buildings')->group(function () {
+    Route::get('/', [BuildingController::class, 'index']);
+    Route::post('/', [BuildingController::class, 'store']);
+    Route::get('/statistics', [BuildingController::class, 'statistics']);
+    Route::get('/with-room-count', [BuildingController::class, 'getWithRoomCount']);
+    Route::get('/type/{type}', [BuildingController::class, 'getByType']);
+    Route::get('/trash', [BuildingController::class, 'trash']);
+    Route::get('/search-suggestions', [BuildingController::class, 'searchSuggestions']);
+
+    // Bulk operations
+    Route::post('/bulk-update', [BuildingController::class, 'bulkUpdate']);
+    Route::post('/bulk-delete', [BuildingController::class, 'bulkDelete']);
+    Route::post('/bulk-toggle-status', [BuildingController::class, 'bulkToggleStatus']);
+    Route::post('/import', [BuildingController::class, 'import']);
+    Route::get('/export', [BuildingController::class, 'export']);
+    Route::post('/restore/{id}', [BuildingController::class, 'restore']);
+    Route::delete('/force-delete/{id}', [BuildingController::class, 'forceDelete']);
+
+    Route::get('/{building}', [BuildingController::class, 'show']);
+    Route::put('/{building}', [BuildingController::class, 'update']);
+    Route::delete('/{building}', [BuildingController::class, 'destroy']);
+    Route::post('/{building}/toggle-status', [BuildingController::class, 'toggleStatus']);
+    Route::post('/{building}/duplicate', [BuildingController::class, 'duplicate']);
+});
+
 // Room management routes
 Route::middleware(['auth:sanctum'])->prefix('rooms')->group(function () {
     Route::get('/', [RoomController::class, 'index'])->middleware('permission:rooms.view');
     Route::post('/', [RoomController::class, 'store'])->middleware('permission:rooms.create');
+    Route::post('/check-duplicates', [RoomController::class, 'checkDuplicates'])->middleware('permission:rooms.create');
     Route::get('/statistics', [RoomController::class, 'statistics'])->middleware('permission:rooms.view');
     Route::get('/available-for-schedule', [RoomController::class, 'getAvailableForSchedule'])->middleware('permission:rooms.view');
     Route::get('/available', [RoomController::class, 'getAvailable'])->middleware('permission:rooms.view');
@@ -143,18 +171,24 @@ Route::middleware(['auth:sanctum'])->prefix('rooms')->group(function () {
     Route::get('/utilization-report', [RoomController::class, 'getUtilizationReport'])->middleware('permission:rooms.view');
     Route::get('/search-suggestions', [RoomController::class, 'searchSuggestions'])->middleware('permission:rooms.view');
     Route::get('/by-capacity', [RoomController::class, 'getByCapacity'])->middleware('permission:rooms.view');
+    Route::get('/trash', [RoomController::class, 'trash'])->middleware('permission:rooms.view');
     Route::post('/bulk-update', [RoomController::class, 'bulkUpdate'])->middleware('permission:rooms.edit');
     Route::post('/import', [RoomController::class, 'import'])->middleware('permission:rooms.create');
     Route::get('/export', [RoomController::class, 'export'])->middleware('permission:rooms.view');
-    Route::post('/restore/{id}', [RoomController::class, 'restore'])->middleware('permission:rooms.delete');
-    Route::delete('/force-delete/{id}', [RoomController::class, 'forceDelete'])->middleware('permission:rooms.delete');
-
+    Route::put('/{room}/toggle-status', [RoomController::class, 'toggleStatus'])->middleware('permission:rooms.edit');
+    Route::post('/{room}/duplicate', [RoomController::class, 'duplicate'])->middleware('permission:rooms.create');
+    Route::post('/bulk-delete', [RoomController::class, 'bulkDelete'])->middleware('permission:rooms.delete');
+    Route::post('/bulk-force-delete', [RoomController::class, 'bulkForceDelete'])->middleware('permission:rooms.delete');
+    Route::post('/bulk-toggle-status', [RoomController::class, 'bulkToggleStatus'])->middleware('permission:rooms.edit');
+    Route::get('/download/{filename}', [RoomController::class, 'download'])->middleware('permission:rooms.view');
     Route::get('/building/{building}', [RoomController::class, 'getByBuilding'])->middleware('permission:rooms.view');
     Route::get('/type/{type}', [RoomController::class, 'getByType'])->middleware('permission:rooms.view');
 
     Route::get('/{room}', [RoomController::class, 'show'])->middleware('permission:rooms.view');
     Route::put('/{room}', [RoomController::class, 'update'])->middleware('permission:rooms.edit');
     Route::delete('/{room}', [RoomController::class, 'destroy'])->middleware('permission:rooms.delete');
+    Route::delete('/{room}/force-delete', [RoomController::class, 'forceDelete'])->middleware('permission:rooms.delete');
+    Route::post('/{room}/restore', [RoomController::class, 'restore'])->middleware('permission:rooms.delete');
     Route::get('/{room}/schedule', [RoomController::class, 'getSchedule'])->middleware('permission:rooms.view');
     Route::put('/{room}/availability', [RoomController::class, 'updateAvailability'])->middleware('permission:rooms.edit');
     Route::post('/{room}/schedule-maintenance', [RoomController::class, 'scheduleMaintenance'])->middleware('permission:rooms.edit');

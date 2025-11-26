@@ -29,7 +29,7 @@ class UpdateRoomRequest extends FormRequest
             'floor' => 'required|integer|min:1',
             'room_type' => 'required|in:classroom,laboratory,seminar_room,auditorium,workshop,library,office,meeting_room,multipurpose',
             'capacity' => 'required|integer|min:1|max:1000',
-            'current_occupancy' => 'nullable|integer|min:0|max:capacity',
+            'current_occupancy' => 'nullable|integer|min:0|max:1000',
             'area' => 'nullable|decimal:8,2|min:1',
             'department' => 'nullable|string|max:255',
             'faculty' => 'nullable|string|max:255',
@@ -123,6 +123,28 @@ class UpdateRoomRequest extends FormRequest
             'qr_code' => 'QR Code',
             'notes' => 'Notes',
         ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Convert string numeric values to proper types BEFORE validation
+        $this->merge([
+            'capacity' => $this->capacity ? (int) $this->capacity : null,
+            'floor' => $this->floor ? (int) $this->floor : null,
+            'current_occupancy' => $this->current_occupancy ? (int) $this->current_occupancy : 0,
+            'area' => $this->area ? (float) $this->area : null,
+            'is_active' => $this->is_active !== null ? (bool) $this->is_active : true,
+        ]);
+
+        // Validate room code format
+        if ($this->room_code && !preg_match('/^[A-Z]{2,4}\d{2,4}$/', $this->room_code)) {
+            $this->merge([
+                'room_code' => strtoupper($this->room_code)
+            ]);
+        }
     }
 
     /**

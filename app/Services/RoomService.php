@@ -18,7 +18,7 @@ class RoomService
     /**
      * Get paginated list of rooms with filtering.
      */
-    public function getRooms(array $filters = [], int $perPage = 15, string $sortBy = 'name', string $sortDirection = 'asc'): array
+    public function getRooms(array $filters = [], int $perPage = 15, string $sortBy = 'name', string $sortDirection = 'asc'): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         $query = Room::with(['creator', 'updater']);
 
@@ -89,17 +89,54 @@ class RoomService
         $sortBy = in_array($sortBy, $allowedSorts) ? $sortBy : 'name';
         $query->orderBy($sortBy, $sortDirection);
 
-        $rooms = $query->paginate($perPage);
+        return $query->paginate($perPage);
+    }
+
+    /**
+     * Check for potential duplicates before creating.
+     */
+    public function checkForDuplicates(array $roomData): array
+    {
+        $potentialDuplicates = [];
+
+        // Check for duplicate room_code (including in trash)
+        $existingByCode = Room::withTrashed()
+            ->where('room_code', $roomData['room_code'])
+            ->first();
+
+        if ($existingByCode) {
+            $potentialDuplicates[] = [
+                'type' => 'room_code',
+                'value' => $roomData['room_code'],
+                'existing' => $existingByCode,
+                'message' => $existingByCode->deleted_at
+                    ? 'Kode ruangan ini sudah ada di trash'
+                    : 'Kode ruangan ini sudah digunakan'
+            ];
+        }
+
+        // Check for duplicate name with same building (including in trash)
+        if (isset($roomData['building']) && isset($roomData['name'])) {
+            $existingByName = Room::withTrashed()
+                ->where('name', $roomData['name'])
+                ->where('building', $roomData['building'])
+                ->first();
+
+            if ($existingByName) {
+                $potentialDuplicates[] = [
+                    'type' => 'name_building',
+                    'value' => $roomData['name'] . ' di ' . $roomData['building'],
+                    'existing' => $existingByName,
+                    'message' => $existingByName->deleted_at
+                        ? 'Nama ruangan ini sudah ada di trash untuk gedung ini'
+                        : 'Nama ruangan ini sudah digunakan di gedung ini'
+                ];
+            }
+        }
 
         return [
-            'data' => $rooms,
-            'message' => 'Rooms retrieved successfully',
-            'meta' => [
-                'current_page' => $rooms->currentPage(),
-                'last_page' => $rooms->lastPage(),
-                'per_page' => $rooms->perPage(),
-                'total' => $rooms->total(),
-            ]
+            'has_duplicates' => !empty($potentialDuplicates),
+            'duplicates' => $potentialDuplicates
         ];
     }
 
@@ -112,9 +149,77 @@ class RoomService
             // Generate room code if not provided
             if (empty($data['room_code'])) {
                 $building = $data['building'];
-                $floor = $data['floor'];
-                $sequence = Room::where('building', $building)->where('floor', $floor)->count() + 1;
-                $data['room_code'] = strtoupper($building) . $floor . str_pad($sequence, 2, '0', STR_PAD_LEFT);
+                $roomType = $data['room_type'] ?? 'classroom';
+                $sequence = Room::where('building', $building)->count() + 1;
+
+                // Use SP (Study Program) code - default to SPS
+                $spCode = 'SPS';
+
+                // Create building code from building name
+                $words = explode(' ', $building);
+                $buildingMainName = '';
+                $skipNext = false;
+
+                foreach ($words as $word) {
+                    $upperWord = strtoupper($word);
+                    if ($skipNext) {
+                        $skipNext = false;
+                        continue;
+                    }
+                    // Skip faculty indicators like "Fakultas", "Sekolah" etc.
+                    if (in_array($upperWord, ['FAKULTAS', 'FK', 'SEKOLAH', 'SCHOOL'])) {
+                        $skipNext = true; // Skip the next word (faculty name)
+                        continue;
+                    }
+                    if ($buildingMainName) {
+                        $buildingMainName .= ' ';
+                    }
+                    $buildingMainName .= $word;
+                }
+
+                // Get first 3 chars of building main name
+                $buildingCode = '';
+                if ($buildingMainName) {
+                    $buildingCode = strtoupper(substr($buildingMainName, 0, 3));
+                } else {
+                    $buildingCode = 'GEN';
+                }
+
+                // Room type code
+                $roomTypeCode = '';
+                switch ($roomType) {
+                    case 'classroom':
+                        $roomTypeCode = 'KLS';
+                        break;
+                    case 'laboratory':
+                        $roomTypeCode = 'LAB';
+                        break;
+                    case 'seminar_room':
+                        $roomTypeCode = 'SMR';
+                        break;
+                    case 'auditorium':
+                        $roomTypeCode = 'AUD';
+                        break;
+                    case 'workshop':
+                        $roomTypeCode = 'WSH';
+                        break;
+                    case 'library':
+                        $roomTypeCode = 'LIB';
+                        break;
+                    case 'office':
+                        $roomTypeCode = 'OFC';
+                        break;
+                    case 'meeting_room':
+                        $roomTypeCode = 'MTR';
+                        break;
+                    case 'multipurpose':
+                        $roomTypeCode = 'MPL';
+                        break;
+                    default:
+                        $roomTypeCode = 'RUM';
+                }
+
+                $data['room_code'] = $spCode . '-' . $buildingCode . '-' . $roomTypeCode . str_pad($sequence, 2, '0', STR_PAD_LEFT);
             }
 
             // Set current user as creator
@@ -233,6 +338,41 @@ class RoomService
     }
 
     /**
+     * Get trashed (soft-deleted) rooms.
+     */
+    public function getTrashedRooms(int $perPage = 15, array $filters = []): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $query = Room::onlyTrashed()->with(['creator', 'updater']);
+
+        // Apply filters to trashed rooms
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('room_code', 'like', "%{$search}%")
+                  ->orWhere('building', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%")
+                  ->orWhere('department', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($filters['building'])) {
+            $query->where('building', $filters['building']);
+        }
+
+        if (!empty($filters['room_type'])) {
+            $query->where('room_type', $filters['room_type']);
+        }
+
+        if (isset($filters['is_active'])) {
+            $query->where('is_active', $filters['is_active']);
+        }
+
+        return $query->orderBy('deleted_at', 'desc')
+                     ->paginate($perPage);
+    }
+
+    /**
      * Restore a deleted room.
      */
     public function restoreRoom(int $roomId): Room
@@ -283,14 +423,16 @@ class RoomService
      */
     public function getRoomStatistics(): array
     {
-        $query = Room::query();
+        $total = Room::count();
+        $active = Room::where('is_active', true)->count();
+        $inactive = Room::where('is_active', false)->count();
+        $trashed = Room::onlyTrashed()->count();
 
-        $total = $query->count();
-        $active = $query->where('is_active', true)->count();
+        $query = Room::query();
         $available = $query->where('availability_status', 'available')->count();
-        $occupied = $query->where('availability_status', 'occupied')->count();
-        $maintenance = $query->where('availability_status', 'maintenance')->count();
-        $reserved = $query->where('availability_status', 'reserved')->count();
+        $occupied = Room::where('availability_status', 'occupied')->count();
+        $maintenance = Room::where('availability_status', 'maintenance')->count();
+        $reserved = Room::where('availability_status', 'reserved')->count();
 
         $roomTypeStats = $query->selectRaw('room_type, COUNT(*) as count')
             ->groupBy('room_type')
@@ -316,18 +458,26 @@ class RoomService
             'min_capacity' => $query->min('capacity'),
         ];
 
-        // Calculate utilization rate
-        $totalScheduledHours = Schedule::whereDate('date', '>=', now()->subMonth())
-            ->whereDate('date', '<=', now())
-            ->where('status', 'active')
-            ->count();
+        // Calculate utilization rate (handle case where no schedules exist)
+        try {
+            $totalScheduledHours = Schedule::whereDate('start_date', '>=', now()->subMonth())
+                ->whereDate('start_date', '<=', now())
+                ->where('status', 'active')
+                ->count();
 
-        $totalPossibleHours = $total * 8 * 22; // 8 hours/day, 22 working days
-        $utilizationRate = $totalPossibleHours > 0 ? round(($totalScheduledHours / $totalPossibleHours) * 100, 1) : 0;
+            $totalPossibleHours = $total * 8 * 22; // 8 hours/day, 22 working days
+            $utilizationRate = $totalPossibleHours > 0 ? round(($totalScheduledHours / $totalPossibleHours) * 100, 1) : 0;
+        } catch (\Exception $e) {
+            $totalScheduledHours = 0;
+            $utilizationRate = 0;
+        }
 
         return [
             'total_rooms' => $total,
             'active_rooms' => $active,
+            'inactive_rooms' => $inactive,
+            'trashed_rooms' => $trashed,
+            'buildings' => count($buildingStats),
             'by_availability_status' => [
                 'available' => $available,
                 'occupied' => $occupied,
@@ -407,10 +557,11 @@ class RoomService
         }
 
         $schedules = $room->schedules()
-            ->whereBetween('date', [$startDate, $endDate])
+            ->whereDate('start_date', '<=', $endDate)
+            ->whereDate('end_date', '>=', $startDate)
             ->where('status', 'active')
             ->with(['course', 'lecturer'])
-            ->orderBy('date')
+            ->orderBy('start_date')
             ->orderBy('start_time')
             ->get();
 
@@ -643,7 +794,8 @@ class RoomService
 
         foreach ($rooms as $room) {
             $totalScheduledHours = $room->schedules()
-                ->whereBetween('date', [$startDate, $endDate])
+                ->whereDate('start_date', '<=', $endDate)
+                ->whereDate('end_date', '>=', $startDate)
                 ->where('status', 'active')
                 ->selectRaw('SUM(TIMESTAMPDIFF(HOUR, start_time, end_time)) as total_hours')
                 ->value('total_hours') ?? 0;
@@ -696,5 +848,205 @@ class RoomService
         }
 
         return $weekdays * $hoursPerDay;
+    }
+
+    /**
+     * Toggle room status.
+     */
+    public function toggleRoomStatus(int $id, bool $isActive): array
+    {
+        return DB::transaction(function () use ($id, $isActive) {
+            $room = Room::findOrFail($id);
+
+            $oldStatus = $room->is_active;
+            $room->update([
+                'is_active' => $isActive,
+                'updated_by' => auth()->id(),
+            ]);
+
+            // Log activity
+            Log::channel('activity')->info('Room status toggled', [
+                'room_id' => $room->id,
+                'room_code' => $room->room_code,
+                'name' => $room->name,
+                'old_status' => $oldStatus,
+                'new_status' => $isActive,
+                'updated_by' => auth()->id(),
+            ]);
+
+            return [
+                'room' => $room->fresh(['creator', 'updater']),
+                'message' => 'Room status updated successfully'
+            ];
+        });
+    }
+
+    /**
+     * Duplicate a room.
+     */
+    public function duplicateRoom(int $id, $user): array
+    {
+        return DB::transaction(function () use ($id, $user) {
+            $originalRoom = Room::findOrFail($id);
+
+            $newRoom = $originalRoom->replicate();
+            $newRoom->room_code = $this->generateUniqueRoomCode($originalRoom->room_code);
+            $newRoom->name = $this->generateDuplicateName($originalRoom->name);
+            $newRoom->created_by = $user->id;
+            $newRoom->updated_by = null;
+            $newRoom->created_at = now();
+            $newRoom->updated_at = null;
+
+            $newRoom->save();
+
+            // Log activity
+            Log::channel('activity')->info('Room duplicated', [
+                'original_room_id' => $originalRoom->id,
+                'new_room_id' => $newRoom->id,
+                'room_code' => $newRoom->room_code,
+                'name' => $newRoom->name,
+                'duplicated_by' => $user->id,
+            ]);
+
+            return [
+                'room' => $newRoom->fresh(['creator', 'updater']),
+                'message' => 'Room duplicated successfully'
+            ];
+        });
+    }
+
+    /**
+     * Bulk delete rooms.
+     */
+    public function bulkDeleteRooms(array $roomIds): int
+    {
+        return DB::transaction(function () use ($roomIds) {
+            $rooms = Room::whereIn('id', $roomIds)->get();
+            $deletedCount = 0;
+
+            foreach ($rooms as $room) {
+                if ($room->delete()) {
+                    $deletedCount++;
+
+                    // Log activity
+                    Log::channel('activity')->info('Room deleted (bulk)', [
+                        'room_id' => $room->id,
+                        'room_code' => $room->room_code,
+                        'name' => $room->name,
+                        'deleted_by' => auth()->id(),
+                    ]);
+                }
+            }
+
+            return $deletedCount;
+        });
+    }
+
+    /**
+     * Bulk force delete rooms permanently.
+     */
+    public function bulkForceDeleteRooms(array $roomIds): int
+    {
+        return DB::transaction(function () use ($roomIds) {
+            $rooms = Room::onlyTrashed()->whereIn('id', $roomIds)->get();
+            $deletedCount = 0;
+
+            foreach ($rooms as $room) {
+                // Delete related schedules
+                $room->schedules()->forceDelete();
+
+                // Force delete the room
+                if ($room->forceDelete()) {
+                    $deletedCount++;
+
+                    // Log activity
+                    Log::channel('activity')->warning('Room permanently deleted (bulk)', [
+                        'room_id' => $room->id,
+                        'room_code' => $room->room_code,
+                        'name' => $room->name,
+                        'permanently_deleted_by' => auth()->id(),
+                    ]);
+                }
+            }
+
+            return $deletedCount;
+        });
+    }
+
+    /**
+     * Bulk toggle room status.
+     */
+    public function bulkToggleRoomStatus(array $roomIds, bool $isActive): array
+    {
+        return DB::transaction(function () use ($roomIds, $isActive) {
+            $rooms = Room::whereIn('id', $roomIds)->get();
+            $updatedCount = 0;
+
+            foreach ($rooms as $room) {
+                $oldStatus = $room->is_active;
+                $room->update([
+                    'is_active' => $isActive,
+                    'updated_by' => auth()->id(),
+                ]);
+                $updatedCount++;
+
+                // Log activity
+                Log::channel('activity')->info('Room status toggled (bulk)', [
+                    'room_id' => $room->id,
+                    'room_code' => $room->room_code,
+                    'name' => $room->name,
+                    'old_status' => $oldStatus,
+                    'new_status' => $isActive,
+                    'updated_by' => auth()->id(),
+                ]);
+            }
+
+            return [
+                'updated_count' => $updatedCount,
+                'message' => "Successfully updated {$updatedCount} rooms"
+            ];
+        });
+    }
+
+    /**
+     * Generate unique room code for duplicate.
+     */
+    private function generateUniqueRoomCode(string $originalCode): string
+    {
+        // If original code already has COPY suffix, extract base code
+        $baseCode = preg_replace('/-COPY-\d+$/', '', $originalCode);
+
+        // Find existing copies
+        $existingCodes = Room::where('room_code', 'like', $baseCode . '-COPY-%')
+            ->pluck('room_code')
+            ->toArray();
+
+        $counter = 1;
+
+        do {
+            $newCode = $baseCode . '-COPY-' . $counter;
+            $exists = in_array($newCode, $existingCodes);
+            $counter++;
+        } while ($exists);
+
+        return $newCode;
+    }
+
+    /**
+     * Generate duplicate name.
+     */
+    private function generateDuplicateName(string $originalName): string
+    {
+        // If original name already has (Copy) suffix, increment the number
+        if (preg_match('/^(.*) \(Copy (\d+)\)$/', $originalName, $matches)) {
+            $baseName = $matches[1];
+            $copyNumber = (int) $matches[2];
+            return $baseName . ' (Copy ' . ($copyNumber + 1) . ')';
+        } elseif (preg_match('/^(.*) \(Copy\)$/', $originalName, $matches)) {
+            $baseName = $matches[1];
+            return $baseName . ' (Copy 2)';
+        } else {
+            return $originalName . ' (Copy)';
+        }
     }
 }

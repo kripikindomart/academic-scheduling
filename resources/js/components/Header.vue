@@ -209,6 +209,8 @@ const userInitial = computed(() => {
 const pageTitle = computed(() => {
   const titles = {
     '/dashboard': 'Dashboard',
+    '/room-dashboard': 'Manajemen Ruangan',
+    '/rooms': 'Manajemen Ruangan',
     '/schedule': 'Jadwal',
     '/courses': 'Mata Kuliah',
     '/students': 'Mahasiswa',
@@ -219,18 +221,21 @@ const pageTitle = computed(() => {
 });
 
 const breadcrumbs = computed(() => {
-  const paths = route.path.split('/').filter(Boolean);
+  const path = route.path;
   const breadcrumbItems = [{ name: 'Beranda', link: '/' }];
 
-  if (paths.length > 0) {
-    let currentPath = '';
-    paths.forEach(path => {
-      currentPath += `/${path}`;
-      const name = pageTitle.value;
-      if (name && name !== 'Beranda') {
-        breadcrumbItems.push({ name, link: currentPath });
-      }
-    });
+  if (path === '/room-dashboard' || path === '/rooms') {
+    breadcrumbItems.push({ name: 'Manajemen Ruangan', link: path });
+  } else if (path === '/schedule') {
+    breadcrumbItems.push({ name: 'Jadwal', link: path });
+  } else if (path === '/courses') {
+    breadcrumbItems.push({ name: 'Mata Kuliah', link: path });
+  } else if (path === '/students') {
+    breadcrumbItems.push({ name: 'Mahasiswa', link: path });
+  } else if (path === '/users') {
+    breadcrumbItems.push({ name: 'Pengguna', link: path });
+  } else if (path === '/settings') {
+    breadcrumbItems.push({ name: 'Pengaturan', link: path });
   }
 
   return breadcrumbItems;

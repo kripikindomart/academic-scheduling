@@ -1,42 +1,38 @@
 <template>
   <Layout>
-    <div class="min-h-screen bg-gray-50 pb-8">
-      <!-- Header -->
-      <div class="px-4 py-6 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between mb-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
       <div>
-        <h1 class="text-2xl font-semibold text-gray-900">Program Studi Pascasarjana</h1>
-        <p class="text-sm text-gray-600">Kelola data program studi S2 dan S3</p>
+        <h1 class="text-2xl font-semibold text-gray-900">Manajemen Ruangan</h1>
+        <p class="text-sm text-gray-600">Kelola data ruangan kampus</p>
       </div>
-      <button @click="openCreateModal" class="flex items-center px-4 py-2 text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <button @click="openCreateModal" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
-        Tambah Program Studi
+        Tambah Ruangan
       </button>
-        </div>
-      </div>
+    </div>
 
-      <!-- Stats Cards -->
-      <div class="px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 gap-6 mb-6 md:grid-cols-4">
-      <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+      <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
         <div class="flex items-center">
           <div class="p-3 bg-blue-100 rounded-lg">
-            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Total Program Studi</p>
+            <p class="text-sm font-medium text-gray-600">Total Ruangan</p>
             <p class="text-2xl font-semibold text-gray-900">{{ stats.total }}</p>
           </div>
         </div>
       </div>
-      <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+      <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
         <div class="flex items-center">
           <div class="p-3 bg-green-100 rounded-lg">
-            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -46,10 +42,10 @@
           </div>
         </div>
       </div>
-      <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+      <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
         <div class="flex items-center">
           <div class="p-3 bg-yellow-100 rounded-lg">
-            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -59,37 +55,35 @@
           </div>
         </div>
       </div>
-      <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+      <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
         <div class="flex items-center">
           <div class="p-3 bg-purple-100 rounded-lg">
-            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-600">Fakultas</p>
-            <p class="text-2xl font-semibold text-gray-900">{{ stats.faculties }}</p>
+            <p class="text-sm font-medium text-gray-600">Gedung</p>
+            <p class="text-2xl font-semibold text-gray-900">{{ stats.buildings }}</p>
           </div>
         </div>
       </div>
-        </div>
-      </div>
+    </div>
 
-      <!-- Filters and Search -->
-      <div class="px-4 sm:px-6 lg:px-8">
-        <div class="p-6 mb-6 bg-white border border-gray-200 rounded-lg shadow-sm">
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <!-- Filters and Search -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <label class="block mb-2 text-sm font-medium text-gray-700">Search</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
           <input
             type="text"
             v-model="filters.search"
-            placeholder="Cari nama program studi..."
+            placeholder="Cari nama atau kode ruangan..."
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
           >
         </div>
         <div>
-          <label class="block mb-2 text-sm font-medium text-gray-700">Status</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
           <select v-model="filters.status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
             <option value="">Semua Status</option>
             <option value="active">Aktif</option>
@@ -97,26 +91,40 @@
           </select>
         </div>
         <div>
-          <label class="block mb-2 text-sm font-medium text-gray-700">Jenjang</label>
-          <select v-model="filters.level" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-            <option value="">Semua Jenjang</option>
-            <option value="S2">S2 - Magister</option>
-            <option value="S3">S3 - Doktor</option>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Gedung</label>
+          <select v-model="filters.building" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            <option value="">Semua Gedung</option>
+            <option value="A">Gedung A</option>
+            <option value="B">Gedung B</option>
+            <option value="C">Gedung C</option>
+            <option value="D">Gedung D</option>
+            <option value="Lab">Laboratorium</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Tipe Ruangan</label>
+          <select v-model="filters.room_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            <option value="">Semua Tipe</option>
+            <option value="classroom">Ruang Kelas</option>
+            <option value="laboratory">Laboratorium</option>
+            <option value="seminar_room">Ruang Seminar</option>
+            <option value="auditorium">Auditorium</option>
+            <option value="meeting_room">Ruang Rapat</option>
           </select>
         </div>
       </div>
-      <div class="flex items-center justify-between mt-4">
-        <button @click="refreshData" class="flex items-center px-4 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="mt-4 flex justify-between items-center">
+        <button @click="refreshData" class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
           Refresh Data
         </button>
         <div class="flex space-x-2">
-          <button @click="resetFilters" class="px-4 py-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50">
+          <button @click="resetFilters" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
             Reset
           </button>
-          <button @click="applyFilters" class="px-4 py-2 text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700">
+          <button @click="applyFilters" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
             Terapkan Filter
           </button>
         </div>
@@ -124,36 +132,36 @@
     </div>
 
     <!-- Bulk Actions -->
-    <div v-if="selectedItems.length > 0" class="p-4 mb-6 border border-yellow-200 rounded-lg bg-yellow-50">
-      <div class="flex items-center justify-between">
+    <div v-if="selectedItems.length > 0" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+      <div class="flex justify-between items-center">
         <div class="flex items-center">
           <span class="text-sm font-medium text-yellow-800">
             {{ selectedItems.length }} item terpilih
           </span>
-          <div class="flex ml-4 space-x-2">
+          <div class="ml-4 flex space-x-2">
             <!-- Active tab actions -->
             <template v-if="activeTab === 'active'">
-              <button @click="bulkDelete" class="px-3 py-1 text-sm text-white transition-colors bg-red-600 rounded hover:bg-red-700">
+              <button @click="bulkDelete" class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm">
                 Hapus
               </button>
-              <button @click="bulkActivate" class="px-3 py-1 text-sm text-white transition-colors bg-green-600 rounded hover:bg-green-700">
+              <button @click="bulkActivate" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm">
                 Aktifkan
               </button>
-              <button @click="bulkDeactivate" class="px-3 py-1 text-sm text-white transition-colors bg-gray-600 rounded hover:bg-gray-700">
+              <button @click="bulkDeactivate" class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm">
                 Nonaktifkan
               </button>
             </template>
 
             <!-- Trash tab actions -->
             <template v-else>
-              <button @click="bulkRestore" class="px-3 py-1 text-sm text-white transition-colors bg-green-600 rounded hover:bg-green-700">
+              <button @click="bulkRestore" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm">
                 Restore
               </button>
-              <button @click="bulkDeletePermanent" class="px-3 py-1 text-sm text-white transition-colors bg-red-600 rounded hover:bg-red-700">
+              <button @click="bulkDeletePermanent" class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm">
                 Hapus Permanen
               </button>
             </template>
-          <button @click="clearSelection" class="px-3 py-1 ml-4 text-sm text-white transition-colors bg-yellow-600 rounded hover:bg-yellow-700">
+          <button @click="clearSelection" class="ml-4 px-3 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors text-sm">
             Batal Pilih
           </button>
           </div>
@@ -162,7 +170,7 @@
     </div>
 
     <!-- Table Container with Tabs -->
-    <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
       <!-- Tabs at top of table -->
       <div class="border-b border-gray-200">
         <nav class="flex -mb-px">
@@ -176,11 +184,11 @@
             ]"
           >
             <div class="flex items-center">
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
               Data Aktif
-              <span class="px-2 py-1 ml-2 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
+              <span class="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
                 {{ stats.active }}
               </span>
             </div>
@@ -195,11 +203,11 @@
             ]"
           >
             <div class="flex items-center">
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
               Data Terhapus
-              <span class="px-2 py-1 ml-2 text-xs font-medium text-red-800 bg-red-100 rounded-full">
+              <span class="ml-2 bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
                 {{ stats.trashed }}
               </span>
             </div>
@@ -208,13 +216,13 @@
       </div>
 
       <div class="p-6 border-b border-gray-200">
-        <div class="flex items-center justify-between">
+        <div class="flex justify-between items-center">
           <h2 class="text-xl font-semibold text-gray-900">
-            {{ activeTab === 'active' ? 'Daftar Program Studi' : 'Data Terhapus' }}
+            {{ activeTab === 'active' ? 'Daftar Ruangan' : 'Data Terhapus' }}
           </h2>
           <div class="flex items-center space-x-2">
             <span class="text-sm text-gray-600">Show</span>
-            <select v-model="perPage" @change="fetchData" class="px-2 py-1 text-sm border border-gray-300 rounded">
+            <select v-model="perPage" @change="fetchData" class="px-2 py-1 border border-gray-300 rounded text-sm">
               <option value="10">10</option>
               <option value="25">25</option>
               <option value="50">50</option>
@@ -234,120 +242,122 @@
                   type="checkbox"
                   :checked="allSelected"
                   @change="toggleSelectAll"
-                  class="text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  class="rounded border-gray-300 text-green-600 focus:ring-green-500"
                 >
               </th>
               <th class="px-6 py-3 font-medium">Kode</th>
-              <th class="px-6 py-3 font-medium">Nama Program Studi</th>
-              <th class="px-6 py-3 font-medium">Jenjang</th>
-              <th class="px-6 py-3 font-medium">Ketua Program Studi</th>
+              <th class="px-6 py-3 font-medium">Nama Ruangan</th>
+              <th class="px-6 py-3 font-medium">Gedung</th>
+              <th class="px-6 py-3 font-medium">Tipe</th>
+              <th class="px-6 py-3 font-medium">Kapasitas</th>
               <th class="px-6 py-3 font-medium">Status</th>
               <th class="px-6 py-3 font-medium">Aksi</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200">
-            <tr v-if="programs.length === 0" class="hover:bg-gray-50">
-              <td colspan="7" class="px-6 py-12 text-center">
+            <tr v-if="rooms.length === 0" class="hover:bg-gray-50">
+              <td colspan="8" class="px-6 py-12 text-center">
                 <div class="flex flex-col items-center justify-center">
-                  <svg class="w-12 h-12 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
-                  <h3 class="mb-2 text-lg font-medium text-gray-900">
-                    {{ activeTab === 'trash' ? 'Tidak Ada Data Terhapus' : 'Tidak Ada Data Program Studi' }}
+                  <h3 class="text-lg font-medium text-gray-900 mb-2">
+                    {{ activeTab === 'trash' ? 'Tidak Ada Data Terhapus' : 'Tidak Ada Data Ruangan' }}
                   </h3>
-                  <p class="mb-4 text-gray-500">
-                    {{ activeTab === 'trash' ? 'Belum ada program studi yang dihapus.' : 'Belum ada program studi yang terdaftar dalam sistem.' }}
+                  <p class="text-gray-500 mb-4">
+                    {{ activeTab === 'trash' ? 'Belum ada ruangan yang dihapus.' : 'Belum ada ruangan yang terdaftar dalam sistem.' }}
                   </p>
-                  <button v-if="activeTab === 'active'" @click="openCreateModal" class="flex items-center px-4 py-2 text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <button v-if="activeTab === 'active'" @click="openCreateModal" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    Tambah Program Studi Pertama
+                    Tambah Ruangan Pertama
                   </button>
                 </div>
               </td>
             </tr>
-            <tr v-else v-for="program in programs" :key="program.id" class="hover:bg-gray-50">
+            <tr v-else v-for="room in rooms" :key="room.id" class="hover:bg-gray-50">
               <td class="px-6 py-4">
                 <input
                   type="checkbox"
-                  :checked="selectedItems.includes(program.id)"
-                  @change="toggleSelect(program.id)"
-                  class="text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  :checked="selectedItems.includes(room.id)"
+                  @change="toggleSelect(room.id)"
+                  class="rounded border-gray-300 text-green-600 focus:ring-green-500"
                 >
               </td>
-              <td class="px-6 py-4 font-medium text-gray-900">{{ program.code }}</td>
-              <td class="px-6 py-4 text-gray-900">{{ program.name }}</td>
+              <td class="px-6 py-4 font-medium text-gray-900">{{ room.room_code }}</td>
+              <td class="px-6 py-4 text-gray-900">{{ room.name }}</td>
+              <td class="px-6 py-4 text-gray-900">{{ room.building }}</td>
               <td class="px-6 py-4">
-                <span class="px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
-                  {{ formatLevelForDisplay(program.level) }}
+                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                  {{ getRoomTypeLabel(room.room_type) }}
                 </span>
               </td>
-              <td class="px-6 py-4 text-gray-900">{{ program.head_of_program }}</td>
+              <td class="px-6 py-4 text-gray-900">{{ room.capacity }} Orang</td>
               <td class="px-6 py-4">
                 <!-- Slide Toggle for Status -->
                 <div class="flex items-center space-x-3">
                   <label class="text-sm text-gray-700 whitespace-nowrap">Status:</label>
                   <button
-                    @click="toggleStatus(program)"
-                    :disabled="togglingStatus === program.id"
+                    @click="toggleStatus(room)"
+                    :disabled="togglingStatus === room.id"
                     :class="[
                       'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                      program.is_active ? 'bg-green-600' : 'bg-gray-300',
-                      togglingStatus === program.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                      room.is_active ? 'bg-green-600' : 'bg-gray-300',
+                      togglingStatus === room.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                     ]"
                   >
                     <span
                       :class="[
                         'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                        program.is_active ? 'translate-x-6' : 'translate-x-1'
+                        room.is_active ? 'translate-x-6' : 'translate-x-1'
                       ]"
                     />
                   </button>
-                  <span :class="program.is_active ? 'text-green-600 font-medium' : 'text-gray-500'" class="text-sm">
-                    {{ program.is_active ? 'Aktif' : 'Tidak Aktif' }}
+                  <span :class="room.is_active ? 'text-green-600 font-medium' : 'text-gray-500'" class="text-sm">
+                    {{ room.is_active ? 'Aktif' : 'Tidak Aktif' }}
                   </span>
                 </div>
               </td>
               <td class="px-6 py-4">
                 <div class="flex space-x-2">
                   <!-- Edit button -->
-                  <button @click="editProgram(program)"
-                          class="p-1 text-blue-600 rounded hover:text-blue-900"
+                  <button @click="editRoom(room)"
+                          class="text-blue-600 hover:text-blue-900 p-1 rounded"
                           title="Edit">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
 
                   <!-- Duplicate button (only for active tab) -->
                   <button v-if="activeTab === 'active'"
-                          @click="duplicateProgram(program)"
-                          class="p-1 text-purple-600 rounded hover:text-purple-900"
-                          :disabled="duplicatingProgram === program.id"
+                          @click="duplicateRoom(room)"
+                          class="text-purple-600 hover:text-purple-900 p-1 rounded"
+                          :disabled="duplicatingRoom === room.id"
                           title="Duplicate">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h9m0-9V4a2 2 0 00-2-2H5a2 2 0 00-2 2v3m-3 3V4a2 2 0 012-2h9a2 2 0 012 2v3" />
                     </svg>
                   </button>
 
                   <!-- Delete button (only for active tab) -->
                   <button v-if="activeTab === 'active'"
-                          @click="confirmDeleteProgram(program)"
-                          class="p-1 text-red-600 rounded hover:text-red-900"
+                          @click="confirmDeleteRoom(room)"
+                          class="text-red-600 hover:text-red-900 p-1 rounded"
                           title="Delete">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
 
                   <!-- Restore button (only for trash tab) -->
                   <button v-if="activeTab === 'trash'"
-                          @click="restoreProgram(program)"
-                          class="p-1 text-green-600 rounded hover:text-green-900"
-                          :disabled="restoringProgram === program.id"
+                          @click="restoreRoom(room)"
+                          class="text-green-600 hover:text-green-900 p-1 rounded"
+                          :disabled="restoringRoom === room.id"
                           title="Restore">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6 6" />
                     </svg>
                   </button>
@@ -360,7 +370,7 @@
 
       <!-- Pagination -->
       <div class="p-6 border-t border-gray-200">
-        <div class="flex items-center justify-between">
+        <div class="flex justify-between items-center">
           <div class="text-sm text-gray-700">
             Showing {{ (currentPage - 1) * perPage + 1 }} to {{ Math.min(currentPage * perPage, total) }} of {{ total }} results
           </div>
@@ -399,72 +409,102 @@
 
     <!-- Create/Edit Modal -->
     <div v-if="showModal" class="fixed inset-0 z-50 overflow-y-auto">
-      <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 transition-opacity" @click="closeModal">
           <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
         </div>
 
-        <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <div class="px-4 pt-5 pb-4 bg-white sm:p-6 sm:pb-4">
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div class="sm:flex sm:items-start">
               <div class="w-full">
-                <h3 class="mb-4 text-lg font-medium leading-6 text-gray-900">
-                  {{ editingProgram ? 'Edit Program Studi' : 'Tambah Program Studi' }}
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                  {{ editingRoom ? 'Edit Ruangan' : 'Tambah Ruangan' }}
                 </h3>
-                <form @submit.prevent="saveProgram">
+                <form @submit.prevent="saveRoom">
                   <div class="space-y-4">
                     <div>
-                      <label class="block mb-1 text-sm font-medium text-gray-700">Kode Program Studi</label>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Kode Ruangan</label>
                       <input
                         type="text"
-                        v-model="form.code"
+                        v-model="form.room_code"
                         required
-                        :class="['w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2', formErrors.code ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500']"
-                        placeholder="Contoh: TI"
+                        :class="['w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2', formErrors.room_code ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500']"
+                        placeholder="Contoh: A-101"
                       >
-                      <p v-if="formErrors.code" class="mt-1 text-sm text-red-600">
-                        {{ Array.isArray(formErrors.code) ? formErrors.code[0] : formErrors.code }}
+                      <p v-if="formErrors.room_code" class="mt-1 text-sm text-red-600">
+                        {{ Array.isArray(formErrors.room_code) ? formErrors.room_code[0] : formErrors.room_code }}
                       </p>
                     </div>
                     <div>
-                      <label class="block mb-1 text-sm font-medium text-gray-700">Nama Program Studi</label>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Nama Ruangan</label>
                       <input
                         type="text"
                         v-model="form.name"
                         required
                         :class="['w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2', formErrors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500']"
-                        placeholder="Contoh: Teknik Informatika"
+                        placeholder="Contoh: Ruang Kelas Teknik Informatika"
                       >
                       <p v-if="formErrors.name" class="mt-1 text-sm text-red-600">
                         {{ Array.isArray(formErrors.name) ? formErrors.name[0] : formErrors.name }}
                       </p>
                     </div>
                     <div>
-                      <label class="block mb-1 text-sm font-medium text-gray-700">Jenjang</label>
-                      <select v-model="form.level" required :class="['w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2', formErrors.level ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500']">
-                        <option value="">Pilih Jenjang</option>
-                        <option value="S2">S2 - Magister</option>
-                        <option value="S3">S3 - Doktor</option>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Gedung</label>
+                      <select v-model="form.building" required :class="['w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2', formErrors.building ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500']">
+                        <option value="">Pilih Gedung</option>
+                        <option value="A">Gedung A</option>
+                        <option value="B">Gedung B</option>
+                        <option value="C">Gedung C</option>
+                        <option value="D">Gedung D</option>
+                        <option value="Lab">Laboratorium</option>
                       </select>
-                      <p v-if="formErrors.level" class="mt-1 text-sm text-red-600">
-                        {{ Array.isArray(formErrors.level) ? formErrors.level[0] : formErrors.level }}
+                      <p v-if="formErrors.building" class="mt-1 text-sm text-red-600">
+                        {{ Array.isArray(formErrors.building) ? formErrors.building[0] : formErrors.building }}
                       </p>
                     </div>
                     <div>
-                      <label class="block mb-1 text-sm font-medium text-gray-700">Ketua Program Studi</label>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Tipe Ruangan</label>
+                      <select v-model="form.room_type" required :class="['w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2', formErrors.room_type ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500']">
+                        <option value="">Pilih Tipe Ruangan</option>
+                        <option value="classroom">Ruang Kelas</option>
+                        <option value="laboratory">Laboratorium</option>
+                        <option value="seminar_room">Ruang Seminar</option>
+                        <option value="auditorium">Auditorium</option>
+                        <option value="meeting_room">Ruang Rapat</option>
+                      </select>
+                      <p v-if="formErrors.room_type" class="mt-1 text-sm text-red-600">
+                        {{ Array.isArray(formErrors.room_type) ? formErrors.room_type[0] : formErrors.room_type }}
+                      </p>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Lantai</label>
                       <input
-                        type="text"
-                        v-model="form.head_of_program"
+                        type="number"
+                        v-model="form.floor"
                         required
-                        :class="['w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2', formErrors.head_of_program ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500']"
-                        placeholder="Nama Ketua Program Studi"
+                        :class="['w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2', formErrors.floor ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500']"
+                        placeholder="Contoh: 1"
                       >
-                      <p v-if="formErrors.head_of_program" class="mt-1 text-sm text-red-600">
-                        {{ Array.isArray(formErrors.head_of_program) ? formErrors.head_of_program[0] : formErrors.head_of_program }}
+                      <p v-if="formErrors.floor" class="mt-1 text-sm text-red-600">
+                        {{ Array.isArray(formErrors.floor) ? formErrors.floor[0] : formErrors.floor }}
                       </p>
                     </div>
                     <div>
-                      <label class="block mb-1 text-sm font-medium text-gray-700">Status</label>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Kapasitas</label>
+                      <input
+                        type="number"
+                        v-model="form.capacity"
+                        required
+                        :class="['w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2', formErrors.capacity ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500']"
+                        placeholder="Contoh: 30"
+                      >
+                      <p v-if="formErrors.capacity" class="mt-1 text-sm text-red-600">
+                        {{ Array.isArray(formErrors.capacity) ? formErrors.capacity[0] : formErrors.capacity }}
+                      </p>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                       <select v-model="form.is_active" :class="['w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2', formErrors.is_active ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500']">
                         <option :value="true">Aktif</option>
                         <option :value="false">Tidak Aktif</option>
@@ -478,11 +518,11 @@
               </div>
             </div>
           </div>
-          <div class="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse">
-            <button @click="saveProgram" class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm">
-              {{ editingProgram ? 'Update' : 'Simpan' }}
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button @click="saveRoom" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm">
+              {{ editingRoom ? 'Update' : 'Simpan' }}
             </button>
-            <button @click="closeModal" type="button" class="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+            <button @click="closeModal" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
               Batal
             </button>
           </div>
@@ -492,12 +532,12 @@
 
     <!-- Confirmation Modal -->
     <div v-if="confirmationModal.show" class="fixed inset-0 z-50 overflow-y-auto">
-      <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
         <!-- Background overlay -->
-        <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closeConfirmationModal"></div>
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeConfirmationModal"></div>
 
         <!-- Modal panel -->
-        <div class="relative inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <!-- Modal header with icon -->
           <div :class="[
             'px-4 pt-5 pb-4 sm:p-6 sm:pb-4',
@@ -509,20 +549,20 @@
                 confirmationModal.type === 'delete' ? 'bg-red-100' : confirmationModal.type === 'warning' ? 'bg-yellow-100' : 'bg-blue-100'
               ]">
                 <!-- Delete icon -->
-                <svg v-if="confirmationModal.type === 'delete'" class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg v-if="confirmationModal.type === 'delete'" class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.932-3l.524-8.969c.237-.719.322-1.564.184-2.382C15.769 2.569 13.758 2 12.002 2 10.247 2 8.236 2.569 7.384 3.807c-.138.818-.053 1.663.184 2.382l.524 8.969c.57 1.333 1.393 3 1.932 3z" />
                 </svg>
                 <!-- Warning icon -->
-                <svg v-else-if="confirmationModal.type === 'warning'" class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg v-else-if="confirmationModal.type === 'warning'" class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.932-3l.524-8.969c.237-.719.322-1.564.184-2.382C15.769 2.569 13.758 2 12.002 2 10.247 2 8.236 2.569 7.384 3.807c-.138.818-.053 1.663.184 2.382l.524 8.969c.57 1.333 1.393 3 1.932 3z" />
                 </svg>
                 <!-- Info icon -->
-                <svg v-else class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg v-else class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div class="ml-4 text-left">
-                <h3 class="text-lg font-medium leading-6 text-gray-900" id="modal-title">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
                   {{ confirmationModal.title }}
                 </h3>
                 <div class="mt-2">
@@ -536,8 +576,8 @@
 
           <!-- Modal content (details) -->
           <div v-if="confirmationModal.details" class="px-4 pb-4 sm:p-6 sm:pb-4">
-            <div class="p-3 border border-gray-200 rounded-lg bg-gray-50">
-              <div class="flex items-center justify-between text-sm">
+            <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div class="flex justify-between items-center text-sm">
                 <span class="font-medium text-gray-700">Item yang akan dihapus:</span>
                 <span class="text-gray-600">{{ confirmationModal.details }}</span>
               </div>
@@ -545,7 +585,7 @@
           </div>
 
           <!-- Modal actions -->
-          <div class="px-4 px-6 py-3 bg-gray-50 sm:flex sm:flex-row-reverse">
+          <div class="px-6 py-3 bg-gray-50 sm:flex sm:flex-row-reverse">
             <button
               type="button"
               @click="confirmAction"
@@ -559,7 +599,7 @@
               ]"
               :disabled="confirmationModal.processing"
             >
-              <svg v-if="confirmationModal.processing" class="w-5 h-5 mr-3 -ml-1 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+              <svg v-if="confirmationModal.processing" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V4a1 1 0 00-2 0v8a8 8 0 018 8v4a1 1 0 002 0v-8z"></path>
               </svg>
@@ -568,7 +608,7 @@
             <button
               type="button"
               @click="closeConfirmationModal"
-              class="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
               :disabled="confirmationModal.processing"
             >
               Batal
@@ -579,7 +619,7 @@
     </div>
 
     <!-- Toast Container -->
-    <div class="fixed z-50 space-y-2 toast-container top-4 right-4">
+    <div class="toast-container fixed top-4 right-4 z-50 space-y-2">
       <Toast
         v-for="(toast, index) in toasts"
         :key="index"
@@ -591,22 +631,20 @@
         ref="toastComponent"
       />
     </div>
-      </div>
-    </div>
   </Layout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, ref as vueRef, watch } from 'vue';
 import Layout from '@/components/Layout.vue';
-import programStudyService from '@/services/programStudyService';
+import roomService from '@/services/roomService';
 import Toast from '@/components/Toast.vue';
 
 // State
-const programs = ref([]);
+const rooms = ref([]);
 const loading = ref(false);
 const showModal = ref(false);
-const editingProgram = ref(null);
+const editingRoom = ref(null);
 const selectedItems = ref([]);
 const perPage = ref(10);
 const currentPage = ref(1);
@@ -619,8 +657,8 @@ const activeTab = ref('active');
 
 // Loading states for async operations
 const togglingStatus = ref(null);
-const restoringProgram = ref(null);
-const duplicatingProgram = ref(null);
+const restoringRoom = ref(null);
+const duplicatingRoom = ref(null);
 const formErrors = ref({});
 
 // Confirmation Modal
@@ -644,10 +682,13 @@ const filters = ref({
 
 // Form
 const form = ref({
-  code: '',
+  room_code: '',
   name: '',
-  level: '',
-  head_of_program: '',
+  building: '',
+  floor: '',
+  room_type: '',
+  capacity: '',
+  description: '',
   is_active: true
 });
 
@@ -656,12 +697,13 @@ const stats = ref({
   total: 0,
   active: 0,
   inactive: 0,
-  faculties: 0
+  buildings: 0,
+  trashed: 0
 });
 
 // Computed
 const allSelected = computed(() => {
-  return programs.value.length > 0 && programs.value.every(program => selectedItems.value.includes(program.id));
+  return rooms.value.length > 0 && rooms.value.every(room => selectedItems.value.includes(room.id));
 });
 
 const totalPages = computed(() => {
@@ -680,26 +722,44 @@ const visiblePages = computed(() => {
   return pages;
 });
 
-// XSS Protection - Sanitize input
+// XSS Protection - Enhanced Sanitize input
 const sanitizeInput = (input) => {
   if (typeof input !== 'string') return input;
 
-  // Remove HTML tags and potential script content
   return input
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+\s*=/gi, '') // Remove event handlers
+    // Remove script tags and content
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    // Remove all HTML tags
+    .replace(/<[^>]*>/g, '')
+    // Remove JavaScript protocol
+    .replace(/javascript:/gi, '')
+    // Remove all event handlers (onclick, onload, etc.)
+    .replace(/on\w+\s*=/gi, '')
+    // Remove potentially harmful CSS expressions
+    .replace(/expression\s*\(/gi, '')
+    // Remove data and object attributes
+    .replace(/data-[^=]*=['"][^'"]*['"]/gi, '')
+    // Remove dangerous characters
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+    // Limit length
+    .substring(0, 1000)
     .trim();
 };
 
 // Sanitize form data before sending to backend
 const sanitizeFormData = (data) => {
   const sanitized = {};
+  const numericFields = ['capacity', 'floor', 'current_occupancy', 'area'];
+
   Object.keys(data).forEach(key => {
-    if (typeof data[key] === 'string') {
+    if (numericFields.includes(key)) {
+      // Keep numeric fields as numbers
+      sanitized[key] = data[key];
+    } else if (typeof data[key] === 'string') {
+      // Sanitize string fields only
       sanitized[key] = sanitizeInput(data[key]);
     } else {
+      // Keep other fields as-is
       sanitized[key] = data[key];
     }
   });
@@ -746,14 +806,14 @@ const fetchData = async () => {
 
     let response;
     if (activeTab.value === 'trash') {
-      response = await programStudyService.getTrash(params);
+      response = await roomService.getTrash(params);
     } else {
-      response = await programStudyService.getAll(params);
+      response = await roomService.getAll(params);
     }
 
     if (response.success) {
-      programs.value = response.data.data || response.data;
-      total.value = response.meta?.total || programs.value.length;
+      rooms.value = response.data.data || response.data;
+      total.value = response.meta?.total || rooms.value.length;
 
       // Load statistics
       await loadStatistics();
@@ -761,7 +821,7 @@ const fetchData = async () => {
       throw new Error(response.message || 'Failed to fetch data');
     }
   } catch (error) {
-    programs.value = [];
+    rooms.value = [];
     total.value = 0;
 
     // Handle different error types
@@ -785,7 +845,7 @@ const showPermissionError = () => {
     localStorage.setItem('permission_error_shown', 'true');
     showToast(
       'Akses Ditolak',
-      'Anda tidak memiliki izin untuk mengakses halaman Program Studi. Silakan hubungi administrator sistem.',
+      'Anda tidak memiliki izin untuk mengakses halaman Ruangan. Silakan hubungi administrator sistem.',
       'error',
       8000
     );
@@ -795,14 +855,14 @@ const showPermissionError = () => {
 
 const loadStatistics = async () => {
   try {
-    const response = await programStudyService.getStatistics();
+    const response = await roomService.getStatistics();
     if (response.success) {
       stats.value = {
-        total: response.data.total_programs || 0,
-        active: response.data.active_programs || 0,
-        inactive: response.data.inactive_programs || 0,
-        trashed: response.data.trashed_programs || 0,
-        faculties: response.data.faculties || 1
+        total: response.data.total_rooms || 0,
+        active: response.data.active_rooms || 0,
+        inactive: response.data.inactive_rooms || 0,
+        trashed: response.data.trashed_rooms || 0,
+        buildings: response.data.buildings || 1
       };
     }
   } catch (error) {
@@ -818,69 +878,130 @@ const loadStatistics = async () => {
 };
 
 const openCreateModal = () => {
-  editingProgram.value = null;
+  editingRoom.value = null;
   form.value = {
-    code: '',
+    room_code: '',
     name: '',
-    faculty: 'Sekolah Pascasarjana',
-    level: '',
-    head_of_program: '',
+    building: '',
+    floor: 1,
+    room_type: '',
+    capacity: 1,
+    department: '',
+    faculty: '',
     is_active: true
   };
   showModal.value = true;
 };
 
-const editProgram = (program) => {
-  editingProgram.value = program;
-
-  // Map backend level format to frontend format
-  const levelMapping = {
-    'undergraduate': 'S1',
-    'graduate': 'S2',
-    'doctoral': 'S3'
-  };
-
-  const mappedLevel = levelMapping[program.level] || program.level;
+const editRoom = (room) => {
+  editingRoom.value = room;
 
   form.value = {
-    id: program.id,
-    code: program.code,
-    name: program.name,
-    faculty: program.faculty,
-    level: mappedLevel, // Use mapped level for frontend
-    head_of_program: program.head_of_program,
-    is_active: program.is_active !== undefined ? program.is_active : (program.status === 'active')
+    id: room.id,
+    room_code: room.room_code,
+    name: room.name,
+    building: room.building,
+    floor: room.floor,
+    room_type: room.room_type,
+    capacity: room.capacity,
+    department: room.department || '',
+    faculty: room.faculty || '',
+    is_active: room.is_active !== undefined ? room.is_active : (room.status === 'active')
   };
   showModal.value = true;
 };
 
-const saveProgram = async () => {
+const saveRoom = async () => {
   // Clear previous errors
   formErrors.value = {};
+
+  // Frontend validation
+  if (!form.value.room_code.trim()) {
+    formErrors.value.room_code = ['Kode ruangan wajib diisi'];
+    return;
+  }
+
+  if (!form.value.name.trim()) {
+    formErrors.value.name = ['Nama ruangan wajib diisi'];
+    return;
+  }
+
+  if (!form.value.building) {
+    formErrors.value.building = ['Gedung wajib dipilih'];
+    return;
+  }
+
+  if (!form.value.room_type) {
+    formErrors.value.room_type = ['Tipe ruangan wajib dipilih'];
+    return;
+  }
+
+  // Validate capacity (must be positive integer)
+  const capacity = parseInt(form.value.capacity);
+  if (isNaN(capacity) || capacity < 1) {
+    formErrors.value.capacity = ['Kapasitas harus berupa angka dan minimal 1'];
+    return;
+  }
+
+  // Validate floor (must be positive integer)
+  const floor = parseInt(form.value.floor);
+  if (isNaN(floor) || floor < 1) {
+    formErrors.value.floor = ['Lantai harus berupa angka dan minimal 1'];
+    return;
+  }
+
+  // Validate optional numeric fields
+  if (form.value.current_occupancy) {
+    const currentOccupancy = parseInt(form.value.current_occupancy);
+    if (isNaN(currentOccupancy) || currentOccupancy < 0) {
+      formErrors.value.current_occupancy = ['Occupancy harus berupa angka dan minimal 0'];
+      return;
+    }
+  }
+
+  if (form.value.area) {
+    const area = parseFloat(form.value.area);
+    if (isNaN(area) || area < 1) {
+      formErrors.value.area = ['Luas harus berupa angka dan minimal 1'];
+      return;
+    }
+  }
 
   try {
     // Sanitize form data before sending
     const sanitizedData = sanitizeFormData(form.value);
 
-    if (editingProgram.value) {
+    // Use validated numeric values
+    sanitizedData.capacity = capacity;
+    sanitizedData.floor = floor;
+
+    // Optional numeric fields (if present)
+    if (form.value.current_occupancy) {
+      sanitizedData.current_occupancy = parseInt(form.value.current_occupancy);
+    }
+    if (form.value.area) {
+      sanitizedData.area = parseFloat(form.value.area);
+    }
+
+    if (editingRoom.value) {
       // Update existing program
-      const response = await programStudyService.update(editingProgram.value.id, sanitizedData);
+      const response = await roomService.update(editingRoom.value.id, sanitizedData);
       if (response.success) {
-        showToast('Berhasil', 'Program studi berhasil diperbarui!', 'success');
+        showToast('Berhasil', 'Ruangan berhasil diperbarui!', 'success');
         closeModal();
         fetchData();
       } else {
-        throw new Error(response.message || 'Failed to update program');
+        throw new Error(response.message || 'Failed to update room');
       }
     } else {
-      // Create new program
-      const response = await programStudyService.create(sanitizedData);
+      // Create new room
+      const response = await roomService.create(sanitizedData);
       if (response.success) {
-        showToast('Berhasil', 'Program studi berhasil ditambahkan!', 'success');
+        showToast('Berhasil', 'Ruangan berhasil ditambahkan!', 'success');
         closeModal();
         fetchData();
       } else {
-        throw new Error(response.message || 'Failed to create program');
+        throw new Error(response.message || 'Failed to create room');
       }
     }
   } catch (error) {
@@ -900,17 +1021,17 @@ const saveProgram = async () => {
   }
 };
 
-const confirmDeleteProgram = async (program) => {
+const confirmDeleteRoom = async (room) => {
   showConfirmationModal(
     'delete',
     'Konfirmasi Hapus',
-    `Apakah Anda yakin ingin menghapus program studi "${sanitizeInput(program.name)}"? Data yang dihapus dapat dipulihkan kembali.`,
-    `${sanitizeInput(program.code)} - ${sanitizeInput(program.name)}`,
+    `Apakah Anda yakin ingin menghapus ruangan "${sanitizeInput(room.name)}"? Data yang dihapus dapat dipulihkan kembali.`,
+    `${sanitizeInput(room.room_code)} - ${sanitizeInput(room.name)}`,
     'Hapus',
     async () => {
-      const response = await programStudyService.delete(program.id);
+      const response = await roomService.delete(room.id);
       if (response.success) {
-        showToast('Berhasil', 'Program studi berhasil dihapus!', 'success');
+        showToast('Berhasil', 'Ruangan berhasil dihapus!', 'success');
         fetchData();
       } else {
         throw new Error(response.message || 'Failed to delete program');
@@ -919,11 +1040,11 @@ const confirmDeleteProgram = async (program) => {
   );
 };
 
-const deleteProgram = async (id) => {
+const deleteRoom = async (id) => {
   try {
-    const response = await programStudyService.delete(id);
+    const response = await roomService.delete(id);
     if (response.success) {
-      showToast('Berhasil', 'Program studi berhasil dihapus!', 'success');
+      showToast('Berhasil', 'Ruangan berhasil dihapus!', 'success');
       fetchData();
     } else {
       throw new Error(response.message || 'Failed to delete program');
@@ -935,7 +1056,7 @@ const deleteProgram = async (id) => {
 
 const closeModal = () => {
   showModal.value = false;
-  editingProgram.value = null;
+  editingRoom.value = null;
   formErrors.value = {};
 };
 
@@ -952,7 +1073,7 @@ const toggleSelectAll = () => {
   if (allSelected.value) {
     selectedItems.value = [];
   } else {
-    selectedItems.value = programs.value.map(p => p.id);
+    selectedItems.value = rooms.value.map(p => p.id);
   }
 };
 
@@ -964,19 +1085,19 @@ const bulkDelete = async () => {
   showConfirmationModal(
     'delete',
     'Konfirmasi Hapus Massal',
-    `Apakah Anda yakin ingin menghapus ${selectedItems.value.length} program studi yang dipilih? Data yang dihapus dapat dipulihkan kembali.`,
-    `${selectedItems.value.length} program studi`,
+    `Apakah Anda yakin ingin menghapus ${selectedItems.value.length} ruangan yang dipilih? Data yang dihapus dapat dipulihkan kembali.`,
+    `${selectedItems.value.length} ruangan`,
     'Hapus Semua',
     async () => {
-      const response = await programStudyService.bulkDelete({
-        program_study_ids: selectedItems.value
+      const response = await roomService.bulkDelete({
+        room_ids: selectedItems.value
       });
       if (response.success) {
-        showToast('Berhasil', `${selectedItems.value.length} program studi berhasil dihapus!`, 'success');
+        showToast('Berhasil', `${selectedItems.value.length} ruangan berhasil dihapus!`, 'success');
         clearSelection();
         fetchData();
       } else {
-        throw new Error(response.message || 'Failed to bulk delete programs');
+        throw new Error(response.message || 'Failed to bulk delete rooms');
       }
     }
   );
@@ -984,12 +1105,12 @@ const bulkDelete = async () => {
 
 const bulkActivate = async () => {
   try {
-    const response = await programStudyService.bulkToggleStatus({
-      program_study_ids: selectedItems.value,
+    const response = await roomService.bulkToggleStatus({
+      room_ids: selectedItems.value,
       is_active: true
     });
     if (response.success) {
-      showToast('Berhasil', `${selectedItems.value.length} program studi berhasil diaktifkan!`, 'success');
+      showToast('Berhasil', `${selectedItems.value.length} ruangan berhasil diaktifkan!`, 'success');
       clearSelection();
       fetchData();
     } else {
@@ -1002,12 +1123,12 @@ const bulkActivate = async () => {
 
 const bulkDeactivate = async () => {
   try {
-    const response = await programStudyService.bulkToggleStatus({
-      program_study_ids: selectedItems.value,
+    const response = await roomService.bulkToggleStatus({
+      room_ids: selectedItems.value,
       is_active: false
     });
     if (response.success) {
-      showToast('Berhasil', `${selectedItems.value.length} program studi berhasil dinonaktifkan!`, 'success');
+      showToast('Berhasil', `${selectedItems.value.length} ruangan berhasil dinonaktifkan!`, 'success');
       clearSelection();
       fetchData();
     } else {
@@ -1045,14 +1166,20 @@ const changePage = (page) => {
 };
 
 // Helper function to format level for display
-const formatLevelForDisplay = (level) => {
-  const levelMapping = {
-    'undergraduate': 'S1',
-    'graduate': 'S2',
-    'doctoral': 'S3'
+const getRoomTypeLabel = (roomType) => {
+  const roomTypeMapping = {
+    'classroom': 'Ruang Kelas',
+    'laboratory': 'Laboratorium',
+    'seminar_room': 'Ruang Seminar',
+    'auditorium': 'Auditorium',
+    'meeting_room': 'Ruang Rapat',
+    'workshop': 'Workshop',
+    'library': 'Perpustakaan',
+    'office': 'Kantor',
+    'multipurpose': 'Multi Purpose'
   };
 
-  return levelMapping[level] || level;
+  return roomTypeMapping[roomType] || roomType;
 };
 
 
@@ -1095,17 +1222,17 @@ const confirmAction = async () => {
 };
 
 // New Methods for enhanced functionality
-const toggleStatus = async (program) => {
+const toggleStatus = async (room) => {
   try {
-    togglingStatus.value = program.id;
+    togglingStatus.value = room.id;
 
-    const response = await programStudyService.toggleStatus(program.id, !program.is_active);
+    const response = await roomService.toggleStatus(room.id, !room.is_active);
 
     if (response.success) {
-      // Update program data in the local array
-      const index = programs.value.findIndex(p => p.id === program.id);
+      // Update room data in the local array
+      const index = rooms.value.findIndex(r => r.id === room.id);
       if (index !== -1) {
-        programs.value[index] = { ...programs.value[index], ...response.data };
+        rooms.value[index] = { ...rooms.value[index], ...response.data };
       }
 
       showToast('Berhasil', `Status ${response.data.name} berhasil diubah menjadi ${response.data.is_active ? 'Aktif' : 'Tidak Aktif'}`, 'success');
@@ -1119,45 +1246,45 @@ const toggleStatus = async (program) => {
   }
 };
 
-const duplicateProgram = async (program) => {
+const duplicateRoom = async (room) => {
   showConfirmationModal(
     'info',
     'Konfirmasi Duplikasi',
-    `Apakah Anda yakin ingin menduplikasi program studi "${program.name}"?`,
-    `${program.code} - ${program.name}`,
+    `Apakah Anda yakin ingin menduplikasi ruangan "${room.name}"?`,
+    `${room.room_code} - ${room.name}`,
     'Duplikasi',
     async () => {
-      duplicatingProgram.value = program.id;
+      duplicatingRoom.value = room.id;
 
-      const response = await programStudyService.duplicate(program.id);
+      const response = await roomService.duplicate(room.id);
 
       if (response.success) {
-        showToast('Berhasil', `Program studi "${response.data.name}" berhasil diduplikasi!`, 'success');
+        showToast('Berhasil', `Ruangan "${response.data.name}" berhasil diduplikasi!`, 'success');
         fetchData();
       } else {
-        throw new Error(response.message || 'Failed to duplicate program');
+        throw new Error(response.message || 'Failed to duplicate room');
       }
     }
   );
 };
 
-const restoreProgram = async (program) => {
+const restoreRoom = async (room) => {
   showConfirmationModal(
     'info',
     'Konfirmasi Pemulihan',
-    `Apakah Anda yakin ingin memulihkan program studi "${program.name}"?`,
-    `${program.code} - ${program.name}`,
+    `Apakah Anda yakin ingin memulihkan ruangan "${room.name}"?`,
+    `${room.room_code} - ${room.name}`,
     'Pulihkan',
     async () => {
-      restoringProgram.value = program.id;
+      restoringRoom.value = room.id;
 
-      const response = await programStudyService.restore(program.id);
+      const response = await roomService.restore(room.id);
 
       if (response.success) {
-        showToast('Berhasil', `Program studi "${response.data.name}" berhasil dipulihkan!`, 'success');
+        showToast('Berhasil', `Ruangan "${response.data.name}" berhasil dipulihkan!`, 'success');
         fetchData();
       } else {
-        throw new Error(response.message || 'Failed to restore program');
+        throw new Error(response.message || 'Failed to restore room');
       }
     }
   );
@@ -1168,23 +1295,23 @@ const bulkRestore = async () => {
   showConfirmationModal(
     'info',
     'Konfirmasi Pemulihan Massal',
-    `Apakah Anda yakin ingin memulihkan ${selectedItems.value.length} program studi yang dipilih?`,
-    `${selectedItems.value.length} program studi`,
+    `Apakah Anda yakin ingin memulihkan ${selectedItems.value.length} ruangan yang dipilih?`,
+    `${selectedItems.value.length} ruangan`,
     'Pulihkan Semua',
     async () => {
       const promises = selectedItems.value.map(id =>
-        programStudyService.restore(id)
+        roomService.restore(id)
       );
 
       const results = await Promise.allSettled(promises);
       const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
 
       if (successful > 0) {
-        showToast('Berhasil', `${successful} program studi berhasil dipulihkan!`, 'success');
+        showToast('Berhasil', `${successful} ruangan berhasil dipulihkan!`, 'success');
         clearSelection();
         fetchData();
       } else {
-        showToast('Gagal', 'Tidak ada program studi yang berhasil dipulihkan', 'error');
+        showToast('Gagal', 'Tidak ada ruangan yang berhasil dipulihkan', 'error');
       }
     }
   );
@@ -1195,12 +1322,12 @@ const bulkDeletePermanent = async () => {
   showConfirmationModal(
     'delete',
     'Konfirmasi Hapus Permanen',
-    `⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus permanen ${selectedItems.value.length} program studi? Tindakan ini tidak dapat dibatalkan!`,
-    `${selectedItems.value.length} program studi akan dihapus permanen`,
+    `⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus permanen ${selectedItems.value.length} ruangan? Tindakan ini tidak dapat dibatalkan!`,
+    `${selectedItems.value.length} ruangan akan dihapus permanen`,
     'Hapus Permanen',
     async () => {
       const promises = selectedItems.value.map(id =>
-        programStudyService.forceDelete(id).catch(error => {
+        roomService.forceDelete(id).catch(error => {
                     return { success: false, error: error.message || 'Failed to force delete' };
         })
       );
@@ -1209,11 +1336,11 @@ const bulkDeletePermanent = async () => {
       const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
 
       if (successful > 0) {
-        showToast('Berhasil', `${successful} program studi berhasil dihapus permanen!`, 'success');
+        showToast('Berhasil', `${successful} ruangan berhasil dihapus permanen!`, 'success');
         clearSelection();
         fetchData();
       } else {
-        showToast('Gagal', 'Tidak ada program studi yang berhasil dihapus permanen', 'error');
+        showToast('Gagal', 'Tidak ada ruangan yang berhasil dihapus permanen', 'error');
       }
     }
   );
