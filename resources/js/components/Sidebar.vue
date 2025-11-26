@@ -1,5 +1,5 @@
 <template>
-  <div :class="['bg-white shadow-lg transition-all duration-300 flex flex-col h-screen', isCollapsed ? 'w-20' : 'w-64']">
+  <div :class="['bg-white shadow-lg transition-all duration-300 flex flex-col min-h-screen', isCollapsed ? 'w-20' : 'w-64']">
     <!-- Logo Section -->
     <div class="p-4 flex-shrink-0">
       <div class="flex items-center">
@@ -201,6 +201,9 @@ import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
+// Emit events to parent
+const emit = defineEmits(['sidebar-collapsed']);
+
 const route = useRoute();
 const authStore = useAuthStore();
 
@@ -216,7 +219,7 @@ const mainMenuItems = [
 const academicMenuItems = [
   { path: '/courses', name: 'Mata Kuliah', icon: 'book' },
   { path: '/program-studies', name: 'Program Studi', icon: 'building' },
-  { path: '/rooms', name: 'Ruangan', icon: 'room' },
+  { path: '/room-dashboard', name: 'Manajemen Ruangan', icon: 'room' },
   { path: '/students', name: 'Mahasiswa', icon: 'users' },
 ];
 
@@ -235,6 +238,7 @@ const userInitial = computed(() => {
 const toggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value;
   localStorage.setItem('sidebar-collapsed', isCollapsed.value.toString());
+  emit('sidebar-collapsed', isCollapsed.value);
 };
 
 const isCurrentRoute = (path) => {
@@ -246,6 +250,7 @@ const loadSidebarState = () => {
   const saved = localStorage.getItem('sidebar-collapsed');
   if (saved !== null) {
     isCollapsed.value = saved === 'true';
+    emit('sidebar-collapsed', isCollapsed.value);
   }
 };
 

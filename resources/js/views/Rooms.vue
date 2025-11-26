@@ -218,7 +218,7 @@
       <div class="p-6 border-b border-gray-200">
         <div class="flex justify-between items-center">
           <h2 class="text-xl font-semibold text-gray-900">
-            {{ activeTab === 'active' ? 'Daftar Program Studi' : 'Data Terhapus' }}
+            {{ activeTab === 'active' ? 'Daftar Ruangan' : 'Data Terhapus' }}
           </h2>
           <div class="flex items-center space-x-2">
             <span class="text-sm text-gray-600">Show</span>
@@ -262,16 +262,16 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                   <h3 class="text-lg font-medium text-gray-900 mb-2">
-                    {{ activeTab === 'trash' ? 'Tidak Ada Data Terhapus' : 'Tidak Ada Data Program Studi' }}
+                    {{ activeTab === 'trash' ? 'Tidak Ada Data Terhapus' : 'Tidak Ada Data Ruangan' }}
                   </h3>
                   <p class="text-gray-500 mb-4">
-                    {{ activeTab === 'trash' ? 'Belum ada program studi yang dihapus.' : 'Belum ada program studi yang terdaftar dalam sistem.' }}
+                    {{ activeTab === 'trash' ? 'Belum ada ruangan yang dihapus.' : 'Belum ada ruangan yang terdaftar dalam sistem.' }}
                   </p>
                   <button v-if="activeTab === 'active'" @click="openCreateModal" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
                     <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    Tambah Program Studi Pertama
+                    Tambah Ruangan Pertama
                   </button>
                 </div>
               </td>
@@ -322,7 +322,7 @@
               <td class="px-6 py-4">
                 <div class="flex space-x-2">
                   <!-- Edit button -->
-                  <button @click="editProgram(program)"
+                  <button @click="editRoom(room)"
                           class="text-blue-600 hover:text-blue-900 p-1 rounded"
                           title="Edit">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -332,9 +332,9 @@
 
                   <!-- Duplicate button (only for active tab) -->
                   <button v-if="activeTab === 'active'"
-                          @click="duplicateProgram(program)"
+                          @click="duplicateRoom(room)"
                           class="text-purple-600 hover:text-purple-900 p-1 rounded"
-                          :disabled="duplicatingProgram === room.id"
+                          :disabled="duplicatingRoom === room.id"
                           title="Duplicate">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h9m0-9V4a2 2 0 00-2-2H5a2 2 0 00-2 2v3m-3 3V4a2 2 0 012-2h9a2 2 0 012 2v3" />
@@ -343,7 +343,7 @@
 
                   <!-- Delete button (only for active tab) -->
                   <button v-if="activeTab === 'active'"
-                          @click="confirmDeleteProgram(program)"
+                          @click="confirmDeleteRoom(room)"
                           class="text-red-600 hover:text-red-900 p-1 rounded"
                           title="Delete">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -353,9 +353,9 @@
 
                   <!-- Restore button (only for trash tab) -->
                   <button v-if="activeTab === 'trash'"
-                          @click="restoreProgram(program)"
+                          @click="restoreRoom(room)"
                           class="text-green-600 hover:text-green-900 p-1 rounded"
-                          :disabled="restoringProgram === room.id"
+                          :disabled="restoringRoom === room.id"
                           title="Restore">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6 6" />
@@ -419,7 +419,7 @@
             <div class="sm:flex sm:items-start">
               <div class="w-full">
                 <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
-                  {{ editingRoom ? 'Edit Program Studi' : 'Tambah Program Studi' }}
+                  {{ editingRoom ? 'Edit Ruangan' : 'Tambah Ruangan' }}
                 </h3>
                 <form @submit.prevent="saveRoom">
                   <div class="space-y-4">
@@ -657,8 +657,8 @@ const activeTab = ref('active');
 
 // Loading states for async operations
 const togglingStatus = ref(null);
-const restoringProgram = ref(null);
-const duplicatingProgram = ref(null);
+const restoringRoom = ref(null);
+const duplicatingRoom = ref(null);
 const formErrors = ref({});
 
 // Confirmation Modal
@@ -697,7 +697,8 @@ const stats = ref({
   total: 0,
   active: 0,
   inactive: 0,
-  buildings: 0
+  buildings: 0,
+  trashed: 0
 });
 
 // Computed
@@ -721,26 +722,44 @@ const visiblePages = computed(() => {
   return pages;
 });
 
-// XSS Protection - Sanitize input
+// XSS Protection - Enhanced Sanitize input
 const sanitizeInput = (input) => {
   if (typeof input !== 'string') return input;
 
-  // Remove HTML tags and potential script content
   return input
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+\s*=/gi, '') // Remove event handlers
+    // Remove script tags and content
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    // Remove all HTML tags
+    .replace(/<[^>]*>/g, '')
+    // Remove JavaScript protocol
+    .replace(/javascript:/gi, '')
+    // Remove all event handlers (onclick, onload, etc.)
+    .replace(/on\w+\s*=/gi, '')
+    // Remove potentially harmful CSS expressions
+    .replace(/expression\s*\(/gi, '')
+    // Remove data and object attributes
+    .replace(/data-[^=]*=['"][^'"]*['"]/gi, '')
+    // Remove dangerous characters
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+    // Limit length
+    .substring(0, 1000)
     .trim();
 };
 
 // Sanitize form data before sending to backend
 const sanitizeFormData = (data) => {
   const sanitized = {};
+  const numericFields = ['capacity', 'floor', 'current_occupancy', 'area'];
+
   Object.keys(data).forEach(key => {
-    if (typeof data[key] === 'string') {
+    if (numericFields.includes(key)) {
+      // Keep numeric fields as numbers
+      sanitized[key] = data[key];
+    } else if (typeof data[key] === 'string') {
+      // Sanitize string fields only
       sanitized[key] = sanitizeInput(data[key]);
     } else {
+      // Keep other fields as-is
       sanitized[key] = data[key];
     }
   });
@@ -826,7 +845,7 @@ const showPermissionError = () => {
     localStorage.setItem('permission_error_shown', 'true');
     showToast(
       'Akses Ditolak',
-      'Anda tidak memiliki izin untuk mengakses halaman Program Studi. Silakan hubungi administrator sistem.',
+      'Anda tidak memiliki izin untuk mengakses halaman Ruangan. Silakan hubungi administrator sistem.',
       'error',
       8000
     );
@@ -861,36 +880,33 @@ const loadStatistics = async () => {
 const openCreateModal = () => {
   editingRoom.value = null;
   form.value = {
-    code: '',
+    room_code: '',
     name: '',
-    faculty: 'Sekolah Pascasarjana',
-    level: '',
-    head_of_program: '',
+    building: '',
+    floor: 1,
+    room_type: '',
+    capacity: 1,
+    department: '',
+    faculty: '',
     is_active: true
   };
   showModal.value = true;
 };
 
-const editProgram = (program) => {
-  editingRoom.value = program;
-
-  // Map backend level format to frontend format
-  const levelMapping = {
-    'undergraduate': 'S1',
-    'graduate': 'S2',
-    'doctoral': 'S3'
-  };
-
-  const mappedLevel = levelMapping[program.level] || program.level;
+const editRoom = (room) => {
+  editingRoom.value = room;
 
   form.value = {
     id: room.id,
-    code: program.code,
-    name: program.name,
-    faculty: program.faculty,
-    level: mappedLevel, // Use mapped level for frontend
-    head_of_program: program.head_of_program,
-    is_active: room.is_active !== undefined ? room.is_active : (program.status === 'active')
+    room_code: room.room_code,
+    name: room.name,
+    building: room.building,
+    floor: room.floor,
+    room_type: room.room_type,
+    capacity: room.capacity,
+    department: room.department || '',
+    faculty: room.faculty || '',
+    is_active: room.is_active !== undefined ? room.is_active : (room.status === 'active')
   };
   showModal.value = true;
 };
@@ -899,29 +915,93 @@ const saveRoom = async () => {
   // Clear previous errors
   formErrors.value = {};
 
+  // Frontend validation
+  if (!form.value.room_code.trim()) {
+    formErrors.value.room_code = ['Kode ruangan wajib diisi'];
+    return;
+  }
+
+  if (!form.value.name.trim()) {
+    formErrors.value.name = ['Nama ruangan wajib diisi'];
+    return;
+  }
+
+  if (!form.value.building) {
+    formErrors.value.building = ['Gedung wajib dipilih'];
+    return;
+  }
+
+  if (!form.value.room_type) {
+    formErrors.value.room_type = ['Tipe ruangan wajib dipilih'];
+    return;
+  }
+
+  // Validate capacity (must be positive integer)
+  const capacity = parseInt(form.value.capacity);
+  if (isNaN(capacity) || capacity < 1) {
+    formErrors.value.capacity = ['Kapasitas harus berupa angka dan minimal 1'];
+    return;
+  }
+
+  // Validate floor (must be positive integer)
+  const floor = parseInt(form.value.floor);
+  if (isNaN(floor) || floor < 1) {
+    formErrors.value.floor = ['Lantai harus berupa angka dan minimal 1'];
+    return;
+  }
+
+  // Validate optional numeric fields
+  if (form.value.current_occupancy) {
+    const currentOccupancy = parseInt(form.value.current_occupancy);
+    if (isNaN(currentOccupancy) || currentOccupancy < 0) {
+      formErrors.value.current_occupancy = ['Occupancy harus berupa angka dan minimal 0'];
+      return;
+    }
+  }
+
+  if (form.value.area) {
+    const area = parseFloat(form.value.area);
+    if (isNaN(area) || area < 1) {
+      formErrors.value.area = ['Luas harus berupa angka dan minimal 1'];
+      return;
+    }
+  }
+
   try {
     // Sanitize form data before sending
     const sanitizedData = sanitizeFormData(form.value);
+
+    // Use validated numeric values
+    sanitizedData.capacity = capacity;
+    sanitizedData.floor = floor;
+
+    // Optional numeric fields (if present)
+    if (form.value.current_occupancy) {
+      sanitizedData.current_occupancy = parseInt(form.value.current_occupancy);
+    }
+    if (form.value.area) {
+      sanitizedData.area = parseFloat(form.value.area);
+    }
 
     if (editingRoom.value) {
       // Update existing program
       const response = await roomService.update(editingRoom.value.id, sanitizedData);
       if (response.success) {
-        showToast('Berhasil', 'Program studi berhasil diperbarui!', 'success');
+        showToast('Berhasil', 'Ruangan berhasil diperbarui!', 'success');
         closeModal();
         fetchData();
       } else {
-        throw new Error(response.message || 'Failed to update program');
+        throw new Error(response.message || 'Failed to update room');
       }
     } else {
-      // Create new program
+      // Create new room
       const response = await roomService.create(sanitizedData);
       if (response.success) {
-        showToast('Berhasil', 'Program studi berhasil ditambahkan!', 'success');
+        showToast('Berhasil', 'Ruangan berhasil ditambahkan!', 'success');
         closeModal();
         fetchData();
       } else {
-        throw new Error(response.message || 'Failed to create program');
+        throw new Error(response.message || 'Failed to create room');
       }
     }
   } catch (error) {
@@ -941,17 +1021,17 @@ const saveRoom = async () => {
   }
 };
 
-const confirmDeleteProgram = async (program) => {
+const confirmDeleteRoom = async (room) => {
   showConfirmationModal(
     'delete',
     'Konfirmasi Hapus',
-    `Apakah Anda yakin ingin menghapus program studi "${sanitizeInput(program.name)}"? Data yang dihapus dapat dipulihkan kembali.`,
-    `${sanitizeInput(program.code)} - ${sanitizeInput(program.name)}`,
+    `Apakah Anda yakin ingin menghapus ruangan "${sanitizeInput(room.name)}"? Data yang dihapus dapat dipulihkan kembali.`,
+    `${sanitizeInput(room.room_code)} - ${sanitizeInput(room.name)}`,
     'Hapus',
     async () => {
       const response = await roomService.delete(room.id);
       if (response.success) {
-        showToast('Berhasil', 'Program studi berhasil dihapus!', 'success');
+        showToast('Berhasil', 'Ruangan berhasil dihapus!', 'success');
         fetchData();
       } else {
         throw new Error(response.message || 'Failed to delete program');
@@ -960,11 +1040,11 @@ const confirmDeleteProgram = async (program) => {
   );
 };
 
-const deleteProgram = async (id) => {
+const deleteRoom = async (id) => {
   try {
     const response = await roomService.delete(id);
     if (response.success) {
-      showToast('Berhasil', 'Program studi berhasil dihapus!', 'success');
+      showToast('Berhasil', 'Ruangan berhasil dihapus!', 'success');
       fetchData();
     } else {
       throw new Error(response.message || 'Failed to delete program');
@@ -1005,19 +1085,19 @@ const bulkDelete = async () => {
   showConfirmationModal(
     'delete',
     'Konfirmasi Hapus Massal',
-    `Apakah Anda yakin ingin menghapus ${selectedItems.value.length} program studi yang dipilih? Data yang dihapus dapat dipulihkan kembali.`,
-    `${selectedItems.value.length} program studi`,
+    `Apakah Anda yakin ingin menghapus ${selectedItems.value.length} ruangan yang dipilih? Data yang dihapus dapat dipulihkan kembali.`,
+    `${selectedItems.value.length} ruangan`,
     'Hapus Semua',
     async () => {
       const response = await roomService.bulkDelete({
-        program_study_ids: selectedItems.value
+        room_ids: selectedItems.value
       });
       if (response.success) {
-        showToast('Berhasil', `${selectedItems.value.length} program studi berhasil dihapus!`, 'success');
+        showToast('Berhasil', `${selectedItems.value.length} ruangan berhasil dihapus!`, 'success');
         clearSelection();
         fetchData();
       } else {
-        throw new Error(response.message || 'Failed to bulk delete programs');
+        throw new Error(response.message || 'Failed to bulk delete rooms');
       }
     }
   );
@@ -1026,11 +1106,11 @@ const bulkDelete = async () => {
 const bulkActivate = async () => {
   try {
     const response = await roomService.bulkToggleStatus({
-      program_study_ids: selectedItems.value,
+      room_ids: selectedItems.value,
       is_active: true
     });
     if (response.success) {
-      showToast('Berhasil', `${selectedItems.value.length} program studi berhasil diaktifkan!`, 'success');
+      showToast('Berhasil', `${selectedItems.value.length} ruangan berhasil diaktifkan!`, 'success');
       clearSelection();
       fetchData();
     } else {
@@ -1044,11 +1124,11 @@ const bulkActivate = async () => {
 const bulkDeactivate = async () => {
   try {
     const response = await roomService.bulkToggleStatus({
-      program_study_ids: selectedItems.value,
+      room_ids: selectedItems.value,
       is_active: false
     });
     if (response.success) {
-      showToast('Berhasil', `${selectedItems.value.length} program studi berhasil dinonaktifkan!`, 'success');
+      showToast('Berhasil', `${selectedItems.value.length} ruangan berhasil dinonaktifkan!`, 'success');
       clearSelection();
       fetchData();
     } else {
@@ -1166,45 +1246,45 @@ const toggleStatus = async (room) => {
   }
 };
 
-const duplicateProgram = async (program) => {
+const duplicateRoom = async (room) => {
   showConfirmationModal(
     'info',
     'Konfirmasi Duplikasi',
-    `Apakah Anda yakin ingin menduplikasi program studi "${program.name}"?`,
-    `${program.code} - ${program.name}`,
+    `Apakah Anda yakin ingin menduplikasi ruangan "${room.name}"?`,
+    `${room.room_code} - ${room.name}`,
     'Duplikasi',
     async () => {
-      duplicatingProgram.value = room.id;
+      duplicatingRoom.value = room.id;
 
       const response = await roomService.duplicate(room.id);
 
       if (response.success) {
-        showToast('Berhasil', `Program studi "${response.data.name}" berhasil diduplikasi!`, 'success');
+        showToast('Berhasil', `Ruangan "${response.data.name}" berhasil diduplikasi!`, 'success');
         fetchData();
       } else {
-        throw new Error(response.message || 'Failed to duplicate program');
+        throw new Error(response.message || 'Failed to duplicate room');
       }
     }
   );
 };
 
-const restoreProgram = async (program) => {
+const restoreRoom = async (room) => {
   showConfirmationModal(
     'info',
     'Konfirmasi Pemulihan',
-    `Apakah Anda yakin ingin memulihkan program studi "${program.name}"?`,
-    `${program.code} - ${program.name}`,
+    `Apakah Anda yakin ingin memulihkan ruangan "${room.name}"?`,
+    `${room.room_code} - ${room.name}`,
     'Pulihkan',
     async () => {
-      restoringProgram.value = room.id;
+      restoringRoom.value = room.id;
 
       const response = await roomService.restore(room.id);
 
       if (response.success) {
-        showToast('Berhasil', `Program studi "${response.data.name}" berhasil dipulihkan!`, 'success');
+        showToast('Berhasil', `Ruangan "${response.data.name}" berhasil dipulihkan!`, 'success');
         fetchData();
       } else {
-        throw new Error(response.message || 'Failed to restore program');
+        throw new Error(response.message || 'Failed to restore room');
       }
     }
   );
@@ -1215,8 +1295,8 @@ const bulkRestore = async () => {
   showConfirmationModal(
     'info',
     'Konfirmasi Pemulihan Massal',
-    `Apakah Anda yakin ingin memulihkan ${selectedItems.value.length} program studi yang dipilih?`,
-    `${selectedItems.value.length} program studi`,
+    `Apakah Anda yakin ingin memulihkan ${selectedItems.value.length} ruangan yang dipilih?`,
+    `${selectedItems.value.length} ruangan`,
     'Pulihkan Semua',
     async () => {
       const promises = selectedItems.value.map(id =>
@@ -1227,11 +1307,11 @@ const bulkRestore = async () => {
       const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
 
       if (successful > 0) {
-        showToast('Berhasil', `${successful} program studi berhasil dipulihkan!`, 'success');
+        showToast('Berhasil', `${successful} ruangan berhasil dipulihkan!`, 'success');
         clearSelection();
         fetchData();
       } else {
-        showToast('Gagal', 'Tidak ada program studi yang berhasil dipulihkan', 'error');
+        showToast('Gagal', 'Tidak ada ruangan yang berhasil dipulihkan', 'error');
       }
     }
   );
@@ -1242,8 +1322,8 @@ const bulkDeletePermanent = async () => {
   showConfirmationModal(
     'delete',
     'Konfirmasi Hapus Permanen',
-    `⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus permanen ${selectedItems.value.length} program studi? Tindakan ini tidak dapat dibatalkan!`,
-    `${selectedItems.value.length} program studi akan dihapus permanen`,
+    `⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus permanen ${selectedItems.value.length} ruangan? Tindakan ini tidak dapat dibatalkan!`,
+    `${selectedItems.value.length} ruangan akan dihapus permanen`,
     'Hapus Permanen',
     async () => {
       const promises = selectedItems.value.map(id =>
@@ -1256,11 +1336,11 @@ const bulkDeletePermanent = async () => {
       const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
 
       if (successful > 0) {
-        showToast('Berhasil', `${successful} program studi berhasil dihapus permanen!`, 'success');
+        showToast('Berhasil', `${successful} ruangan berhasil dihapus permanen!`, 'success');
         clearSelection();
         fetchData();
       } else {
-        showToast('Gagal', 'Tidak ada program studi yang berhasil dihapus permanen', 'error');
+        showToast('Gagal', 'Tidak ada ruangan yang berhasil dihapus permanen', 'error');
       }
     }
   );

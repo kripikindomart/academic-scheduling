@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = '/api/rooms';
+const API_BASE_URL = '/api/buildings';
 
-class RoomService {
+class BuildingService {
   constructor() {
     this.api = axios.create({
       baseURL: API_BASE_URL,
@@ -52,7 +52,7 @@ class RoomService {
         }
 
         if (error.response?.status === 422) {
-          // Validation error - handle both formats (errors or meta)
+          // Validation error
           const validationErrors = error.response.data?.errors || error.response.data?.meta || {};
           error.userMessage = 'Validasi gagal. Silakan periksa kembali input Anda.';
           error.validationErrors = validationErrors;
@@ -69,31 +69,31 @@ class RoomService {
     );
   }
 
-  // Get all rooms with filters
+  // Get all buildings
   async getAll(params = {}) {
     const response = await this.api.get('/', { params });
     return response.data;
   }
 
-  // Get room by ID
+  // Get building by ID
   async getById(id) {
     const response = await this.api.get(`/${id}`);
     return response.data;
   }
 
-  // Create new room
+  // Create new building
   async create(data) {
     const response = await this.api.post('/', data);
     return response.data;
   }
 
-  // Update room
+  // Update building
   async update(id, data) {
     const response = await this.api.put(`/${id}`, data);
     return response.data;
   }
 
-  // Delete room
+  // Delete building
   async delete(id) {
     const response = await this.api.delete(`/${id}`);
     return response.data;
@@ -105,6 +105,12 @@ class RoomService {
     return response.data;
   }
 
+  // Get buildings with room count
+  async getWithRoomCount() {
+    const response = await this.api.get('/with-room-count');
+    return response.data;
+  }
+
   // Bulk operations
   async bulkUpdate(data) {
     const response = await this.api.post('/bulk-update', data);
@@ -113,11 +119,6 @@ class RoomService {
 
   async bulkDelete(data) {
     const response = await this.api.post('/bulk-delete', data);
-    return response.data;
-  }
-
-  async bulkToggleStatus(data) {
-    const response = await this.api.post('/bulk-toggle-status', data);
     return response.data;
   }
 
@@ -165,65 +166,16 @@ class RoomService {
     return response.data;
   }
 
-  // Room-specific methods
-  async getAvailableForSchedule(params) {
-    const response = await this.api.get('/available-for-schedule', { params });
-    return response.data;
-  }
-
-  async getAvailable(params = {}) {
-    const response = await this.api.get('/available', { params });
-    return response.data;
-  }
-
-  async getByBuilding(building) {
-    const response = await this.api.get(`/building/${building}`);
-    return response.data;
-  }
-
-  async getByType(type) {
-    const response = await this.api.get(`/type/${type}`);
-    return response.data;
-  }
-
-  async getByCapacity(params = {}) {
-    const response = await this.api.get('/by-capacity', { params });
-    return response.data;
-  }
-
-  async getNeedingMaintenance() {
-    const response = await this.api.get('/needing-maintenance');
-    return response.data;
-  }
-
-  async getUtilizationReport(params = {}) {
-    const response = await this.api.get('/utilization-report', { params });
-    return response.data;
-  }
-
-  async searchSuggestions(params = {}) {
-    const response = await this.api.get('/search-suggestions', { params });
-    return response.data;
-  }
-
-  async getSchedule(roomId, params = {}) {
-    const response = await this.api.get(`/${roomId}/schedule`, { params });
-    return response.data;
-  }
-
   // Bulk operations for trash
   async bulkForceDelete(data) {
     const response = await this.api.post('/bulk-force-delete', data);
     return response.data;
   }
 
-  // File operations
-  async downloadFile(filename) {
-    const response = await this.api.get(`/download/${filename}`, {
-      responseType: 'blob'
-    });
+  async bulkToggleStatus(data) {
+    const response = await this.api.post('/bulk-toggle-status', data);
     return response.data;
   }
 }
 
-export default new RoomService();
+export default new BuildingService();

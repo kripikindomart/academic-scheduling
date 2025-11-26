@@ -183,12 +183,14 @@ class Schedule extends Model
 
     public function scopeByDate($query, $date)
     {
-        return $query->where('date', $date);
+        return $query->whereDate('start_date', '<=', $date)
+                    ->whereDate('end_date', '>=', $date);
     }
 
     public function scopeByDateRange($query, $startDate, $endDate)
     {
-        return $query->whereBetween('date', [$startDate, $endDate]);
+        return $query->whereDate('start_date', '<=', $endDate)
+                    ->whereDate('end_date', '>=', $startDate);
     }
 
     public function scopeByTimeRange($query, $startTime, $endTime)

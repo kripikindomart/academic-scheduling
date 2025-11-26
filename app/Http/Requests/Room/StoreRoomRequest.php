@@ -27,8 +27,8 @@ class StoreRoomRequest extends FormRequest
             'floor' => 'required|integer|min:1',
             'room_type' => 'required|in:classroom,laboratory,seminar_room,auditorium,workshop,library,office,meeting_room,multipurpose',
             'capacity' => 'required|integer|min:1|max:1000',
-            'current_occupancy' => 'nullable|integer|min:0|max:capacity',
-            'area' => 'nullable|decimal:8,2|min:1',
+            'current_occupancy' => 'nullable|integer|min:0',
+            'area' => 'nullable|numeric|min:1',
             'department' => 'nullable|string|max:255',
             'faculty' => 'nullable|string|max:255',
             'location' => 'nullable|string',
@@ -37,11 +37,11 @@ class StoreRoomRequest extends FormRequest
             'facilities.*' => 'string|max:255',
             'equipment' => 'nullable|array',
             'equipment.*' => 'string|max:255',
-            'availability_status' => 'nullable|in:available,occupied,maintenance,reserved,unavailable|default:available',
-            'is_active' => 'nullable|boolean|default:true',
+            'availability_status' => 'nullable|in:available,occupied,maintenance,reserved,unavailable',
+            'is_active' => 'nullable|boolean',
             'accessibility_features' => 'nullable|array',
             'accessibility_features.*' => 'string|max:255',
-            'maintenance_status' => 'nullable|in:good,needs_attention,under_maintenance,critical|default:good',
+            'maintenance_status' => 'nullable|in:good,needs_attention,under_maintenance,critical',
             'last_maintenance_date' => 'nullable|date|before_or_equal:today',
             'next_maintenance_date' => 'nullable|date|after:today',
             'responsible_person' => 'nullable|string|max:255',
@@ -128,12 +128,19 @@ class StoreRoomRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        // Convert string numeric values to proper types BEFORE validation
+        $this->merge([
+            'capacity' => $this->capacity ? (int) $this->capacity : null,
+            'floor' => $this->floor ? (int) $this->floor : null,
+            'current_occupancy' => $this->current_occupancy ? (int) $this->current_occupancy : 0,
+            'area' => $this->area ? (float) $this->area : null,
+            'is_active' => $this->is_active !== null ? (bool) $this->is_active : true,
+        ]);
+
         // Set default values
         $this->merge([
             'availability_status' => $this->availability_status ?? 'available',
-            'is_active' => $this->is_active ?? true,
             'maintenance_status' => $this->maintenance_status ?? 'good',
-            'current_occupancy' => $this->current_occupancy ?? 0,
         ]);
 
         // Validate room code format
