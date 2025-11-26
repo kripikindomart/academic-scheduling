@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ProgramStudyController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\LecturerController;
 use App\Http\Controllers\Api\RoomController;
+use App\Http\Controllers\Api\ScheduleController;
 
 // Authentication routes
 Route::prefix('auth')->group(function () {
@@ -150,6 +151,35 @@ Route::middleware(['auth:sanctum'])->prefix('rooms')->group(function () {
     Route::put('/{room}/availability', [RoomController::class, 'updateAvailability'])->middleware('permission:rooms.edit');
     Route::post('/{room}/schedule-maintenance', [RoomController::class, 'scheduleMaintenance'])->middleware('permission:rooms.edit');
     Route::post('/{room}/complete-maintenance', [RoomController::class, 'completeMaintenance'])->middleware('permission:rooms.edit');
+});
+
+// Schedule management routes
+Route::middleware(['auth:sanctum'])->prefix('schedules')->group(function () {
+    Route::get('/', [ScheduleController::class, 'index'])->middleware('permission:schedules.view');
+    Route::post('/', [ScheduleController::class, 'store'])->middleware('permission:schedules.create');
+    Route::get('/statistics', [ScheduleController::class, 'statistics'])->middleware('permission:schedules.view');
+    Route::get('/check-conflicts', [ScheduleController::class, 'checkConflicts'])->middleware('permission:schedules.view');
+    Route::get('/available-rooms', [ScheduleController::class, 'getAvailableRooms'])->middleware('permission:schedules.view');
+    Route::get('/available-lecturers', [ScheduleController::class, 'getAvailableLecturers'])->middleware('permission:schedules.view');
+    Route::get('/date-range', [ScheduleController::class, 'getByDateRange'])->middleware('permission:schedules.view');
+    Route::get('/calendar', [ScheduleController::class, 'getCalendarView'])->middleware('permission:schedules.view');
+    Route::get('/course/{courseId}', [ScheduleController::class, 'getByCourse'])->middleware('permission:schedules.view');
+    Route::get('/lecturer/{lecturerId}', [ScheduleController::class, 'getByLecturer'])->middleware('permission:schedules.view');
+    Route::get('/room/{roomId}', [ScheduleController::class, 'getByRoom'])->middleware('permission:schedules.view');
+
+    Route::post('/bulk-update', [ScheduleController::class, 'bulkUpdate'])->middleware('permission:schedules.edit');
+    Route::post('/bulk-delete', [ScheduleController::class, 'bulkDelete'])->middleware('permission:schedules.delete');
+    Route::get('/export', [ScheduleController::class, 'export'])->middleware('permission:schedules.view');
+    Route::post('/import', [ScheduleController::class, 'import'])->middleware('permission:schedules.create');
+
+    Route::get('/{schedule}', [ScheduleController::class, 'show'])->middleware('permission:schedules.view');
+    Route::put('/{schedule}', [ScheduleController::class, 'update'])->middleware('permission:schedules.edit');
+    Route::delete('/{schedule}', [ScheduleController::class, 'destroy'])->middleware('permission:schedules.delete');
+
+    // Workflow operations
+    Route::post('/{schedule}/approve', [ScheduleController::class, 'approve'])->middleware('permission:schedules.approve');
+    Route::post('/{schedule}/reject', [ScheduleController::class, 'reject'])->middleware('permission:schedules.reject');
+    Route::post('/{schedule}/cancel', [ScheduleController::class, 'cancel'])->middleware('permission:schedules.cancel');
 });
 
 // Dashboard route
