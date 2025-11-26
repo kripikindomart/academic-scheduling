@@ -193,6 +193,7 @@ class ProgramStudyService extends BaseService
     {
         $totalPrograms = ProgramStudy::count();
         $activePrograms = ProgramStudy::active()->count();
+        $trashedPrograms = ProgramStudy::onlyTrashed()->count();
 
         $programsByLevel = ProgramStudy::selectRaw('level, COUNT(*) as count')
             ->groupBy('level')
@@ -223,6 +224,7 @@ class ProgramStudyService extends BaseService
             'total_programs' => $totalPrograms,
             'active_programs' => $activePrograms,
             'inactive_programs' => $totalPrograms - $activePrograms,
+            'trashed_programs' => $trashedPrograms,
             'programs_by_level' => $programsByLevel,
             'programs_by_faculty' => $programsByFaculty,
             'programs_by_degree' => $programsByDegree,
@@ -488,7 +490,7 @@ class ProgramStudyService extends BaseService
                     $this->createProgramStudy($row);
                     $importedCount++;
                 } catch (\Exception $e) {
-                    $errors[] = "Row {$importedCount + 1}: " . $e->getMessage();
+                    $errors[] = "Row " . ($importedCount + 1) . ": " . $e->getMessage();
                 }
             }
 
@@ -590,5 +592,165 @@ class ProgramStudyService extends BaseService
         // This would typically use a library like Laravel Excel
         // For now, return empty array
         return [];
+    }
+
+    /**
+     * Get trashed program studies
+     *
+     * @param int $perPage
+     * @param array $filters
+     * @return LengthAwarePaginator
+     */
+    public function getTrashedProgramStudies(int $perPage = 20, array $filters = []): LengthAwarePaginator
+    {
+        $query = ProgramStudy::onlyTrashed()->with(['creator']);
+
+        // Apply filters to trashed items
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhere('faculty', 'like', "%{$search}%")
+                  ->orWhere('head_of_program', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($filters['faculty'])) {
+            $query->where('faculty', $filters['faculty']);
+        }
+
+        if (!empty($filters['level'])) {
+            $query->where('level', $filters['level']);
+        }
+
+        return $query->orderBy('deleted_at', 'desc')
+                    ->paginate($perPage);
+    }
+
+    /**
+     * Restore trashed program study
+     *
+     * @param int $id
+     * @return array
+     */
+    public function restoreProgramStudy(int $id): array
+    {
+        return DB::transaction(function () use ($id) {
+            $program = ProgramStudy::onlyTrashed()->findOrFail($id);
+
+            $program->restore();
+
+            $program->update([
+                'updated_by' => auth('sanctum')->id(),
+            ]);
+
+            // Log activity
+            Log::channel('activity')->info('Program study restored', [
+                'program_study_id' => $program->id,
+                'code' => $program->code,
+                'name' => $program->name,
+                'restored_by' => auth('sanctum')->id(),
+            ]);
+
+            return $program->load(['creator', 'lecturers'])->toArray();
+        });
+    }
+
+    /**
+     * Toggle program study status
+     *
+     * @param int $id
+     * @param bool $isActive
+     * @return array
+     */
+    public function toggleProgramStudyStatus(int $id, bool $isActive): array
+    {
+        return DB::transaction(function () use ($id, $isActive) {
+            $program = ProgramStudy::findOrFail($id);
+
+            $oldStatus = $program->is_active;
+            $program->update([
+                'is_active' => $isActive,
+                'updated_by' => auth('sanctum')->id(),
+            ]);
+
+            // Log activity
+            Log::channel('activity')->info('Program study status toggled', [
+                'program_study_id' => $program->id,
+                'code' => $program->code,
+                'name' => $program->name,
+                'old_status' => $oldStatus,
+                'new_status' => $isActive,
+                'updated_by' => auth('sanctum')->id(),
+            ]);
+
+            return $program->load(['creator', 'lecturers'])->toArray();
+        });
+    }
+
+    /**
+     * Duplicate program study
+     *
+     * @param int $id
+     * @return array
+     */
+    public function duplicateProgramStudy(int $id): array
+    {
+        return DB::transaction(function () use ($id) {
+            $originalProgram = ProgramStudy::findOrFail($id);
+
+            $newProgram = $originalProgram->replicate();
+
+            // Generate unique code
+            $baseCode = $originalProgram->code;
+            $suffix = 1;
+            do {
+                $newCode = $baseCode . '_COPY_' . $suffix;
+                $exists = ProgramStudy::where('code', $newCode)->exists();
+                $suffix++;
+            } while ($exists);
+
+            $newProgram->code = $newCode;
+            $newProgram->name = $originalProgram->name . ' (Copy ' . ($suffix - 1) . ')';
+            $newProgram->is_active = false; // Start as inactive
+            $newProgram->created_by = auth('sanctum')->id();
+            $newProgram->updated_by = auth('sanctum')->id();
+            $newProgram->save();
+
+            // Log activity
+            Log::channel('activity')->info('Program study duplicated', [
+                'original_program_id' => $originalProgram->id,
+                'original_code' => $originalProgram->code,
+                'new_program_id' => $newProgram->id,
+                'new_code' => $newProgram->code,
+                'duplicated_by' => auth('sanctum')->id(),
+            ]);
+
+            return $newProgram->load(['creator', 'lecturers'])->toArray();
+        });
+    }
+
+    /**
+     * Force delete program study permanently.
+     *
+     * @param int $id
+     * @return bool
+     */
+    public function forceDeleteProgramStudy(int $id): bool
+    {
+        return DB::transaction(function () use ($id) {
+            $program = ProgramStudy::onlyTrashed()->findOrFail($id);
+
+            // Log activity before deletion
+            Log::channel('activity')->warning('Program study permanently deleted', [
+                'program_study_id' => $program->id,
+                'code' => $program->code,
+                'name' => $program->name,
+                'deleted_by' => auth('sanctum')->id(),
+            ]);
+
+            return $program->forceDelete();
+        });
     }
 }

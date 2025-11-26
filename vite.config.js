@@ -5,7 +5,7 @@ import vue from "@vitejs/plugin-vue";
 export default defineConfig({
     plugins: [
         laravel({
-            input: ["resources/css/app.css", "resources/js/app.js"],
+            input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
         }),
         vue(),
@@ -17,5 +17,14 @@ export default defineConfig({
     },
     css: {
         postcss: './postcss.config.js',
+    },
+    server: {
+        port: 3000,
+        proxy: {
+            '/api': {
+                target: 'http://127.0.0.1:8000',
+                changeOrigin: true,
+            },
+        },
     },
 });

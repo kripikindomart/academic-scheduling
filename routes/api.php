@@ -56,18 +56,26 @@ Route::middleware(['auth:sanctum'])->prefix('program-studies')->group(function (
     Route::post('/', [ProgramStudyController::class, 'store'])->middleware('permission:program_studies.create');
     Route::get('/faculties', [ProgramStudyController::class, 'faculties'])->middleware('permission:program_studies.view');
     Route::get('/statistics', [ProgramStudyController::class, 'statistics'])->middleware('permission:program_studies.view');
-    Route::get('/{program_study}', [ProgramStudyController::class, 'show'])->middleware('permission:program_studies.view');
-    Route::put('/{program_study}', [ProgramStudyController::class, 'update'])->middleware('permission:program_studies.edit');
-    Route::delete('/{program_study}', [ProgramStudyController::class, 'destroy'])->middleware('permission:program_studies.delete');
-    Route::post('/{program_study}/lecturers', [ProgramStudyController::class, 'assignLecturer'])->middleware('permission:program_studies.edit');
-    Route::delete('/{program_study}/lecturers', [ProgramStudyController::class, 'removeLecturer'])->middleware('permission:program_studies.edit');
+    Route::get('/trash', [ProgramStudyController::class, 'trash'])->middleware('permission:program_studies.view');
+    Route::get('/export', [ProgramStudyController::class, 'export'])->middleware('permission:program_studies.view');
+    Route::get('/download/{filename}', [ProgramStudyController::class, 'download'])->middleware('permission:program_studies.view');
 
     // Bulk operations
     Route::post('/bulk-update', [ProgramStudyController::class, 'bulkUpdate'])->middleware('permission:program_studies.edit');
     Route::post('/bulk-delete', [ProgramStudyController::class, 'bulkDelete'])->middleware('permission:program_studies.delete');
     Route::post('/bulk-toggle-status', [ProgramStudyController::class, 'bulkToggleStatus'])->middleware('permission:program_studies.edit');
     Route::post('/import', [ProgramStudyController::class, 'import'])->middleware('permission:program_studies.create');
-    Route::get('/export', [ProgramStudyController::class, 'export'])->middleware('permission:program_studies.view');
+
+    // Specific program study routes - must come after static routes
+    Route::get('/{program_study}', [ProgramStudyController::class, 'show'])->middleware('permission:program_studies.view');
+    Route::put('/{program_study}', [ProgramStudyController::class, 'update'])->middleware('permission:program_studies.edit');
+    Route::delete('/{program_study}/force-delete', [ProgramStudyController::class, 'forceDelete'])->middleware('permission:program_studies.delete');
+    Route::delete('/{program_study}', [ProgramStudyController::class, 'destroy'])->middleware('permission:program_studies.delete');
+    Route::post('/{program_study}/restore', [ProgramStudyController::class, 'restore'])->middleware('permission:program_studies.delete');
+    Route::put('/{program_study}/toggle-status', [ProgramStudyController::class, 'toggleStatus'])->middleware('permission:program_studies.edit');
+    Route::post('/{program_study}/duplicate', [ProgramStudyController::class, 'duplicate'])->middleware('permission:program_studies.create');
+    Route::post('/{program_study}/lecturers', [ProgramStudyController::class, 'assignLecturer'])->middleware('permission:program_studies.edit');
+    Route::delete('/{program_study}/lecturers', [ProgramStudyController::class, 'removeLecturer'])->middleware('permission:program_studies.edit');
 });
 
 // Student management routes

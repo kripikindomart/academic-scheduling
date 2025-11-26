@@ -5,7 +5,7 @@ namespace App\Services;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 
-class ResponseService extends BaseService
+class ResponseService
 {
     /**
      * Create standardized API response
@@ -47,6 +47,19 @@ class ResponseService extends BaseService
     public static function success($data = null, string $message = 'Operation successful', $meta = null): JsonResponse
     {
         return self::create(true, $message, $data, 200, $meta);
+    }
+
+    /**
+     * Error response
+     *
+     * @param string $message
+     * @param mixed $errors
+     * @param int $code
+     * @return JsonResponse
+     */
+    public static function error(string $message = 'Error occurred', $errors = null, int $code = 400): JsonResponse
+    {
+        return self::create(false, $message, null, $code, $errors);
     }
 
     /**
@@ -216,7 +229,7 @@ class ResponseService extends BaseService
             'from' => $paginator->firstItem(),
             'to' => $paginator->lastItem(),
             'has_more_pages' => $paginator->hasMorePages(),
-            'has_previous_pages' => $paginator->hasPreviousPages(),
+            'has_previous_pages' => $paginator->currentPage() > 1,
         ];
 
         $allMeta = array_merge(['pagination' => $pagination], (array) $meta);

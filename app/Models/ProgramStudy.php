@@ -34,6 +34,8 @@ class ProgramStudy extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $appends = ['status'];
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -124,6 +126,11 @@ class ProgramStudy extends Model
     public function getFullNameAttribute()
     {
         return "{$this->code} - {$this->name}";
+    }
+
+    public function getStatusAttribute()
+    {
+        return $this->is_active ? 'active' : 'inactive';
     }
 
     public function isUndergraduate()

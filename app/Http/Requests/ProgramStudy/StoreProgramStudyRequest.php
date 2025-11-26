@@ -19,6 +19,82 @@ class StoreProgramStudyRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     *
+     * @return void
+     */
+    protected function prepareForValidation(): void
+    {
+        // Set default degree if not provided, use level to determine
+        $degree = $this->degree ?: $this->level ?: 'S1';
+
+        $this->merge([
+            'faculty' => $this->faculty ?: 'Sekolah Pascasarjana',
+            'level' => $this->mapLevel($this->level),
+            'degree' => $degree,
+            'duration_years' => $this->duration_years ?: $this->getDefaultDuration($degree),
+            'minimum_credits' => $this->minimum_credits ?: $this->getDefaultCredits($degree),
+        ]);
+    }
+
+    /**
+     * Map level from frontend format to database format
+     *
+     * @param string|null $level
+     * @return string
+     */
+    private function mapLevel(?string $level): string
+    {
+        $mapping = [
+            'S1' => 'undergraduate',
+            'S2' => 'graduate',
+            'S3' => 'doctoral',
+            'D3' => 'undergraduate',
+            'D4' => 'undergraduate',
+        ];
+
+        return $mapping[$level] ?? $level ?? 'undergraduate';
+    }
+
+    /**
+     * Get default duration based on degree
+     *
+     * @param string|null $degree
+     * @return int
+     */
+    private function getDefaultDuration(?string $degree): int
+    {
+        $defaults = [
+            'D3' => 3,
+            'D4' => 4,
+            'S1' => 4,
+            'S2' => 2,
+            'S3' => 3,
+        ];
+
+        return $defaults[$degree] ?? 4;
+    }
+
+    /**
+     * Get default minimum credits based on degree
+     *
+     * @param string|null $degree
+     * @return int
+     */
+    private function getDefaultCredits(?string $degree): int
+    {
+        $defaults = [
+            'D3' => 110,
+            'D4' => 144,
+            'S1' => 144,
+            'S2' => 36,
+            'S3' => 48,
+        ];
+
+        return $defaults[$degree] ?? 144;
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -30,10 +106,10 @@ class StoreProgramStudyRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'faculty' => ['required', 'string', 'max:255'],
-            'level' => ['required', 'string', 'in:undergraduate,graduate,doctoral'],
+            'level' => ['required', 'string', 'in:undergraduate,graduate,doctoral,S1,S2,S3,D3,D4'],
             'degree' => ['required', 'string', 'in:S1,S2,S3,D3,D4'],
-            'duration_years' => ['required', 'integer', 'min:1', 'max:10'],
-            'minimum_credits' => ['required', 'integer', 'min:1', 'max:500'],
+            'duration_years' => ['sometimes', 'integer', 'min:1', 'max:10'],
+            'minimum_credits' => ['sometimes', 'integer', 'min:1', 'max:500'],
             'head_of_program' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:50'],
@@ -50,28 +126,27 @@ class StoreProgramStudyRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'code.required' => 'Program code is required',
-            'code.unique' => 'Program code already exists',
-            'name.required' => 'Program name is required',
-            'name.max' => 'Program name may not be greater than 255 characters',
-            'faculty.required' => 'Faculty is required',
-            'faculty.max' => 'Faculty name may not be greater than 255 characters',
-            'level.required' => 'Level is required',
-            'level.in' => 'Level must be undergraduate, graduate, or doctoral',
-            'degree.required' => 'Degree is required',
-            'degree.in' => 'Degree must be S1, S2, S3, D3, or D4',
-            'duration_years.required' => 'Duration years is required',
-            'duration_years.integer' => 'Duration years must be an integer',
-            'duration_years.min' => 'Duration years must be at least 1',
-            'duration_years.max' => 'Duration years may not be greater than 10',
-            'minimum_credits.required' => 'Minimum credits is required',
-            'minimum_credits.integer' => 'Minimum credits must be an integer',
-            'minimum_credits.min' => 'Minimum credits must be at least 1',
-            'minimum_credits.max' => 'Minimum credits may not be greater than 500',
-            'email.email' => 'Please provide a valid email address',
-            'email.max' => 'Email may not be greater than 255 characters',
-            'phone.max' => 'Phone number may not be greater than 50 characters',
-            'office_location.max' => 'Office location may not be greater than 255 characters',
+            'code.required' => 'Kode program studi wajib diisi',
+            'code.unique' => 'Kode program studi sudah ada',
+            'code.max' => 'Kode program studi maksimal 20 karakter',
+            'name.required' => 'Nama program studi wajib diisi',
+            'name.max' => 'Nama program studi maksimal 255 karakter',
+            'faculty.required' => 'Fakultas wajib diisi',
+            'faculty.max' => 'Nama fakultas maksimal 255 karakter',
+            'level.required' => 'Jenjang pendidikan wajib diisi',
+            'level.in' => 'Jenjang pendidikan harus S1, S2, S3, D3, atau D4',
+            'degree.required' => 'Gelar akademik wajib diisi',
+            'degree.in' => 'Gelar akademik harus S1, S2, S3, D3, atau D4',
+            'duration_years.integer' => 'Durasi tahun harus berupa angka',
+            'duration_years.min' => 'Durasi tahun minimal 1 tahun',
+            'duration_years.max' => 'Durasi tahun maksimal 10 tahun',
+            'minimum_credits.integer' => 'Jumlah minimal SKS harus berupa angka',
+            'minimum_credits.min' => 'Jumlah minimal SKS minimal 1',
+            'minimum_credits.max' => 'Jumlah minimal SKS maksimal 500',
+            'email.email' => 'Format email tidak valid',
+            'email.max' => 'Email maksimal 255 karakter',
+            'phone.max' => 'Nomor telepon maksimal 50 karakter',
+            'office_location.max' => 'Lokasi kantor maksimal 255 karakter',
         ];
     }
 
