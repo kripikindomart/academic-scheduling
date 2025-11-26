@@ -10,6 +10,7 @@ use App\Services\ResponseService;
 use App\Services\ProgramStudyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class ProgramStudyController extends Controller
 {
@@ -31,8 +32,19 @@ class ProgramStudyController extends Controller
                 'level',
                 'degree',
                 'is_active',
+                'status',
                 'search'
             ]);
+
+            // Map frontend status to backend is_active
+            if (isset($filters['status'])) {
+                if ($filters['status'] === 'active') {
+                    $filters['is_active'] = 1;
+                } elseif ($filters['status'] === 'inactive') {
+                    $filters['is_active'] = 0;
+                }
+                unset($filters['status']);
+            }
 
             $perPage = $request->get('per_page', 20);
             $programs = $this->programStudyService->getAllProgramStudies($perPage, $filters);
@@ -105,6 +117,13 @@ class ProgramStudyController extends Controller
     public function update(UpdateProgramStudyRequest $request, ProgramStudy $programStudy): JsonResponse
     {
         try {
+            // Log request data for debugging
+            \Log::info('Update request data:', [
+                'request_data' => $request->all(),
+                'program_study_id' => $programStudy->id,
+                'validated_data' => $request->validated()
+            ]);
+
             $updatedProgram = $this->programStudyService->updateProgramStudy($programStudy->id, $request->validated());
 
             return ResponseService::success(
@@ -112,6 +131,11 @@ class ProgramStudyController extends Controller
                 'Program study updated successfully'
             );
         } catch (\Exception $e) {
+            \Log::error('Update failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return ResponseService::error(
                 'Failed to update program study: ' . $e->getMessage(),
                 null,
@@ -359,11 +383,157 @@ class ProgramStudyController extends Controller
             ]);
 
             $file = $this->programStudyService->exportProgramStudies($filters);
+            $filename = 'program-studies.' . ($filters['format'] ?? 'xlsx');
 
-            return response()->download($file, 'program-studies.' . ($filters['format'] ?? 'xlsx'));
+            // Generate a temporary download URL
+            $downloadUrl = url('/api/program-studies/download/' . basename($file));
+
+            return ResponseService::success([
+                'download_url' => $downloadUrl,
+                'filename' => $filename,
+                'file_size' => file_exists($file) ? filesize($file) : 0,
+                'format' => $filters['format'] ?? 'xlsx'
+            ], 'Export completed successfully');
         } catch (\Exception $e) {
             return ResponseService::error(
                 'Failed to export program studies: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Download exported file.
+     */
+    public function download(string $filename)
+    {
+        try {
+            $filePath = storage_path('app/exports/' . $filename);
+
+            if (!file_exists($filePath)) {
+                return ResponseService::notFound('File not found');
+            }
+
+            return response()->download($filePath, $filename);
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to download file: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Display trashed program studies.
+     */
+    public function trash(Request $request): JsonResponse
+    {
+        try {
+            $filters = $request->only([
+                'search',
+                'faculty',
+                'level'
+            ]);
+
+            $perPage = $request->get('per_page', 20);
+            $programs = $this->programStudyService->getTrashedProgramStudies($perPage, $filters);
+
+            return ResponseService::paginated(
+                $programs,
+                'Trashed program studies retrieved successfully'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to retrieve trashed program studies: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Restore trashed program study.
+     */
+    public function restore(Request $request, $id): JsonResponse
+    {
+        try {
+            $programStudy = ProgramStudy::onlyTrashed()->findOrFail($id);
+            $program = $this->programStudyService->restoreProgramStudy($programStudy->id);
+
+            return ResponseService::success(
+                $program,
+                'Program study restored successfully'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to restore program study: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Toggle program study status.
+     */
+    public function toggleStatus(ProgramStudy $programStudy, Request $request): JsonResponse
+    {
+        try {
+            $isActive = $request->input('is_active', false);
+            $program = $this->programStudyService->toggleProgramStudyStatus($programStudy->id, $isActive);
+
+            return ResponseService::success(
+                $program,
+                'Program study status updated successfully'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to update program study status: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Duplicate program study.
+     */
+    public function duplicate(ProgramStudy $programStudy): JsonResponse
+    {
+        try {
+            $newProgram = $this->programStudyService->duplicateProgramStudy($programStudy->id);
+
+            return ResponseService::success(
+                $newProgram,
+                'Program study duplicated successfully'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to duplicate program study: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+      }
+
+    /**
+     * Force delete program study permanently.
+     */
+    public function forceDelete(Request $request, $id): JsonResponse
+    {
+        try {
+            $programStudy = ProgramStudy::onlyTrashed()->findOrFail($id);
+            $this->programStudyService->forceDeleteProgramStudy($programStudy->id);
+
+            return ResponseService::success(
+                null,
+                'Program study deleted permanently successfully'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to permanently delete program study: ' . $e->getMessage(),
                 null,
                 500
             );
