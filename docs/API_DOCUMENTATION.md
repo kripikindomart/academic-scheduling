@@ -453,6 +453,93 @@ PUT /api/rooms/{room}/availability
 POST /api/rooms/{room}/schedule-maintenance
 ```
 
+### Schedule Management Endpoints
+
+#### List Schedules
+```http
+GET /api/schedules?search=math&course_id=1&lecturer_id=1&per_page=15
+```
+
+#### Create Schedule
+```http
+POST /api/schedules
+```
+
+#### Get Schedule Details
+```http
+GET /api/schedules/{schedule}
+```
+
+#### Update Schedule
+```http
+PUT /api/schedules/{schedule}
+```
+
+#### Delete Schedule
+```http
+DELETE /api/schedules/{schedule}
+```
+
+#### Get Schedule Statistics
+```http
+GET /api/schedules/statistics
+```
+
+#### Check Schedule Conflicts
+```http
+POST /api/schedules/check-conflicts
+```
+
+#### Get Available Rooms for Scheduling
+```http
+GET /api/schedules/available-rooms?date=2024-01-15&start_time=08:00&end_time=10:00&min_capacity=50
+```
+
+#### Get Available Lecturers for Scheduling
+```http
+GET /api/schedules/available-lecturers?date=2024-01-15&start_time=08:00&end_time=10:00&program_study_id=1
+```
+
+#### Get Schedules by Date Range
+```http
+GET /api/schedules/date-range?start_date=2024-01-01&end_date=2024-01-31&course_id=1
+```
+
+#### Get Calendar View
+```http
+GET /api/schedules/calendar?year=2024&month=1
+```
+
+#### Get Schedules by Course
+```http
+GET /api/schedules/course/{courseId}?status=approved
+```
+
+#### Get Schedules by Lecturer
+```http
+GET /api/schedules/lecturer/{lecturerId}?semester=ganjil
+```
+
+#### Get Schedules by Room
+```http
+GET /api/schedules/room/{roomId}?date_from=2024-01-01&date_to=2024-01-31
+```
+
+#### Workflow Operations
+```http
+POST /api/schedules/{schedule}/approve
+POST /api/schedules/{schedule}/reject
+POST /api/schedules/{schedule}/cancel
+```
+
+#### Bulk Operations
+```http
+POST /api/schedules/bulk-update
+POST /api/schedules/bulk-delete
+GET /api/schedules/export?format=csv
+POST /api/schedules/import
+```
+
 ## Data Models
 
 ### User Model

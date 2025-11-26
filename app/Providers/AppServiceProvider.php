@@ -25,6 +25,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(RoomService::class, function ($app) {
             return new RoomService();
         });
+
+        $this->app->singleton(ScheduleService::class, function ($app) {
+            return new ScheduleService();
+        });
     }
 
     /**

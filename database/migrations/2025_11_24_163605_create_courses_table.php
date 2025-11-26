@@ -27,11 +27,14 @@ return new class extends Migration
             $table->foreignId('program_study_id')->constrained()->onDelete('cascade');
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('deleted_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['course_code', 'academic_year']);
             $table->index(['program_study_id', 'semester']);
             $table->index(['course_type', 'level']);
+            $table->index('deleted_at');
         });
     }
 

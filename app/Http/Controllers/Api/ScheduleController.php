@@ -1,0 +1,543 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Schedule\StoreScheduleRequest;
+use App\Http\Requests\Schedule\UpdateScheduleRequest;
+use App\Services\ScheduleService;
+use App\Models\Schedule;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\JsonResponse;
+
+class ScheduleController extends Controller
+{
+    protected ScheduleService $scheduleService;
+
+    public function __construct(ScheduleService $scheduleService)
+    {
+        $this->scheduleService = $scheduleService;
+    }
+
+    /**
+     * Display a listing of schedules.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $filters = [
+            'search' => $request->input('search'),
+            'course_id' => $request->input('course_id'),
+            'lecturer_id' => $request->input('lecturer_id'),
+            'room_id' => $request->input('room_id'),
+            'program_study_id' => $request->input('program_study_id'),
+            'class_id' => $request->input('class_id'),
+            'semester' => $request->input('semester'),
+            'academic_year' => $request->input('academic_year'),
+            'status' => $request->input('status'),
+            'schedule_type' => $request->input('schedule_type'),
+            'session_type' => $request->input('session_type'),
+            'is_published' => $request->input('is_published'),
+            'is_online' => $request->input('is_online'),
+            'date_from' => $request->input('date_from'),
+            'date_to' => $request->input('date_to'),
+            'conflict_status' => $request->input('conflict_status'),
+        ];
+
+        $result = $this->scheduleService->getSchedules(
+            $filters,
+            $request->input('per_page', 15),
+            $request->input('sort_by', 'date'),
+            $request->input('sort_direction', 'asc')
+        );
+
+        return response()->success($result['data'], $result['message'], $result['meta']);
+    }
+
+    /**
+     * Store a newly created schedule.
+     */
+    public function store(StoreScheduleRequest $request): JsonResponse
+    {
+        try {
+            $schedule = $this->scheduleService->createSchedule($request->validated());
+
+            return response()->success($schedule, 'Schedule created successfully');
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to create schedule: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Display the specified schedule.
+     */
+    public function show(Schedule $schedule): JsonResponse
+    {
+        $schedule->load([
+            'course',
+            'lecturer',
+            'room',
+            'programStudy',
+            'schoolClass',
+            'creator',
+            'updater',
+            'approver',
+            'canceller',
+        ]);
+
+        return response()->success($schedule, 'Schedule retrieved successfully');
+    }
+
+    /**
+     * Update the specified schedule.
+     */
+    public function update(UpdateScheduleRequest $request, Schedule $schedule): JsonResponse
+    {
+        try {
+            $updatedSchedule = $this->scheduleService->updateSchedule($schedule, $request->validated());
+
+            return response()->success($updatedSchedule, 'Schedule updated successfully');
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to update schedule: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Remove the specified schedule.
+     */
+    public function destroy(Schedule $schedule): JsonResponse
+    {
+        try {
+            $this->scheduleService->deleteSchedule($schedule);
+
+            return response()->success(null, 'Schedule deleted successfully');
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to delete schedule: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get schedule statistics.
+     */
+    public function statistics(): JsonResponse
+    {
+        try {
+            $statistics = $this->scheduleService->getScheduleStatistics();
+
+            return response()->success($statistics, 'Schedule statistics retrieved successfully');
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to retrieve schedule statistics: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Check schedule conflicts.
+     */
+    public function checkConflicts(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'date' => 'required|date',
+                'start_time' => 'required|date_format:H:i',
+                'end_time' => 'required|date_format:H:i|after:start_time',
+                'room_id' => 'required|exists:rooms,id',
+                'lecturer_id' => 'required|exists:lecturers,id',
+                'class_id' => 'nullable|exists:school_classes,id',
+            ]);
+
+            $conflicts = $this->scheduleService->checkConflicts($validated);
+
+            return response()->success($conflicts, 'Conflict check completed');
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to check conflicts: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get available rooms for scheduling.
+     */
+    public function getAvailableRooms(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'date' => 'required|date',
+                'start_time' => 'required|date_format:H:i',
+                'end_time' => 'required|date_format:H:i|after:start_time',
+                'min_capacity' => 'nullable|integer|min:1',
+            ]);
+
+            $availableRooms = $this->scheduleService->getAvailableRooms(
+                $validated['date'],
+                $validated['start_time'],
+                $validated['end_time'],
+                $validated['min_capacity'] ?? 1
+            );
+
+            return response()->success($availableRooms, 'Available rooms retrieved successfully');
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to get available rooms: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get available lecturers for scheduling.
+     */
+    public function getAvailableLecturers(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'date' => 'required|date',
+                'start_time' => 'required|date_format:H:i',
+                'end_time' => 'required|date_format:H:i|after:start_time',
+                'program_study_id' => 'nullable|exists:program_studies,id',
+            ]);
+
+            $availableLecturers = $this->scheduleService->getAvailableLecturers(
+                $validated['date'],
+                $validated['start_time'],
+                $validated['end_time'],
+                $validated['program_study_id'] ?? null
+            );
+
+            return response()->success($availableLecturers, 'Available lecturers retrieved successfully');
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to get available lecturers: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get schedules by date range.
+     */
+    public function getByDateRange(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'course_id' => 'nullable|exists:courses,id',
+                'lecturer_id' => 'nullable|exists:lecturers,id',
+                'room_id' => 'nullable|exists:rooms,id',
+                'program_study_id' => 'nullable|exists:program_studies,id',
+                'status' => 'nullable|in:draft,submitted,approved,rejected,cancelled,completed',
+            ]);
+
+            $filters = $validated;
+            unset($filters['start_date'], $filters['end_date']);
+
+            $result = $this->scheduleService->getSchedulesByDateRange(
+                $validated['start_date'],
+                $validated['end_date'],
+                $filters
+            );
+
+            return response()->success($result['data'], $result['message']);
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to get schedules: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get calendar view data.
+     */
+    public function getCalendarView(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'year' => 'required|integer|min:2020|max:2050',
+                'month' => 'required|integer|min:1|max:12',
+            ]);
+
+            $result = $this->scheduleService->getCalendarView(
+                $validated['year'],
+                $validated['month']
+            );
+
+            return response()->success($result, 'Calendar view data retrieved successfully');
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to get calendar view: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Approve schedule.
+     */
+    public function approve(Request $request, Schedule $schedule): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'approval_notes' => 'nullable|string|max:1000',
+            ]);
+
+            $approvedSchedule = $this->scheduleService->approveSchedule(
+                $schedule,
+                $validated['approval_notes'] ?? null
+            );
+
+            return response()->success($approvedSchedule, 'Schedule approved successfully');
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to approve schedule: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Reject schedule.
+     */
+    public function reject(Request $request, Schedule $schedule): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'rejection_reason' => 'required|string|max:1000',
+            ]);
+
+            $rejectedSchedule = $this->scheduleService->rejectSchedule(
+                $schedule,
+                $validated['rejection_reason']
+            );
+
+            return response()->success($rejectedSchedule, 'Schedule rejected successfully');
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to reject schedule: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Cancel schedule.
+     */
+    public function cancel(Request $request, Schedule $schedule): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'cancellation_reason' => 'required|string|max:1000',
+            ]);
+
+            $cancelledSchedule = $this->scheduleService->cancelSchedule(
+                $schedule,
+                $validated['cancellation_reason']
+            );
+
+            return response()->success($cancelledSchedule, 'Schedule cancelled successfully');
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to cancel schedule: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Bulk update schedules.
+     */
+    public function bulkUpdate(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'schedule_ids' => 'required|array|min:1',
+                'schedule_ids.*' => 'required|exists:schedules,id',
+                'updates' => 'required|array',
+                'updates.status' => 'sometimes|in:draft,submitted,approved,rejected,cancelled,completed',
+                'updates.conflict_status' => 'sometimes|in:none,detected,resolved',
+                'updates.is_published' => 'sometimes|boolean',
+                'updates.is_locked' => 'sometimes|boolean',
+            ]);
+
+            $updatedCount = $this->scheduleService->bulkUpdateSchedules(
+                $validated['schedule_ids'],
+                $validated['updates']
+            );
+
+            return response()->success(
+                ['updated_count' => $updatedCount],
+                "Successfully updated {$updatedCount} schedules"
+            );
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to bulk update schedules: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Bulk delete schedules.
+     */
+    public function bulkDelete(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'schedule_ids' => 'required|array|min:1',
+                'schedule_ids.*' => 'required|exists:schedules,id',
+            ]);
+
+            $deletedCount = $this->scheduleService->bulkDeleteSchedules($validated['schedule_ids']);
+
+            return response()->success(
+                ['deleted_count' => $deletedCount],
+                "Successfully deleted {$deletedCount} schedules"
+            );
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to bulk delete schedules: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Export schedules.
+     */
+    public function export(Request $request): JsonResponse
+    {
+        try {
+            $filters = $request->only([
+                'course_id',
+                'lecturer_id',
+                'room_id',
+                'program_study_id',
+                'semester',
+                'academic_year',
+                'status',
+                'schedule_type',
+                'date_from',
+                'date_to',
+                'format',
+            ]);
+
+            $format = $request->input('format', 'csv');
+            $filePath = $this->scheduleService->exportSchedules($filters, $format);
+
+            return response()->success(
+                ['download_url' => asset($filePath)],
+                'Schedules export completed'
+            );
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to export schedules: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get schedules for specific course.
+     */
+    public function getByCourse(Request $request, $courseId): JsonResponse
+    {
+        try {
+            $filters = array_merge($request->all(), ['course_id' => $courseId]);
+
+            $result = $this->scheduleService->getSchedules(
+                $filters,
+                $request->input('per_page', 15),
+                $request->input('sort_by', 'date'),
+                $request->input('sort_direction', 'asc')
+            );
+
+            return response()->success($result['data'], $result['message'], $result['meta']);
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to get course schedules: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get schedules for specific lecturer.
+     */
+    public function getByLecturer(Request $request, $lecturerId): JsonResponse
+    {
+        try {
+            $filters = array_merge($request->all(), ['lecturer_id' => $lecturerId]);
+
+            $result = $this->scheduleService->getSchedules(
+                $filters,
+                $request->input('per_page', 15),
+                $request->input('sort_by', 'date'),
+                $request->input('sort_direction', 'asc')
+            );
+
+            return response()->success($result['data'], $result['message'], $result['meta']);
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to get lecturer schedules: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get schedules for specific room.
+     */
+    public function getByRoom(Request $request, $roomId): JsonResponse
+    {
+        try {
+            $filters = array_merge($request->all(), ['room_id' => $roomId]);
+
+            $result = $this->scheduleService->getSchedules(
+                $filters,
+                $request->input('per_page', 15),
+                $request->input('sort_by', 'date'),
+                $request->input('sort_direction', 'asc')
+            );
+
+            return response()->success($result['data'], $result['message'], $result['meta']);
+        } catch (\Exception $e) {
+            return response()->error(
+                'Failed to get room schedules: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+}

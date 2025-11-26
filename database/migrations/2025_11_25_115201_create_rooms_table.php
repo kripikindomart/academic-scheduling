@@ -43,7 +43,9 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('deleted_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['room_code']);
             $table->index(['building', 'floor']);
@@ -56,6 +58,7 @@ return new class extends Migration
             $table->index(['maintenance_status']);
             $table->index(['name']);
             $table->index(['building', 'room_code']);
+            $table->index('deleted_at');
         });
     }
 
