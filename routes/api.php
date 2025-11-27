@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\LecturerController;
 use App\Http\Controllers\Api\BuildingController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\ConflictDetectionController;
 
 // Authentication routes
 Route::prefix('auth')->group(function () {
@@ -114,9 +115,13 @@ Route::middleware(['auth:sanctum'])->prefix('lecturers')->group(function () {
     Route::get('/search-suggestions', [LecturerController::class, 'searchSuggestions'])->middleware('permission:lecturers.view');
     Route::get('/for-scheduling', [LecturerController::class, 'getForScheduling'])->middleware('permission:lecturers.view');
     Route::post('/bulk-update', [LecturerController::class, 'bulkUpdate'])->middleware('permission:lecturers.edit');
+    Route::post('/bulk-delete', [LecturerController::class, 'bulkDelete'])->middleware('permission:lecturers.delete');
+    Route::post('/bulk-restore', [LecturerController::class, 'bulkRestore'])->middleware('permission:lecturers.delete');
+    Route::post('/bulk-force-delete', [LecturerController::class, 'bulkForceDelete'])->middleware('permission:lecturers.delete');
     Route::post('/import', [LecturerController::class, 'import'])->middleware('permission:lecturers.create');
     Route::get('/export', [LecturerController::class, 'export'])->middleware('permission:lecturers.view');
-    Route::post('/restore/{id}', [LecturerController::class, 'restore'])->middleware('permission:lecturers.delete');
+    Route::get('/trash', [LecturerController::class, 'trash'])->middleware('permission:lecturers.view');
+    Route::post('/{id}/restore', [LecturerController::class, 'restore'])->middleware('permission:lecturers.delete');
     Route::delete('/force-delete/{id}', [LecturerController::class, 'forceDelete'])->middleware('permission:lecturers.delete');
 
     Route::get('/program-study/{programStudyId}', [LecturerController::class, 'getByProgramStudy'])->middleware('permission:lecturers.view');
@@ -126,6 +131,7 @@ Route::middleware(['auth:sanctum'])->prefix('lecturers')->group(function () {
 
     Route::get('/{lecturer}', [LecturerController::class, 'show'])->middleware('permission:lecturers.view');
     Route::put('/{lecturer}', [LecturerController::class, 'update'])->middleware('permission:lecturers.edit');
+    Route::post('/{lecturer}/duplicate', [LecturerController::class, 'duplicate'])->middleware('permission:lecturers.create');
     Route::delete('/{lecturer}', [LecturerController::class, 'destroy'])->middleware('permission:lecturers.delete');
     Route::get('/{lecturer}/teaching-load', [LecturerController::class, 'teachingLoad'])->middleware('permission:lecturers.view');
     Route::put('/{lecturer}/status', [LecturerController::class, 'updateStatus'])->middleware('permission:lecturers.edit');
@@ -222,6 +228,31 @@ Route::middleware(['auth:sanctum'])->prefix('schedules')->group(function () {
     Route::post('/{schedule}/approve', [ScheduleController::class, 'approve'])->middleware('permission:schedules.approve');
     Route::post('/{schedule}/reject', [ScheduleController::class, 'reject'])->middleware('permission:schedules.reject');
     Route::post('/{schedule}/cancel', [ScheduleController::class, 'cancel'])->middleware('permission:schedules.cancel');
+});
+
+// Conflict Detection Management routes
+Route::middleware(['auth:sanctum'])->prefix('conflict-detections')->group(function () {
+    Route::get('/', [ConflictDetectionController::class, 'index'])->middleware('permission:conflicts.view');
+    Route::get('/statistics', [ConflictDetectionController::class, 'statistics'])->middleware('permission:conflicts.view');
+    Route::get('/high-priority', [ConflictDetectionController::class, 'highPriority'])->middleware('permission:conflicts.view');
+    Route::get('/analytics', [ConflictDetectionController::class, 'analytics'])->middleware('permission:conflicts.view');
+    Route::get('/conflict-types', [ConflictDetectionController::class, 'getConflictTypes'])->middleware('permission:conflicts.view');
+    Route::get('/severity-levels', [ConflictDetectionController::class, 'getSeverityLevels'])->middleware('permission:conflicts.view');
+    Route::get('/resolution-strategies', [ConflictDetectionController::class, 'getResolutionStrategies'])->middleware('permission:conflicts.view');
+
+    // Detection endpoints
+    Route::post('/detect-for-schedule/{schedule}', [ConflictDetectionController::class, 'detectForSchedule'])->middleware('permission:conflicts.view');
+    Route::post('/detect-for-multiple', [ConflictDetectionController::class, 'detectForMultiple'])->middleware('permission:conflicts.view');
+    Route::post('/detect-all', [ConflictDetectionController::class, 'detectAll'])->middleware('permission:conflicts.view');
+    Route::post('/bulk-detect', [ConflictDetectionController::class, 'bulkDetect'])->middleware('permission:conflicts.view');
+
+    // Resolution endpoints
+    Route::post('/bulk-resolve', [ConflictDetectionController::class, 'bulkResolve'])->middleware('permission:conflicts.resolve');
+
+    Route::get('/{conflict}', [ConflictDetectionController::class, 'show'])->middleware('permission:conflicts.view');
+    Route::post('/{conflict}/resolve', [ConflictDetectionController::class, 'resolve'])->middleware('permission:conflicts.resolve');
+    Route::post('/{conflict}/ignore', [ConflictDetectionController::class, 'ignore'])->middleware('permission:conflicts.resolve');
+    Route::post('/{conflict}/escalate', [ConflictDetectionController::class, 'escalate'])->middleware('permission:conflicts.escalate');
 });
 
 // Dashboard route

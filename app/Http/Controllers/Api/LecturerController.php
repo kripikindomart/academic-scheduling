@@ -45,17 +45,36 @@ class LecturerController extends Controller
             $request->input('sort_direction', 'asc')
         );
 
-        return response()->success($result['data'], $result['message'], $result['meta']);
+        return response()->json([
+            'success' => true,
+            'message' => $result['message'],
+            'data' => $result['data'],
+            'meta' => $result['meta'] ?? []
+        ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreLecturerRequest $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
-        $lecturer = $this->lecturerService->createLecturer($request->validated());
+        // Handle file upload and regular form data
+        $data = $request->all();
 
-        return response()->success($lecturer, 'Lecturer created successfully');
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            $photoPath = $file->store('lecturers/photos', 'public');
+            $data['photo'] = $photoPath;
+        }
+
+        $lecturer = $this->lecturerService->createLecturer($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lecturer created successfully',
+            'data' => $lecturer
+        ], 201);
     }
 
     /**
@@ -71,17 +90,35 @@ class LecturerController extends Controller
             'updater'
         ]);
 
-        return response()->success($lecturer, 'Lecturer retrieved successfully');
+        return response()->json([
+            'success' => true,
+            'message' => 'Lecturer retrieved successfully',
+            'data' => $lecturer
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateLecturerRequest $request, Lecturer $lecturer): JsonResponse
+    public function update(Request $request, Lecturer $lecturer): JsonResponse
     {
-        $updatedLecturer = $this->lecturerService->updateLecturer($lecturer, $request->validated());
+        // Handle file upload and regular form data
+        $data = $request->all();
 
-        return response()->success($updatedLecturer, 'Lecturer updated successfully');
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            $photoPath = $file->store('lecturers/photos', 'public');
+            $data['photo'] = $photoPath;
+        }
+
+        $updatedLecturer = $this->lecturerService->updateLecturer($lecturer, $data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Lecturer updated successfully',
+            'data' => $updatedLecturer
+        ]);
     }
 
     /**
@@ -91,7 +128,10 @@ class LecturerController extends Controller
     {
         $this->lecturerService->deleteLecturer($lecturer);
 
-        return response()->success(null, 'Lecturer deleted successfully');
+        return response()->json([
+            'success' => true,
+            'message' => 'Lecturer deleted successfully'
+        ]);
     }
 
     /**
@@ -100,10 +140,15 @@ class LecturerController extends Controller
     public function statistics(Request $request): JsonResponse
     {
         $statistics = $this->lecturerService->getLecturerStatistics(
-            $request->input('program_study_id')
+            $request->input('program_study_id'),
+            $request->boolean('include_trash', false)
         );
 
-        return response()->success($statistics, 'Lecturer statistics retrieved successfully');
+        return response()->json([
+            'success' => true,
+            'message' => 'Lecturer statistics retrieved successfully',
+            'data' => $statistics
+        ]);
     }
 
     /**
@@ -113,7 +158,7 @@ class LecturerController extends Controller
     {
         $teachingLoad = $this->lecturerService->getLecturerTeachingLoad($lecturer);
 
-        return response()->success($teachingLoad, 'Lecturer teaching load retrieved successfully');
+        return response()->json(["success" => true, "message" => 'Lecturer teaching load retrieved successfully', "data" => $teachingLoad]);
     }
 
     /**
@@ -123,7 +168,7 @@ class LecturerController extends Controller
     {
         $availableLecturers = $this->lecturerService->getAvailableLecturers($course);
 
-        return response()->success($availableLecturers, 'Available lecturers retrieved successfully');
+        return response()->json(["success" => true, "message" => 'Available lecturers retrieved successfully', "data" => $availableLecturers]);
     }
 
     /**
@@ -139,7 +184,7 @@ class LecturerController extends Controller
 
         $assignment = $this->lecturerService->assignCourseToLecturer($lecturer, $course, $validated);
 
-        return response()->success($assignment, 'Course assigned to lecturer successfully');
+        return response()->json(["success" => true, "message" => 'Course assigned to lecturer successfully', "data" => $assignment]);
     }
 
     /**
@@ -156,7 +201,12 @@ class LecturerController extends Controller
 
         $lecturers = $this->lecturerService->getLecturers($filters);
 
-        return response()->success($lecturers['data'], $lecturers['message'], $lecturers['meta']);
+        return response()->json([
+            'success' => true,
+            'message' => $lecturers['message'],
+            'data' => $lecturers['data'],
+            'meta' => $lecturers['meta'] ?? []
+        ]);
     }
 
     /**
@@ -173,7 +223,12 @@ class LecturerController extends Controller
 
         $lecturers = $this->lecturerService->getLecturers($filters);
 
-        return response()->success($lecturers['data'], $lecturers['message'], $lecturers['meta']);
+        return response()->json([
+            'success' => true,
+            'message' => $lecturers['message'],
+            'data' => $lecturers['data'],
+            'meta' => $lecturers['meta'] ?? []
+        ]);
     }
 
     /**
@@ -190,7 +245,12 @@ class LecturerController extends Controller
 
         $lecturers = $this->lecturerService->getLecturers($filters);
 
-        return response()->success($lecturers['data'], $lecturers['message'], $lecturers['meta']);
+        return response()->json([
+            'success' => true,
+            'message' => $lecturers['message'],
+            'data' => $lecturers['data'],
+            'meta' => $lecturers['meta'] ?? []
+        ]);
     }
 
     /**
@@ -208,7 +268,7 @@ class LecturerController extends Controller
             $validated['time']
         );
 
-        return response()->success($lecturers, 'Available lecturers for scheduling retrieved successfully');
+        return response()->json(["success" => true, "message" => 'Available lecturers for scheduling retrieved successfully', "data" => $lecturers]);
     }
 
     /**
@@ -232,10 +292,30 @@ class LecturerController extends Controller
             $validated['updates']
         );
 
-        return response()->success(
-            ['updated_count' => $updatedCount],
-            "Successfully updated {$updatedCount} lecturers"
-        );
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully updated {$updatedCount} lecturers",
+            'data' => ['updated_count' => $updatedCount]
+        ]);
+    }
+
+    /**
+     * Bulk delete lecturers.
+     */
+    public function bulkDelete(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:lecturers,id',
+        ]);
+
+        $deletedCount = $this->lecturerService->bulkDeleteLecturers($validated['ids']);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully deleted {$deletedCount} lecturers",
+            'data' => ['deleted_count' => $deletedCount]
+        ]);
     }
 
     /**
@@ -254,7 +334,7 @@ class LecturerController extends Controller
             $request->user()
         );
 
-        return response()->success($result, 'Lecturers import completed');
+        return response()->json(["success" => true, "message" => 'Lecturers import completed', "data" => $result]);
     }
 
     /**
@@ -274,10 +354,11 @@ class LecturerController extends Controller
         $format = $request->input('format', 'csv');
         $filePath = $this->lecturerService->exportLecturers($filters, $format);
 
-        return response()->success(
-            ['download_url' => asset($filePath)],
-            'Lecturers export completed'
-        );
+        return response()->json([
+            'success' => true,
+            'message' => 'Lecturers export completed',
+            'data' => ['download_url' => asset($filePath)]
+        ]);
     }
 
     /**
@@ -290,7 +371,7 @@ class LecturerController extends Controller
 
         $suggestions = $this->lecturerService->getLecturerSearchSuggestions($query, $limit);
 
-        return response()->success($suggestions, 'Search suggestions retrieved successfully');
+        return response()->json(["success" => true, "message" => 'Search suggestions retrieved successfully', "data" => $suggestions]);
     }
 
     /**
@@ -301,7 +382,7 @@ class LecturerController extends Controller
         $threshold = $request->input('threshold', 90);
         $lecturers = $this->lecturerService->getLecturersWithHighWorkload($threshold);
 
-        return response()->success($lecturers, 'High workload lecturers retrieved successfully');
+        return response()->json(["success" => true, "message" => 'High workload lecturers retrieved successfully', "data" => $lecturers]);
     }
 
     /**
@@ -311,7 +392,7 @@ class LecturerController extends Controller
     {
         $lecturer = $this->lecturerService->restoreLecturer($id);
 
-        return response()->success($lecturer, 'Lecturer restored successfully');
+        return response()->json(["success" => true, "message" => 'Lecturer restored successfully', "data" => $lecturer]);
     }
 
     /**
@@ -321,7 +402,7 @@ class LecturerController extends Controller
     {
         $this->lecturerService->forceDeleteLecturer($id);
 
-        return response()->success(null, 'Lecturer permanently deleted');
+        return response()->json(["success" => true, "message" => 'Lecturer permanently deleted', "data" => null]);
     }
 
     /**
@@ -337,7 +418,7 @@ class LecturerController extends Controller
 
         $updatedLecturer = $this->lecturerService->updateLecturerStatus($lecturer, $validated);
 
-        return response()->success($updatedLecturer, 'Lecturer status updated successfully');
+        return response()->json(["success" => true, "message" => 'Lecturer status updated successfully', "data" => $updatedLecturer]);
     }
 
     /**
@@ -350,7 +431,7 @@ class LecturerController extends Controller
 
         $summary = $this->lecturerService->getLecturerAttendanceSummary($lecturer, $semester, $academicYear);
 
-        return response()->success($summary, 'Lecturer attendance summary retrieved successfully');
+        return response()->json(["success" => true, "message" => 'Lecturer attendance summary retrieved successfully', "data" => $summary]);
     }
 
     /**
@@ -367,6 +448,99 @@ class LecturerController extends Controller
 
         $lecturers = $this->lecturerService->getLecturers($filters);
 
-        return response()->success($lecturers['data'], $lecturers['message'], $lecturers['meta']);
+        return response()->json([
+            'success' => true,
+            'message' => $lecturers['message'],
+            'data' => $lecturers['data'],
+            'meta' => $lecturers['meta'] ?? []
+        ]);
+    }
+
+    /**
+     * Get trashed lecturers.
+     */
+    public function trash(Request $request): JsonResponse
+    {
+        $filters = [
+            'search' => $request->input('search'),
+            'program_study_id' => $request->input('program_study_id'),
+            'faculty' => $request->input('faculty'),
+            'department' => $request->input('department'),
+            'only_trashed' => $request->boolean('only_trashed', true),
+        ];
+
+        $result = $this->lecturerService->getLecturers(
+            $filters,
+            $request->input('per_page', 15),
+            $request->input('sort_by', 'name'),
+            $request->input('sort_direction', 'asc')
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => $result['message'],
+            'data' => $result['data'],
+            'meta' => $result['meta'] ?? []
+        ]);
+    }
+
+    /**
+     * Bulk restore deleted lecturers.
+     */
+    public function bulkRestore(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:lecturers,id',
+        ]);
+
+        $restoredCount = $this->lecturerService->bulkRestoreLecturers($validated['ids']);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully restored {$restoredCount} lecturers",
+            'data' => ['restored_count' => $restoredCount]
+        ]);
+    }
+
+    /**
+     * Bulk permanently delete lecturers.
+     */
+    public function bulkForceDelete(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:lecturers,id',
+        ]);
+
+        $deletedCount = $this->lecturerService->bulkForceDeleteLecturers($validated['ids']);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully permanently deleted {$deletedCount} lecturers",
+            'data' => ['deleted_count' => $deletedCount]
+        ]);
+    }
+
+    /**
+     * Duplicate a lecturer.
+     */
+    public function duplicate(Lecturer $lecturer, Request $request): JsonResponse
+    {
+        try {
+            $duplicatedLecturer = $this->lecturerService->duplicateLecturer($lecturer->id, $request->user());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lecturer duplicated successfully',
+                'data' => $duplicatedLecturer
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to duplicate lecturer: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
+        }
     }
 }

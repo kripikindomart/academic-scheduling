@@ -66,7 +66,12 @@ class LecturerService
         }
 
         if (isset($filters['is_active'])) {
-            $query->where('is_active', $filters['is_active']);
+            $isActive = filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN);
+            $query->where('is_active', $isActive);
+        }
+
+        if (isset($filters['only_trashed']) && filter_var($filters['only_trashed'], FILTER_VALIDATE_BOOLEAN)) {
+            $query->onlyTrashed();
         }
 
         if (!empty($filters['specialization'])) {
@@ -98,6 +103,22 @@ class LecturerService
     public function createLecturer(array $data): Lecturer
     {
         return DB::transaction(function () use ($data) {
+            // Set default values for required fields if not provided
+            $defaults = [
+                'gender' => 'male',
+                'nationality' => 'Indonesia',
+                'birth_date' => now()->subYears(25), // Default 25 years old
+                'status' => 'active',
+                'employment_type' => 'permanent',
+                'employment_status' => 'Active',
+                'hire_date' => now(),
+                'position' => 'Lecturer',
+                'is_active' => true,
+                'academic_load' => 12,
+                'created_by' => auth()->id(),
+            ];
+
+            $data = array_merge($defaults, $data);
             // Generate employee number if not provided
             if (empty($data['employee_number'])) {
                 $faculty = $data['faculty'] ?? 'FST';
@@ -256,51 +277,70 @@ class LecturerService
     /**
      * Get lecturer statistics.
      */
-    public function getLecturerStatistics(?int $programStudyId = null): array
+    public function getLecturerStatistics(?int $programStudyId = null, bool $includeTrash = false): array
     {
         $query = Lecturer::query();
+
+        // Include only trashed records if requested
+        if ($includeTrash) {
+            $query->onlyTrashed();
+        }
 
         if ($programStudyId) {
             $query->where('program_study_id', $programStudyId);
         }
 
         $total = $query->count();
-        $active = $query->where('status', 'active')->where('is_active', true)->count();
-        $inactive = $query->where('status', 'inactive')->count();
-        $onLeave = $query->where('status', 'on_leave')->count();
-        $terminated = $query->where('status', 'terminated')->count();
-        $retired = $query->where('status', 'retired')->count();
+        $active = $query->clone()->where('status', 'active')->where('is_active', true)->count();
+        $inactive = $query->clone()->where('status', 'inactive')->count();
+        $onLeave = $query->clone()->where('status', 'on_leave')->count();
+        $terminated = $query->clone()->where('status', 'terminated')->count();
+        $retired = $query->clone()->where('status', 'retired')->count();
 
-        $employmentTypeStats = $query->selectRaw('employment_type, COUNT(*) as count')
-            ->groupBy('employment_type')
-            ->pluck('count', 'employment_type')
-            ->toArray();
+        try {
+            $employmentTypeStats = $query->clone()
+                ->select('employment_type', \DB::raw('COUNT(*) as count'))
+                ->groupBy('employment_type')
+                ->pluck('count', 'employment_type')
+                ->toArray();
 
-        $educationStats = $query->selectRaw('highest_education, COUNT(*) as count')
-            ->whereNotNull('highest_education')
-            ->groupBy('highest_education')
-            ->pluck('count', 'highest_education')
-            ->toArray();
+            $educationStats = $query->clone()
+                ->select('highest_education', \DB::raw('COUNT(*) as count'))
+                ->whereNotNull('highest_education')
+                ->groupBy('highest_education')
+                ->pluck('count', 'highest_education')
+                ->toArray();
 
-        $rankStats = $query->selectRaw('rank, COUNT(*) as count')
-            ->whereNotNull('rank')
-            ->groupBy('rank')
-            ->orderBy('rank')
-            ->get()
-            ->pluck('count', 'rank')
-            ->toArray();
+            $rankStats = $query->clone()
+                ->select('rank', \DB::raw('COUNT(*) as count'))
+                ->whereNotNull('rank')
+                ->groupBy('rank')
+                ->orderBy('rank')
+                ->pluck('count', 'rank')
+                ->toArray();
 
-        $facultyStats = $query->selectRaw('faculty, COUNT(*) as count')
-            ->groupBy('faculty')
-            ->orderBy('faculty')
-            ->get()
-            ->pluck('count', 'faculty')
-            ->toArray();
+            $facultyStats = $query->clone()
+                ->select('faculty', \DB::raw('COUNT(*) as count'))
+                ->groupBy('faculty')
+                ->orderBy('faculty')
+                ->pluck('count', 'faculty')
+                ->toArray();
 
-        // Calculate average service years
-        $avgServiceYears = $query->whereNotNull('hire_date')
-            ->selectRaw('AVG(DATEDIFF(NOW(), hire_date) / 365) as avg_service')
-            ->value('avg_service');
+            // Calculate average service years
+            $avgServiceYears = $query->clone()
+                ->whereNotNull('hire_date')
+                ->select(\DB::raw('AVG(DATEDIFF(NOW(), hire_date) / 365) as avg_service'))
+                ->value('avg_service');
+        } catch (\Exception $e) {
+            // Log the error and provide fallback values
+            \Log::error('Error in lecturer statistics query: ' . $e->getMessage());
+
+            $employmentTypeStats = [];
+            $educationStats = [];
+            $rankStats = [];
+            $facultyStats = [];
+            $avgServiceYears = 0;
+        }
 
         return [
             'total_lecturers' => $total,
@@ -439,6 +479,25 @@ class LecturerService
             ]);
 
             return $updated;
+        });
+    }
+
+    /**
+     * Bulk delete lecturers.
+     */
+    public function bulkDeleteLecturers(array $lecturerIds): int
+    {
+        return DB::transaction(function () use ($lecturerIds) {
+            $deleted = Lecturer::whereIn('id', $lecturerIds)
+                ->delete();
+
+            Log::info('Bulk lecturer delete', [
+                'lecturer_count' => $deleted,
+                'lecturer_ids' => $lecturerIds,
+                'deleted_by' => auth()->id()
+            ]);
+
+            return $deleted;
         });
     }
 
@@ -621,5 +680,223 @@ class LecturerService
             ->filter(function ($lecturer) use ($threshold) {
                 return $lecturer->workload_percentage >= $threshold;
             });
+    }
+
+    /**
+     * Bulk restore lecturers from trash.
+     */
+    public function bulkRestoreLecturers(array $lecturerIds): int
+    {
+        return DB::transaction(function () use ($lecturerIds) {
+            $restored = Lecturer::withTrashed()
+                ->whereIn('id', $lecturerIds)
+                ->restore();
+
+            Log::info('Bulk lecturer restore', [
+                'lecturer_count' => $restored,
+                'lecturer_ids' => $lecturerIds,
+                'restored_by' => auth()->id()
+            ]);
+
+            return $restored;
+        });
+    }
+
+    /**
+     * Bulk permanently delete lecturers.
+     */
+    public function bulkForceDeleteLecturers(array $lecturerIds): int
+    {
+        return DB::transaction(function () use ($lecturerIds) {
+            $deleted = Lecturer::withTrashed()
+                ->whereIn('id', $lecturerIds)
+                ->forceDelete();
+
+            Log::info('Bulk lecturer force delete', [
+                'lecturer_count' => $deleted,
+                'lecturer_ids' => $lecturerIds,
+                'deleted_by' => auth()->id()
+            ]);
+
+            return $deleted;
+        });
+    }
+
+    /**
+     * Duplicate a lecturer.
+     */
+    public function duplicateLecturer(int $id, $user): array
+    {
+        return DB::transaction(function () use ($id, $user) {
+            $originalLecturer = Lecturer::findOrFail($id);
+
+            $newLecturer = $originalLecturer->replicate();
+            $newLecturer->employee_number = $this->generateUniqueEmployeeNumber($originalLecturer->employee_number);
+            $newLecturer->name = $this->generateDuplicateName($originalLecturer->name);
+            $newLecturer->email = $this->generateUniqueEmail($originalLecturer->email);
+            $newLecturer->id_card_number = $this->generateUniqueIdCardNumber($originalLecturer->id_card_number);
+            $newLecturer->phone = $this->generateUniquePhone($originalLecturer->phone);
+            $newLecturer->passport_number = $this->generateUniquePassportNumber($originalLecturer->passport_number);
+            $newLecturer->created_by = $user->id;
+            $newLecturer->updated_by = null;
+            $newLecturer->created_at = now();
+            $newLecturer->updated_at = null;
+
+            $newLecturer->save();
+
+            // Log activity
+            Log::channel('activity')->info('Lecturer duplicated', [
+                'original_lecturer_id' => $originalLecturer->id,
+                'new_lecturer_id' => $newLecturer->id,
+                'employee_number' => $newLecturer->employee_number,
+                'name' => $newLecturer->name,
+                'duplicated_by' => $user->id
+            ]);
+
+            return $newLecturer->load(['programStudy', 'creator'])->toArray();
+        });
+    }
+
+    /**
+     * Generate a unique employee number for duplicated lecturer.
+     */
+    private function generateUniqueEmployeeNumber(string $originalNumber): string
+    {
+        // Extract base number without any existing copy suffix
+        $baseNumber = preg_replace('/_COPY_\d+$/', '', $originalNumber);
+
+        // Find the highest existing copy number for this base number
+        $existingPattern = $baseNumber . '_COPY_';
+        $highestCopy = Lecturer::where('employee_number', 'like', $existingPattern . '%')
+            ->get()
+            ->map(function($lecturer) use ($baseNumber, $existingPattern) {
+                $suffix = str_replace($existingPattern, '', $lecturer->employee_number);
+                return is_numeric($suffix) ? (int)$suffix : 0;
+            })
+            ->max() ?? 0;
+
+        $nextCopy = $highestCopy + 1;
+        return $baseNumber . '_COPY_' . $nextCopy;
+    }
+
+    /**
+     * Generate a unique email for duplicated lecturer.
+     */
+    private function generateUniqueEmail(string $originalEmail): string
+    {
+        // Extract base email without any existing copy suffix
+        $baseEmail = preg_replace('/_COPY_\d+@/', '@', $originalEmail);
+
+        // Extract parts before and after @ for the base email
+        list($emailLocal, $emailDomain) = explode('@', $baseEmail);
+
+        // Find the highest existing copy number for this base email
+        $highestCopy = Lecturer::where('email', 'like', $emailLocal . '_COPY_%@' . $emailDomain)
+            ->get()
+            ->map(function($lecturer) use ($emailLocal, $emailDomain) {
+                // Extract the copy number between _COPY_ and @
+                $pattern = '/^' . preg_quote($emailLocal, '/') . '_COPY_(\d+)@' . preg_quote($emailDomain, '/') . '$/';
+                if (preg_match($pattern, $lecturer->email, $matches)) {
+                    return (int)$matches[1];
+                }
+                return 0;
+            })
+            ->max() ?? 0;
+
+        $nextCopy = $highestCopy + 1;
+        return $emailLocal . '_COPY_' . $nextCopy . '@' . $emailDomain;
+    }
+
+    /**
+     * Generate a duplicate name.
+     */
+    private function generateDuplicateName(string $originalName): string
+    {
+        // Extract base name without any existing copy suffix
+        $baseName = preg_replace('/\s*\(Copy(\s*\d+)?\)\s*$/', '', $originalName);
+
+        // Count existing copies to determine the next number
+        $copyPattern = $baseName . ' (Copy';
+        $existingCount = Lecturer::where('name', 'like', $copyPattern . '%')->count();
+
+        // If no existing copies, just use (Copy), otherwise use (Copy X)
+        if ($existingCount == 0) {
+            return $baseName . ' (Copy)';
+        } else {
+            return $baseName . ' (Copy ' . ($existingCount + 1) . ')';
+        }
+    }
+
+    /**
+     * Generate a unique ID card number for duplicated lecturer.
+     */
+    private function generateUniqueIdCardNumber(?string $originalNumber): ?string
+    {
+        if (!$originalNumber) {
+            return null;
+        }
+
+        // Extract base ID card number without any existing copy suffix
+        $baseNumber = preg_replace('/_COPY_\d+$/', '', $originalNumber);
+
+        // Find the highest existing copy number for this base number
+        $existingPattern = $baseNumber . '_COPY_';
+        $highestCopy = Lecturer::where('id_card_number', 'like', $existingPattern . '%')
+            ->get()
+            ->map(function($lecturer) use ($baseNumber, $existingPattern) {
+                $suffix = str_replace($existingPattern, '', $lecturer->id_card_number);
+                return is_numeric($suffix) ? (int)$suffix : 0;
+            })
+            ->max() ?? 0;
+
+        $nextCopy = $highestCopy + 1;
+        return $baseNumber . '_COPY_' . $nextCopy;
+    }
+
+    /**
+     * Generate a unique phone number for duplicated lecturer.
+     */
+    private function generateUniquePhone(?string $originalPhone): ?string
+    {
+        if (!$originalPhone) {
+            return null;
+        }
+
+        // Extract base phone without any existing copy suffix
+        $basePhone = preg_replace('/\s*\(Copy\)\s*$/', '', $originalPhone);
+
+        $counter = 1;
+        do {
+            $newPhone = $basePhone . ' (Copy)';
+            if ($counter > 1) {
+                $newPhone = $basePhone . ' (Copy ' . $counter . ')';
+            }
+            $exists = Lecturer::where('phone', $newPhone)->exists();
+            $counter++;
+        } while ($exists);
+
+        return $newPhone;
+    }
+
+    /**
+     * Generate a unique passport number for duplicated lecturer.
+     */
+    private function generateUniquePassportNumber(?string $originalPassport): ?string
+    {
+        if (!$originalPassport) {
+            return null;
+        }
+
+        // Extract base passport number without any existing copy suffix
+        $basePassport = preg_replace('/_COPY_\d*$/', '', $originalPassport);
+
+        $counter = 1;
+        do {
+            $newPassport = $basePassport . '_COPY_' . $counter;
+            $exists = Lecturer::where('passport_number', $newPassport)->exists();
+            $counter++;
+        } while ($exists);
+
+        return $newPassport;
     }
 }
