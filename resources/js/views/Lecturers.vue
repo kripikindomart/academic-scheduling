@@ -86,7 +86,7 @@
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dt class="text-sm font-medium text-green-100">Dosen Aktif</dt>
-                  <dd class="text-3xl font-bold text-white">{{ lecturerStats.by_status?.active || 0 }}</dd>
+                  <dd class="text-3xl font-bold text-white">{{ lecturerStats.by_status?.Aktif || 0 }}</dd>
                   <div class="flex items-center mt-1">
                     <svg class="w-4 h-4 text-green-200 mr-1" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
@@ -116,7 +116,7 @@
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dt class="text-sm font-medium text-amber-100">Sedang Cuti</dt>
-                  <dd class="text-3xl font-bold text-white">{{ lecturerStats.by_status?.on_leave || 0 }}</dd>
+                  <dd class="text-3xl font-bold text-white">{{ lecturerStats.by_status?.Cuti || 0 }}</dd>
                   <div class="flex items-center mt-1">
                     <svg class="w-4 h-4 text-amber-200 mr-1" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
@@ -146,7 +146,7 @@
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dt class="text-sm font-medium text-red-100">Tidak Aktif</dt>
-                  <dd class="text-3xl font-bold text-white">{{ lecturerStats.by_status?.inactive || 0 }}</dd>
+                  <dd class="text-3xl font-bold text-white">{{ lecturerStats.by_status?.Tidak || 0 }}</dd>
                   <div class="flex items-center mt-1">
                     <svg class="w-4 h-4 text-red-200 mr-1" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/>
@@ -222,9 +222,9 @@
                       class="appearance-none w-full px-3 py-2.5 pr-8 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white hover:border-gray-300 transition-all duration-200"
                     >
                       <option value="">Semua Status</option>
-                      <option value="active">Aktif</option>
-                      <option value="inactive">Tidak Aktif</option>
-                      <option value="on_leave">Cuti</option>
+                      <option value="Aktif">Aktif</option>
+                      <option value="Tidak">Tidak Aktif</option>
+                      <option value="Cuti">Cuti</option>
                     </select>
                     <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -383,6 +383,12 @@
                 <div class="flex items-center space-x-2">
                   <!-- Actions for Active Tab -->
                   <template v-if="activeTab === 'active'">
+                    <button
+                      @click="bulkCreateUserAccounts"
+                      class="px-3 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
+                    >
+                      Buat Akun Pengguna
+                    </button>
                     <button
                       @click="confirmBulkDelete"
                       class="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
@@ -627,29 +633,29 @@
                         <span
                           :class="[
                             'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium',
-                            lecturer.status === 'active' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
-                            lecturer.status === 'inactive' ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300' :
-                            lecturer.status === 'on_leave' ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300' :
+                            lecturer.status === 'Aktif' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
+                            lecturer.status === 'Tidak' ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300' :
+                            lecturer.status === 'Cuti' ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300' :
                             'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300'
                           ]"
                         >
                           <span class="w-2 h-2 mr-1.5 rounded-full"
                                 :class="[
                                   'inline-block',
-                                  lecturer.status === 'active' ? 'bg-green-500' :
-                                  lecturer.status === 'inactive' ? 'bg-red-500' :
-                                  lecturer.status === 'on_leave' ? 'bg-yellow-500' :
+                                  lecturer.status === 'Aktif' ? 'bg-green-500' :
+                                  lecturer.status === 'Tidak' ? 'bg-red-500' :
+                                  lecturer.status === 'Cuti' ? 'bg-yellow-500' :
                                   'bg-gray-500'
                                 ]">
                           </span>
-                          {{ lecturer.status === 'active' ? 'Aktif' :
-                             lecturer.status === 'inactive' ? 'Tidak Aktif' :
-                             lecturer.status === 'on_leave' ? 'Cuti' :
+                          {{ lecturer.status === 'Aktif' ? 'Aktif' :
+                             lecturer.status === 'Tidak' ? 'Tidak Aktif' :
+                             lecturer.status === 'Cuti' ? 'Cuti' :
                              lecturer.status || 'Unknown' }}
                         </span>
 
                         <!-- Academic Load (if active) -->
-                        <div v-if="lecturer.status === 'active' && lecturer.academic_load" class="text-xs text-gray-600">
+                        <div v-if="lecturer.status === 'Aktif' && lecturer.academic_load" class="text-xs text-gray-600">
                           Beban: {{ lecturer.academic_load }} SKS
                         </div>
                       </div>
@@ -695,6 +701,7 @@
 
                           <!-- Create User Account Button -->
                           <button
+                            v-if="!lecturer.user_id && !lecturer.user"
                             @click="createUserAccount(lecturer)"
                             class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-200 group"
                             title="Buat akun pengguna"
@@ -703,6 +710,17 @@
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
                           </button>
+
+                          <!-- User Account Status Indicator -->
+                          <div
+                            v-if="lecturer.user_id || lecturer.user"
+                            class="p-2 text-gray-400 rounded-lg"
+                            :title="`Akun pengguna sudah ada: ${lecturer.user?.email || lecturer.email}`"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                          </div>
 
                           <!-- Delete Button -->
                           <button
@@ -840,7 +858,7 @@
         @edit="editLecturerFromDetail"
       />
 
-      <ImportModal
+      <LecturerImportModal
         v-if="showImportModal"
         :show="showImportModal"
         @close="showImportModal = false"
@@ -908,6 +926,7 @@ import programStudyService from '@/services/programStudyService'
 import Layout from '@/components/Layout.vue'
 import LecturerFormModal from '@/components/modals/LecturerFormModal.vue'
 import LecturerDetailModal from '@/components/modals/LecturerDetailModal.vue'
+import LecturerImportModal from '@/components/modals/LecturerImportModal.vue'
 import ImportModal from '@/components/modals/ImportModal.vue'
 import ConfirmModal from '@/components/modals/ConfirmModal.vue'
 import Toast from '@/components/Toast.vue'
@@ -1221,12 +1240,8 @@ const duplicateLecturer = async (lecturer) => {
 
 const createUserAccount = async (lecturer) => {
   // Check if lecturer already has user account
-  if (lecturer.user) {
-    toastStore.addToast({
-      type: 'warning',
-      title: 'Perhatian',
-      message: `Dosen "${lecturer.name}" sudah memiliki akun pengguna`
-    })
+  if (lecturer.user_id || lecturer.user) {
+    toastStore.warning('Perhatian', `Dosen "${lecturer.name}" sudah memiliki akun pengguna`)
     return
   }
 
@@ -1238,38 +1253,94 @@ const createUserAccount = async (lecturer) => {
       timeout: 0
     })
 
-    // Create user account based on lecturer data
-    const userData = {
-      name: lecturer.name,
-      email: lecturer.email,
-      role: 'lecturer',
-      lecturer_id: lecturer.id,
-      password: 'password123', // Default password, should be changed on first login
-      is_active: true
-    }
-
-    // Call API to create user account (assuming there's an endpoint)
-    // This would need to be implemented in the backend
-    console.log('Creating user account:', userData)
+    // Call API to create user account
+    const response = await lecturerService.createUserAccount(lecturer.id)
 
     // Remove loading toast
     toastStore.removeToast(loadingToast)
 
-    toastStore.addToast({
-      type: 'success',
-      title: 'Berhasil',
-      message: `Akun pengguna untuk "${lecturer.name}" berhasil dibuat dengan password: password123`
-    })
+    if (response.success) {
+      const defaultPassword = response.data.default_password
 
-    // Refresh lecturer data to show user account
-    fetchLecturers()
+      toastStore.success('Berhasil',
+        `Akun pengguna untuk "${lecturer.name}" berhasil dibuat. Default password: ${defaultPassword}`
+      )
+
+      // Refresh lecturer data to show user account
+      fetchLecturers()
+    } else {
+      toastStore.error('Error', response.message || 'Gagal membuat akun pengguna')
+    }
   } catch (error) {
     console.error('Error creating user account:', error)
-    toastStore.addToast({
-      type: 'error',
-      title: 'Error',
-      message: error.response?.data?.message || 'Gagal membuat akun pengguna'
+    toastStore.handleError(error, 'createUserAccount')
+  }
+}
+
+const bulkCreateUserAccounts = async () => {
+  if (selectedItems.value.length === 0) {
+    toastStore.warning('Perhatian', 'Pilih minimal satu dosen untuk dibuatkan akun pengguna')
+    return
+  }
+
+  // Filter out null values and extract lecturer IDs
+  const lecturerIds = selectedItems.value
+    .filter(id => id !== null && id !== undefined && id !== '')
+    .map(id => parseInt(id))
+    .filter(id => !isNaN(id) && id > 0)
+
+  // Check if we have any valid IDs after filtering
+  if (lecturerIds.length === 0) {
+    toastStore.warning('Perhatian', 'Tidak ada dosen valid yang dipilih. Silakan pilih kembali.')
+    return
+  }
+
+  try {
+    const loadingToast = toastStore.addToast({
+      type: 'info',
+      title: 'Memproses',
+      message: `Membuat akun pengguna untuk ${lecturerIds.length} dosen...`,
+      timeout: 0
     })
+
+    // Call bulk API
+    const response = await lecturerService.bulkCreateUserAccounts(lecturerIds)
+
+    // Remove loading toast
+    toastStore.removeToast(loadingToast)
+
+    if (response.success) {
+      const { success_count, error_count, results } = response.data
+
+      // Show success message
+      if (success_count > 0) {
+        toastStore.success(
+          'Berhasil',
+          `${success_count} akun pengguna berhasil dibuat. Password default: nama tanpa spasi + @123`
+        )
+      }
+
+      // Show errors if any
+      if (error_count > 0) {
+        const errorResults = results.filter(r => !r.success)
+        const errorMessages = errorResults.slice(0, 3).map(r => `${r.lecturer_name}: ${r.message}`)
+        const errorMessage = errorMessages.join('; ') + (error_count > 3 ? '...' : '')
+
+        toastStore.error('Error', `${error_count} akun gagal dibuat: ${errorMessage}`)
+      }
+
+      // Log detailed results for debugging
+      console.log('Bulk create user accounts results:', results)
+    } else {
+      toastStore.error('Error', response.message || 'Gagal membuat akun pengguna secara bulk')
+    }
+
+    // Clear selection and refresh data
+    selectedItems.value = []
+    fetchLecturers()
+  } catch (error) {
+    console.error('Error in bulk create user accounts:', error)
+    toastStore.handleError(error, 'bulkCreateUserAccounts')
   }
 }
 
@@ -1354,9 +1425,30 @@ const toggleSelectAll = () => {
   }
 }
 
-const editLecturer = (lecturer) => {
-  currentLecturer.value = { ...lecturer }
-  showEditModal.value = true
+const editLecturer = async (lecturer) => {
+  try {
+    // Clear current lecturer first to reset form
+    currentLecturer.value = null
+
+    // Open modal first (will show empty form)
+    showEditModal.value = true
+
+    // Then fetch complete lecturer data from backend
+    const response = await lecturerService.getById(lecturer.id)
+    console.log('📋 EditLecturer - API Response:', response.data)
+
+    // Set lecturer data (this should trigger the watcher in modal)
+    currentLecturer.value = response.data
+    console.log('📋 EditLecturer - CurrentLecturer set:', currentLecturer.value)
+
+  } catch (error) {
+    console.error('Error fetching lecturer data:', error)
+    toastStore.handleError(error, 'Ambil data dosen')
+
+    // Fallback to basic data if fetch fails
+    currentLecturer.value = { ...lecturer }
+    console.log('📋 EditLecturer - Fallback data set:', currentLecturer.value)
+  }
 }
 
 const confirmDelete = (lecturer) => {
@@ -1512,10 +1604,33 @@ const viewLecturerDetail = (lecturer) => {
   showDetailModal.value = true
 }
 
-const editLecturerFromDetail = (lecturer) => {
-  currentLecturer.value = { ...lecturer }
-  showEditModal.value = true
-  showDetailModal.value = false
+const editLecturerFromDetail = async (lecturer) => {
+  try {
+    // Clear current lecturer first to reset form
+    currentLecturer.value = null
+
+    // Close detail modal and open edit modal
+    showDetailModal.value = false
+    showEditModal.value = true
+
+    // Then fetch complete lecturer data from backend
+    const response = await lecturerService.getById(lecturer.id)
+    console.log('📋 EditLecturerFromDetail - API Response:', response.data)
+
+    // Set lecturer data (this should trigger the watcher in modal)
+    currentLecturer.value = response.data
+    console.log('📋 EditLecturerFromDetail - CurrentLecturer set:', currentLecturer.value)
+
+  } catch (error) {
+    console.error('Error fetching lecturer data:', error)
+    toastStore.handleError(error, 'Ambil data dosen')
+
+    // Fallback to basic data if fetch fails
+    currentLecturer.value = { ...lecturer }
+    console.log('📋 EditLecturerFromDetail - Fallback data set:', currentLecturer.value)
+    showEditModal.value = true
+    showDetailModal.value = false
+  }
 }
 
 const closeModal = () => {
@@ -1530,22 +1645,14 @@ const onLecturerSaved = () => {
   closeModal()
   fetchLecturers()
   fetchStats()
-  toastStore.addToast({
-    type: 'success',
-    title: 'Berhasil',
-    message: showEditModal.value ? 'Dosen berhasil diperbarui' : 'Dosen berhasil ditambahkan'
-  })
+  toastStore.success('Berhasil', showEditModal.value ? 'Dosen berhasil diperbarui' : 'Dosen berhasil ditambahkan')
 }
 
 const onImported = () => {
   showImportModal.value = false
   fetchLecturers()
   fetchStats()
-  toastStore.addToast({
-    type: 'success',
-    title: 'Berhasil',
-    message: 'Data berhasil diimpor'
-  })
+  toastStore.success('Berhasil', 'Data berhasil diimpor')
 }
 
 // Pagination methods
