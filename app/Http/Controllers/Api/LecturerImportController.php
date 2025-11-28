@@ -7,6 +7,7 @@ use App\Models\Lecturer;
 use App\Models\ProgramStudy;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -20,7 +21,7 @@ class LecturerImportController extends Controller
     /**
      * Download template for import
      */
-    public function downloadTemplate(): JsonResponse
+    public function downloadTemplate(): BinaryFileResponse
     {
         try {
             $filename = 'template-import-dosen-' . date('Y-m-d') . '.xlsx';
