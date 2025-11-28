@@ -22,3 +22,15 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# Temporary files
+*.xlsx
+*.xls
+*.csv
+
+# Test files
+test_template.*
+template_*
+current_template.*
+
+# Migration files (temporary)
+database/migrations/2025_11_28_*.php
