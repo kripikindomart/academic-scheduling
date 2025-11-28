@@ -862,7 +862,7 @@
         v-if="showImportModal"
         :show="showImportModal"
         @close="showImportModal = false"
-        @imported="onImported"
+        @import-success="onImported"
       />
 
       <ConfirmModal

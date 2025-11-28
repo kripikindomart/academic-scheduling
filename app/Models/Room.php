@@ -90,14 +90,14 @@ class Room extends Model
     {
         return $this->hasMany(Schedule::class)
             ->where('status', 'active')
-            ->whereDate('end_date', '>=', now());
+            ->whereDate('end_time', '>=', now());
     }
 
     public function todaySchedules()
     {
         return $this->hasMany(Schedule::class)
-            ->whereDate('start_date', '<=', now())
-            ->whereDate('end_date', '>=', now())
+            ->whereDate('start_time', '<=', now())
+            ->whereDate('end_time', '>=', now())
             ->orderBy('start_time');
     }
 
@@ -296,8 +296,8 @@ class Room extends Model
         $endOfWeek = now()->endOfWeek();
 
         return $this->schedules()
-            ->whereDate('start_date', '<=', $endOfWeek)
-            ->whereDate('end_date', '>=', $startOfWeek)
+            ->whereDate('start_time', '<=', $endOfWeek)
+            ->whereDate('end_time', '>=', $startOfWeek)
             ->where('status', 'active')
             ->with(['course', 'lecturer'])
             ->orderBy('start_date')
@@ -330,7 +330,7 @@ class Room extends Model
     public function getUpcomingSchedulesAttribute($limit = 5)
     {
         return $this->schedules()
-            ->whereDate('end_date', '>=', now())
+            ->whereDate('end_time', '>=', now())
             ->where('status', 'active')
             ->orderBy('start_date')
             ->orderBy('start_time')

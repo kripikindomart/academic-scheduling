@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\ProgramStudyController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\LecturerController;
+use App\Http\Controllers\Api\LecturerImportController;
 use App\Http\Controllers\Api\BuildingController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\ScheduleController;
@@ -132,11 +133,23 @@ Route::middleware(['auth:sanctum'])->prefix('lecturers')->group(function () {
     Route::get('/{lecturer}', [LecturerController::class, 'show'])->middleware('permission:lecturers.view');
     Route::put('/{lecturer}', [LecturerController::class, 'update'])->middleware('permission:lecturers.edit');
     Route::post('/{lecturer}/duplicate', [LecturerController::class, 'duplicate'])->middleware('permission:lecturers.create');
+    Route::post('/{lecturer}/create-user-account', [LecturerController::class, 'createUserAccount'])->middleware('permission:lecturers.edit');
+    Route::post('/bulk-create-user-accounts', [LecturerController::class, 'bulkCreateUserAccounts'])->middleware('permission:lecturers.edit');
     Route::delete('/{lecturer}', [LecturerController::class, 'destroy'])->middleware('permission:lecturers.delete');
     Route::get('/{lecturer}/teaching-load', [LecturerController::class, 'teachingLoad'])->middleware('permission:lecturers.view');
     Route::put('/{lecturer}/status', [LecturerController::class, 'updateStatus'])->middleware('permission:lecturers.edit');
     Route::get('/{lecturer}/attendance-summary', [LecturerController::class, 'attendanceSummary'])->middleware('permission:lecturers.view');
     Route::post('/{lecturer}/assign-course/{course}', [LecturerController::class, 'assignCourse'])->middleware('permission:lecturers.edit');
+
+    // Import/Export routes
+    Route::prefix('import')->group(function () {
+        Route::get('/template', [LecturerImportController::class, 'downloadTemplate'])->middleware('permission:lecturers.create');
+        Route::post('/validate', [LecturerImportController::class, 'validateFile'])->middleware('permission:lecturers.create');
+        Route::post('/revalidate', [LecturerImportController::class, 'revalidateData'])->middleware('permission:lecturers.create');
+        Route::post('/process', [LecturerImportController::class, 'processImport'])->middleware('permission:lecturers.create');
+        Route::get('/program-studies', [LecturerImportController::class, 'getProgramStudies'])->middleware('permission:lecturers.create');
+        Route::post('/check-duplicates', [LecturerImportController::class, 'checkDuplicates'])->middleware('permission:lecturers.create');
+    });
 });
 
 // Building management routes

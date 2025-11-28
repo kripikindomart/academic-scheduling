@@ -45,7 +45,17 @@ class ProgramStudyService extends BaseService
         }
 
         if (isset($filters['is_active'])) {
-            $query->where('is_active', $filters['is_active']);
+            // Convert boolean/ string to integer for database comparison
+            $isActive = $filters['is_active'];
+            if ($isActive === true || $isActive === 'true' || $isActive === '1') {
+                $isActiveValue = 1;
+            } elseif ($isActive === false || $isActive === 'false' || $isActive === '0') {
+                $isActiveValue = 0;
+            } else {
+                $isActiveValue = (int) $isActive;
+            }
+
+            $query->where('is_active', $isActiveValue);
         }
 
         if (!empty($filters['search'])) {
@@ -58,10 +68,12 @@ class ProgramStudyService extends BaseService
             });
         }
 
-        return $query->orderBy('faculty')
+        $result = $query->orderBy('faculty')
                     ->orderBy('level')
                     ->orderBy('code')
                     ->paginate($perPage);
+
+        return $result;
     }
 
     /**

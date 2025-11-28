@@ -311,8 +311,9 @@
               </td>
               <td class="px-6 py-4">
                 <div class="flex space-x-2">
-                  <!-- Edit button -->
-                  <button @click="editProgram(program)"
+                  <!-- Edit button (only for active tab) -->
+                  <button v-if="activeTab === 'active'"
+                          @click="editProgram(program)"
                           class="p-1 text-blue-600 rounded hover:text-blue-900"
                           title="Edit">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -349,6 +350,16 @@
                           title="Restore">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6 6" />
+                    </svg>
+                  </button>
+
+                  <!-- Delete Permanent button (only for trash tab) -->
+                  <button v-if="activeTab === 'trash'"
+                          @click="confirmDeletePermanent(program)"
+                          class="p-1 text-red-600 rounded hover:text-red-900"
+                          title="Delete Permanently">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
                 </div>
@@ -578,20 +589,7 @@
       </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="fixed z-50 space-y-2 toast-container top-4 right-4">
-      <Toast
-        v-for="(toast, index) in toasts"
-        :key="index"
-        :title="toast.title"
-        :description="toast.description"
-        :type="toast.type"
-        :duration="toast.duration"
-        @close="removeToast(index)"
-        ref="toastComponent"
-      />
-    </div>
-      </div>
+        </div>
     </div>
   </Layout>
 </template>
@@ -600,7 +598,7 @@
 import { ref, computed, onMounted, ref as vueRef, watch } from 'vue';
 import Layout from '@/components/Layout.vue';
 import programStudyService from '@/services/programStudyService';
-import Toast from '@/components/Toast.vue';
+import { useToastStore } from '../stores/toast';
 
 // State
 const programs = ref([]);
@@ -611,8 +609,9 @@ const selectedItems = ref([]);
 const perPage = ref(10);
 const currentPage = ref(1);
 const total = ref(0);
-const toasts = ref([]);
-const toastComponent = ref(null);
+
+// Global toast store
+const toastStore = useToastStore();
 
 // Tab management
 const activeTab = ref('active');
@@ -706,24 +705,6 @@ const sanitizeFormData = (data) => {
   return sanitized;
 };
 
-// Toast helper functions
-const showToast = (title, description = '', type = 'info', duration = 5000) => {
-  const toast = { title, description, type, duration };
-  toasts.value.push(toast);
-
-  // Auto remove after duration
-  if (duration > 0) {
-    setTimeout(() => {
-      removeToast(toasts.value.indexOf(toast));
-    }, duration);
-  }
-};
-
-const removeToast = (index) => {
-  if (index > -1) {
-    toasts.value.splice(index, 1);
-  }
-};
 
 // Methods
 const fetchData = async () => {
@@ -769,10 +750,10 @@ const fetchData = async () => {
       // Show permission error with helpful message
       showPermissionError();
     } else if (error.errorType === 'VALIDATION_ERROR') {
-      showToast('Validasi Gagal', error.userMessage, 'error');
+      toastStore.error('Validasi Gagal', error.userMessage);
     } else {
       // General error
-      showToast('Gagal Memuat Data', error.userMessage, 'error');
+      toastStore.error('Gagal Memuat Data', error.userMessage);
     }
   } finally {
     loading.value = false;
@@ -783,7 +764,7 @@ const showPermissionError = () => {
   const shouldShowPermissionMessage = localStorage.getItem('permission_error_shown');
   if (!shouldShowPermissionMessage) {
     localStorage.setItem('permission_error_shown', 'true');
-    showToast(
+    toastStore(
       'Akses Ditolak',
       'Anda tidak memiliki izin untuk mengakses halaman Program Studi. Silakan hubungi administrator sistem.',
       'error',
@@ -866,7 +847,7 @@ const saveProgram = async () => {
       // Update existing program
       const response = await programStudyService.update(editingProgram.value.id, sanitizedData);
       if (response.success) {
-        showToast('Berhasil', 'Program studi berhasil diperbarui!', 'success');
+        toastStore.success('Berhasil', 'Program studi berhasil diperbarui!');
         closeModal();
         fetchData();
       } else {
@@ -876,7 +857,7 @@ const saveProgram = async () => {
       // Create new program
       const response = await programStudyService.create(sanitizedData);
       if (response.success) {
-        showToast('Berhasil', 'Program studi berhasil ditambahkan!', 'success');
+        toastStore.success('Berhasil', 'Program studi berhasil ditambahkan!');
         closeModal();
         fetchData();
       } else {
@@ -886,16 +867,16 @@ const saveProgram = async () => {
   } catch (error) {
     
     if (error.errorType === 'PERMISSION_ERROR') {
-      showToast('Akses Ditolak', error.userMessage, 'error');
+      toastStore('Akses Ditolak', error.userMessage, 'error');
     } else if (error.errorType === 'VALIDATION_ERROR') {
       // Set form errors for field-specific error display
       formErrors.value = error.validationErrors || {};
 
       // Show general toast message
       const errorMessages = Object.values(error.validationErrors || {}).flat();
-      showToast('Validasi Gagal', errorMessages.join(', '), 'error');
+      toastStore.error('Validasi Gagal', errorMessages.join(', '));
     } else {
-      showToast('Gagal Menyimpan', error.userMessage, 'error');
+      toastStore('Gagal Menyimpan', error.userMessage, 'error');
     }
   }
 };
@@ -908,30 +889,57 @@ const confirmDeleteProgram = async (program) => {
     `${sanitizeInput(program.code)} - ${sanitizeInput(program.name)}`,
     'Hapus',
     async () => {
-      const response = await programStudyService.delete(program.id);
-      if (response.success) {
-        showToast('Berhasil', 'Program studi berhasil dihapus!', 'success');
+      try {
+        const response = await programStudyService.delete(program.id);
+
+        // Check for success: false in response
+        if (response.success === false) {
+          const errorMessage = response.message || 'Failed to delete program study';
+          toastStore.error('Gagal Hapus', errorMessage);
+          return;
+        }
+
+        // Success case
+        toastStore.success('Berhasil', 'Program studi berhasil dihapus!');
         fetchData();
-      } else {
-        throw new Error(response.message || 'Failed to delete program');
+
+      } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to delete program study';
+        toastStore.error('Gagal Hapus', errorMessage);
       }
     }
   );
 };
 
-const deleteProgram = async (id) => {
-  try {
-    const response = await programStudyService.delete(id);
-    if (response.success) {
-      showToast('Berhasil', 'Program studi berhasil dihapus!', 'success');
-      fetchData();
-    } else {
-      throw new Error(response.message || 'Failed to delete program');
+// Confirm Delete Permanent (single item)
+const confirmDeletePermanent = async (program) => {
+  showConfirmationModal(
+    'delete',
+    'Konfirmasi Hapus Permanen',
+    `⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus permanen program studi "${sanitizeInput(program.name)}"? Tindakan ini tidak dapat dibatalkan!`,
+    `${sanitizeInput(program.code)} - ${sanitizeInput(program.name)}`,
+    'Hapus Permanen',
+    async () => {
+      try {
+        const response = await programStudyService.forceDelete(program.id);
+
+        if (response.success === false) {
+          const errorMessage = response.message || 'Failed to permanently delete program study';
+          toastStore.error('Gagal Hapus Permanen', errorMessage);
+          return;
+        }
+
+        toastStore.success('Berhasil', 'Program studi berhasil dihapus permanen!');
+        fetchData();
+
+      } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to permanently delete program study';
+        toastStore.error('Gagal Hapus Permanen', errorMessage);
+      }
     }
-  } catch (error) {
-        showToast('Gagal Menghapus', error.userMessage || error.message, 'error');
-  }
+  );
 };
+
 
 const closeModal = () => {
   showModal.value = false;
@@ -968,15 +976,21 @@ const bulkDelete = async () => {
     `${selectedItems.value.length} program studi`,
     'Hapus Semua',
     async () => {
-      const response = await programStudyService.bulkDelete({
-        program_study_ids: selectedItems.value
-      });
-      if (response.success) {
-        showToast('Berhasil', `${selectedItems.value.length} program studi berhasil dihapus!`, 'success');
-        clearSelection();
-        fetchData();
-      } else {
-        throw new Error(response.message || 'Failed to bulk delete programs');
+      try {
+        const response = await programStudyService.bulkDelete({
+          program_study_ids: selectedItems.value
+        });
+
+        if (response.success) {
+          toastStore.success('Berhasil', `${selectedItems.value.length} program studi berhasil dihapus!`);
+          clearSelection();
+          fetchData();
+        } else {
+          throw new Error(response.message || 'Failed to bulk delete programs');
+        }
+      } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to bulk delete programs';
+        toastStore.error('Gagal Hapus Massal', errorMessage);
       }
     }
   );
@@ -989,14 +1003,14 @@ const bulkActivate = async () => {
       is_active: true
     });
     if (response.success) {
-      showToast('Berhasil', `${selectedItems.value.length} program studi berhasil diaktifkan!`, 'success');
+      toastStore('Berhasil', `${selectedItems.value.length} program studi berhasil diaktifkan!`, 'success');
       clearSelection();
       fetchData();
     } else {
       throw new Error(response.message || 'Failed to bulk activate programs');
     }
   } catch (error) {
-      showToast('Gagal Mengaktifkan', error.userMessage || error.message || error.response?.data?.message || 'Terjadi kesalahan', 'error');
+      toastStore.error('Gagal Mengaktifkan', error.userMessage || error.message || error.response?.data?.message || 'Terjadi kesalahan');
   }
 };
 
@@ -1007,14 +1021,14 @@ const bulkDeactivate = async () => {
       is_active: false
     });
     if (response.success) {
-      showToast('Berhasil', `${selectedItems.value.length} program studi berhasil dinonaktifkan!`, 'success');
+      toastStore('Berhasil', `${selectedItems.value.length} program studi berhasil dinonaktifkan!`, 'success');
       clearSelection();
       fetchData();
     } else {
       throw new Error(response.message || 'Failed to bulk deactivate programs');
     }
   } catch (error) {
-        showToast('Gagal Menonaktifkan', error.userMessage || error.message, 'error');
+        toastStore('Gagal Menonaktifkan', error.userMessage || error.message, 'error');
   }
 };
 
@@ -1108,12 +1122,12 @@ const toggleStatus = async (program) => {
         programs.value[index] = { ...programs.value[index], ...response.data };
       }
 
-      showToast('Berhasil', `Status ${response.data.name} berhasil diubah menjadi ${response.data.is_active ? 'Aktif' : 'Tidak Aktif'}`, 'success');
+      toastStore('Berhasil', `Status ${response.data.name} berhasil diubah menjadi ${response.data.is_active ? 'Aktif' : 'Tidak Aktif'}`, 'success');
     } else {
       throw new Error(response.message || 'Failed to toggle status');
     }
   } catch (error) {
-    showToast('Gagal Mengubah Status', error.userMessage || error.message || error.response?.data?.message || 'Terjadi kesalahan', 'error');
+    toastStore.error('Gagal Mengubah Status', error.userMessage || error.message || error.response?.data?.message || 'Terjadi kesalahan');
   } finally {
     togglingStatus.value = null;
   }
@@ -1127,15 +1141,22 @@ const duplicateProgram = async (program) => {
     `${program.code} - ${program.name}`,
     'Duplikasi',
     async () => {
-      duplicatingProgram.value = program.id;
+      try {
+        duplicatingProgram.value = program.id;
 
-      const response = await programStudyService.duplicate(program.id);
+        const response = await programStudyService.duplicate(program.id);
 
-      if (response.success) {
-        showToast('Berhasil', `Program studi "${response.data.name}" berhasil diduplikasi!`, 'success');
-        fetchData();
-      } else {
-        throw new Error(response.message || 'Failed to duplicate program');
+        if (response.success) {
+          toastStore.success('Berhasil', `Program studi "${response.data.name}" berhasil diduplikasi!`);
+          fetchData();
+        } else {
+          throw new Error(response.message || 'Failed to duplicate program');
+        }
+      } catch (error) {
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to duplicate program';
+        toastStore.error('Gagal Duplikasi', errorMessage);
+      } finally {
+        duplicatingProgram.value = null;
       }
     }
   );
@@ -1154,7 +1175,7 @@ const restoreProgram = async (program) => {
       const response = await programStudyService.restore(program.id);
 
       if (response.success) {
-        showToast('Berhasil', `Program studi "${response.data.name}" berhasil dipulihkan!`, 'success');
+        toastStore('Berhasil', `Program studi "${response.data.name}" berhasil dipulihkan!`, 'success');
         fetchData();
       } else {
         throw new Error(response.message || 'Failed to restore program');
@@ -1180,11 +1201,11 @@ const bulkRestore = async () => {
       const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
 
       if (successful > 0) {
-        showToast('Berhasil', `${successful} program studi berhasil dipulihkan!`, 'success');
+        toastStore('Berhasil', `${successful} program studi berhasil dipulihkan!`, 'success');
         clearSelection();
         fetchData();
       } else {
-        showToast('Gagal', 'Tidak ada program studi yang berhasil dipulihkan', 'error');
+        toastStore.error('Gagal', 'Tidak ada program studi yang berhasil dipulihkan');
       }
     }
   );
@@ -1201,19 +1222,34 @@ const bulkDeletePermanent = async () => {
     async () => {
       const promises = selectedItems.value.map(id =>
         programStudyService.forceDelete(id).catch(error => {
-                    return { success: false, error: error.message || 'Failed to force delete' };
+          return { success: false, error: error.message || 'Failed to force delete' };
         })
       );
 
       const results = await Promise.allSettled(promises);
       const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+      const failed = results.filter(r => r.status === 'fulfilled' && !r.value.success).length;
+
+      // Collect error messages
+      const errorMessages = [];
+      results.forEach(result => {
+        if (result.status === 'fulfilled' && !result.value.success && result.value.error) {
+          errorMessages.push(result.value.error);
+        }
+      });
 
       if (successful > 0) {
-        showToast('Berhasil', `${successful} program studi berhasil dihapus permanen!`, 'success');
+        toastStore.success('Berhasil', `${successful} program studi berhasil dihapus permanen!`);
+      }
+
+      if (failed > 0) {
+        const errorMessage = errorMessages.length > 0 ? errorMessages[0] : 'Gagal menghapus beberapa program studi';
+        toastStore.error('Gagal Hapus Permanen', errorMessage);
+      }
+
+      if (successful > 0 || failed > 0) {
         clearSelection();
         fetchData();
-      } else {
-        showToast('Gagal', 'Tidak ada program studi yang berhasil dihapus permanen', 'error');
       }
     }
   );
@@ -1224,9 +1260,9 @@ const refreshData = async () => {
   try {
     clearSelection();
     await fetchData();
-    showToast('Data Segar', 'Data berhasil dimuat ulang!', 'success', 3000);
+    toastStore.success('Data Segar', 'Data berhasil dimuat ulang!');
   } catch (error) {
-    showToast('Gagal Refresh', error.userMessage || error.message, 'error');
+    toastStore.error('Gagal Refresh', error.userMessage || error.message);
   }
 };
 

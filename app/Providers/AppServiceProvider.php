@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use App\Services\StudentService;
 use App\Services\LecturerService;
 use App\Services\RoomService;
+use App\Services\ConflictDetectionService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(ScheduleService::class, function ($app) {
             return new ScheduleService();
+        });
+
+        $this->app->singleton(ConflictDetectionService::class, function ($app) {
+            return new ConflictDetectionService();
         });
     }
 

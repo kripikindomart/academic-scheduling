@@ -45,8 +45,7 @@ class Lecturer extends Model
         'certifications',
         'research_interests',
         'publications',
-        'academic_load',
-        'office_room',
+                'office_room',
         'office_hours',
         'is_active',
         'photo',
@@ -62,8 +61,7 @@ class Lecturer extends Model
         'hire_date' => 'date',
         'termination_date' => 'date',
         'graduation_year' => 'integer',
-        'academic_load' => 'integer',
-        'is_active' => 'boolean',
+                'is_active' => 'boolean',
         'office_hours' => 'array',
         'certifications' => 'array',
         'research_interests' => 'array',
@@ -98,8 +96,8 @@ class Lecturer extends Model
 
     public function courses()
     {
-        return $this->belongsToMany(Course::class, 'course_lecturers')
-            ->withPivot('role', 'academic_year', 'semester')
+        return $this->belongsToMany(Course::class, 'course_lecturers', 'user_id', 'course_id')
+            ->withPivot('role', 'assigned_at', 'assigned_by')
             ->withTimestamps();
     }
 
@@ -292,9 +290,9 @@ class Lecturer extends Model
 
     public function getCurrentCoursesAttribute()
     {
+        // Filter by assigned_at timestamp to get current courses
         return $this->courses()
-            ->where('academic_year', Carbon::now()->year)
-            ->where('semester', Carbon::now()->month > 6 ? 'ganjil' : 'genap')
+            ->where('assigned_at', '>=', Carbon::now()->startOfYear())
             ->count();
     }
 

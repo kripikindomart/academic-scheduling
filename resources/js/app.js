@@ -4,6 +4,9 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { createPinia } from 'pinia';
 import { useAuthStore } from './stores/auth';
 
+// Import plugins - disabled for now
+// import { errorHandler } from './plugins/errorHandler';
+
 // Import components
 import App from './App.vue';
 
@@ -53,6 +56,12 @@ const router = createRouter({
             path: '/program-studies',
             name: 'program-studies',
             component: () => import('./views/ProgramStudies.vue'),
+            meta: { requiresAuth: true },
+        },
+        {
+            path: '/lecturers',
+            name: 'lecturers',
+            component: () => import('./views/Lecturers.vue'),
             meta: { requiresAuth: true },
         },
         {
@@ -135,6 +144,7 @@ const pinia = createPinia();
 // Use plugins
 app.use(router);
 app.use(pinia);
+// app.use(errorHandler); // disabled
 
 // Mount app
 app.mount('#app');

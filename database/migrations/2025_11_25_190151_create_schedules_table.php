@@ -37,7 +37,7 @@ return new class extends Migration
             $table->foreignId('lecturer_id')->nullable()->constrained('lecturers')->onDelete('set null');
             $table->foreignId('room_id')->constrained()->onDelete('restrict');
             $table->foreignId('program_study_id')->nullable()->constrained()->onDelete('cascade');
-            $table->foreignId('class_id')->nullable()->constrained('school_classes')->onDelete('set null');
+            $table->foreignId('class_id')->nullable(); // Foreign key to school_classes will be added in separate migration
 
             // Academic period
             $table->enum('semester', ['ganjil', 'genap'])->default('ganjil');

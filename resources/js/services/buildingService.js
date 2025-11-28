@@ -152,12 +152,12 @@ class BuildingService {
   }
 
   async forceDelete(id) {
-    const response = await this.api.delete(`/${id}/force-delete`);
+    const response = await this.api.delete(`/force-delete/${id}`);
     return response.data;
   }
 
   async toggleStatus(id, data) {
-    const response = await this.api.put(`/${id}/toggle-status`, data);
+    const response = await this.api.post(`/${id}/toggle-status`, data);
     return response.data;
   }
 
@@ -168,8 +168,33 @@ class BuildingService {
 
   // Bulk operations for trash
   async bulkForceDelete(data) {
-    const response = await this.api.post('/bulk-force-delete', data);
-    return response.data;
+    // Buildings don't have bulk-force-delete endpoint, so we'll use individual force-delete calls
+    const promises = [];
+    const ids = data.building_ids || [];
+
+    for (const id of ids) {
+      promises.push(this.api.delete(`/force-delete/${id}`));
+    }
+
+    const results = await Promise.allSettled(promises);
+
+    // Check if all were successful
+    const successful = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+
+    if (failed > 0) {
+      const error = new Error(`${failed} buildings failed to delete permanently`);
+      error.successful = successful;
+      error.failed = failed;
+      error.results = results;
+      throw error;
+    }
+
+    return {
+      success: true,
+      message: `${successful} buildings successfully deleted permanently`,
+      successful: successful
+    };
   }
 
   async bulkToggleStatus(data) {

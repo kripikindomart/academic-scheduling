@@ -107,18 +107,32 @@ class LecturerService
             $defaults = [
                 'gender' => 'male',
                 'nationality' => 'Indonesia',
-                'birth_date' => now()->subYears(25), // Default 25 years old
+                'birth_date' => now()->subYears(25)->format('Y-m-d'), // Default 25 years old
+                'birth_place' => '', // Default empty string
+                'address' => '', // Default empty string
+                'city' => '', // Default empty string
+                'province' => '', // Default empty string
+                'postal_code' => '', // Default empty string
+                'religion' => '', // Default empty string
+                'phone' => '', // Default empty string
                 'status' => 'active',
                 'employment_type' => 'permanent',
                 'employment_status' => 'Active',
-                'hire_date' => now(),
+                'hire_date' => now()->format('Y-m-d'),
                 'position' => 'Lecturer',
+                'department' => '', // Default empty string
+                'faculty' => 'Sekolah Pascasarjana',
                 'is_active' => true,
-                'academic_load' => 12,
                 'created_by' => auth()->id(),
             ];
 
             $data = array_merge($defaults, $data);
+
+            // Remove id_card_number if empty to avoid duplicate entry error
+            if (empty($data['id_card_number'])) {
+                unset($data['id_card_number']);
+            }
+
             // Generate employee number if not provided
             if (empty($data['employee_number'])) {
                 $faculty = $data['faculty'] ?? 'FST';
@@ -171,6 +185,11 @@ class LecturerService
     {
         return DB::transaction(function () use ($lecturer, $data) {
             $data['updated_by'] = auth()->id();
+
+            // Remove id_card_number if empty to avoid duplicate entry error
+            if (isset($data['id_card_number']) && empty($data['id_card_number'])) {
+                unset($data['id_card_number']);
+            }
 
             // Handle JSON fields
             if (isset($data['specialization']) && is_array($data['specialization'])) {

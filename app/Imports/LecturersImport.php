@@ -9,10 +9,14 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use DateTime;
+use DateInterval;
 
-class LecturersImport implements ToModel, WithHeadingRow, WithValidation, WithBatchInserts, WithChunkReading
+class LecturersImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading, WithCustomCsvSettings, WithMultipleSheets
 {
     protected $skipDuplicates = true;
     protected $updateExisting = false;
@@ -28,8 +32,10 @@ class LecturersImport implements ToModel, WithHeadingRow, WithValidation, WithBa
         'skipped' => 0,
         'failed' => 0,
         'total_processed' => 0,
+        'all_data' => [], // Semua data dari Excel
         'invalid_data' => []
     ];
+    protected $currentRow = 0;
 
     public function __construct($skipDuplicates = true, $updateExisting = false, $forceImportInvalid = false, $mappingData = [])
     {
@@ -46,33 +52,94 @@ class LecturersImport implements ToModel, WithHeadingRow, WithValidation, WithBa
         // Map column names from Excel to database fields
         $mappedData = $this->mapColumns($row);
 
+        // Store ALL data from Excel for manual mapping interface
+        $this->results['all_data'][] = [
+            'row_number' => $this->results['total_rows'],
+            'original_data' => $row,
+            'mapped_data' => $mappedData,
+            'is_valid' => false,
+            'is_duplicate' => false,
+            'errors' => [],
+            'errors_array' => []
+        ];
+
         // Validate required fields
         $requiredFields = ['nama_wajib', 'email_wajib', 'nip_nidn_wajib', 'no_hp_wajib', 'status_kepegawaian_wajib', 'jenis_pegawai_wajib', 'status_dosen_wajib'];
         $missingFields = [];
+        $errors = [];
+        $errors_array = [];
+        $warnings = [];
+        $warnings_array = [];
 
         foreach ($requiredFields as $field) {
             if (empty($mappedData[$field])) {
                 $missingFields[] = $field;
+                $error_msg = "Field {$field} wajib diisi";
+                $errors[] = $error_msg;
+                $errors_array[] = $error_msg;
             }
         }
 
-        if (!empty($missingFields) && !$this->forceImportInvalid) {
-            $this->results['invalid_rows']++;
-            $this->results['invalid_data'][] = [
-                'row_number' => $this->results['total_rows'],
-                'data' => $row,
-                'errors' => 'Field wajib kosong: ' . implode(', ', $missingFields),
-                'mapped_data' => $mappedData
-            ];
-            return null;
+        // Validate email format
+        if (!empty($mappedData['email_wajib']) && !filter_var($mappedData['email_wajib'], FILTER_VALIDATE_EMAIL)) {
+            $errors[] = "Format email tidak valid";
+            $errors_array[] = "Format email tidak valid";
         }
 
         // Check for duplicate employee_number
         $existingLecturer = Lecturer::where('employee_number', $mappedData['nip_nidn_wajib'])->first();
+        $isDuplicate = $existingLecturer !== null;
 
-        if ($existingLecturer) {
+        if ($isDuplicate) {
             $this->results['duplicate_rows']++;
+            $errors[] = "NIP/NIDN sudah ada di sistem";
+            $errors_array[] = "NIP/NIDN sudah ada di sistem";
+        }
 
+        // Validate phone format
+        if (!empty($mappedData['no_hp_wajib']) && !preg_match('/^[0-9+\-\s()]+$/', $mappedData['no_hp_wajib'])) {
+            $errors[] = "Format nomor HP tidak valid";
+            $errors_array[] = "Format nomor HP tidak valid";
+        }
+
+        // Validate program study if provided - NOW AS WARNING, NOT BLOCKING ERROR
+        if (!empty($mappedData['departemen']) || !empty($mappedData['fakultas'])) {
+            $programStudy = ProgramStudy::where(function($query) use ($mappedData) {
+                if (!empty($mappedData['departemen'])) {
+                    $query->where('name', 'like', '%' . $mappedData['departemen'] . '%');
+                }
+                if (!empty($mappedData['fakultas'])) {
+                    $query->orWhere('faculty', 'like', '%' . $mappedData['fakultas'] . '%');
+                }
+            })->first();
+
+            if (!$programStudy) {
+                $warning_msg = "Program studi '{$mappedData['departemen']}' tidak ditemukan. Silakan pilih dari program studi yang tersedia atau biarkan kosong.";
+                $warnings[] = $warning_msg;
+                $warnings_array[] = $warning_msg;
+            }
+        }
+
+        // Update the last entry with validation results
+        $lastIndex = count($this->results['all_data']) - 1;
+
+        // Data considered valid if no critical errors (warnings are OK)
+        $hasOnlyWarnings = empty($errors) && !empty($warnings);
+        $this->results['all_data'][$lastIndex]['is_valid'] = empty($errors) && !$isDuplicate;
+        $this->results['all_data'][$lastIndex]['is_duplicate'] = $isDuplicate;
+        $this->results['all_data'][$lastIndex]['errors'] = empty($errors) ? null : implode(', ', $errors);
+        $this->results['all_data'][$lastIndex]['errors_array'] = $errors_array;
+        $this->results['all_data'][$lastIndex]['warnings'] = empty($warnings) ? null : implode(', ', $warnings);
+        $this->results['all_data'][$lastIndex]['warnings_array'] = $warnings_array;
+
+        // If there are errors, add to invalid_data (warnings don't make it invalid)
+        if (!empty($errors) && !$this->forceImportInvalid) {
+            $this->results['invalid_rows']++;
+            $this->results['invalid_data'][] = $this->results['all_data'][$lastIndex];
+        }
+
+        // Handle duplicates
+        if ($isDuplicate) {
             if ($this->skipDuplicates) {
                 $this->results['skipped']++;
                 return null;
@@ -87,60 +154,65 @@ class LecturersImport implements ToModel, WithHeadingRow, WithValidation, WithBa
             }
         }
 
-        // Create new lecturer
-        try {
-            $lecturer = $this->createLecturer($mappedData);
-            $this->results['imported']++;
-            $this->results['valid_rows']++;
-            $this->results['total_processed']++;
+        // If data is valid and not a duplicate, create new lecturer
+        if (empty($errors) && !$isDuplicate) {
+            try {
+                $lecturer = $this->createLecturer($mappedData);
+                $this->results['imported']++;
+                $this->results['valid_rows']++;
+                $this->results['total_processed']++;
 
-            return $lecturer;
+                return $lecturer;
 
-        } catch (\Exception $e) {
-            $this->results['failed']++;
-            $this->results['invalid_data'][] = [
-                'row_number' => $this->results['total_rows'],
-                'data' => $row,
-                'errors' => $e->getMessage(),
-                'mapped_data' => $mappedData
-            ];
-            return null;
+            } catch (\Exception $e) {
+                $this->results['failed']++;
+                $error_msg = $e->getMessage();
+                $this->results['all_data'][$lastIndex]['errors'] = $error_msg;
+                $this->results['all_data'][$lastIndex]['errors_array'] = [$error_msg];
+                $this->results['all_data'][$lastIndex]['is_valid'] = false;
+
+                $this->results['invalid_rows']++;
+                $this->results['invalid_data'][] = $this->results['all_data'][$lastIndex];
+                return null;
+            }
         }
+
+        return null;
     }
 
     private function mapColumns(array $row): array
     {
         $mapping = [
-            'nama_wajib' => 'name',
-            'email_wajib' => 'email',
-            'nip_nidn_wajib' => 'employee_number',
-            'no_hp_wajib' => 'phone',
-            'no_ktp' => 'id_card_number',
-            'jenis_kelamin' => 'gender',
-            'tempat_lahir' => 'birth_place',
-            'tanggal_lahir' => 'birth_date',
-            'alamat' => 'address',
-            'kota' => 'city',
-            'provinsi' => 'province',
-            'kode_pos' => 'postal_code',
-            'kebangsaan' => 'nationality',
-            'agama' => 'religion',
-            'golongan_darah' => 'blood_type',
-            'status_kepegawaian_wajib' => 'employment_status',
-            'jenis_pegawai_wajib' => 'employment_type',
-            'status_dosen_wajib' => 'status',
-            'tanggal_masuk' => 'hire_date',
-            'jabatan' => 'position',
-            'gelar' => 'rank',
-            'bidang_keahlian' => 'specialization',
-            'departemen' => 'department',
-            'fakultas' => 'faculty',
-            'pendidikan_tertinggi' => 'highest_education',
-            'institusi_pendidikan' => 'education_institution',
-            'jurusan_pendidikan' => 'education_major',
-            'tahun_lulus' => 'graduation_year',
-            'no_ruang_kantor' => 'office_room',
-            'catatan' => 'notes'
+            'nama_wajib' => 'nama_wajib',
+            'email_wajib' => 'email_wajib',
+            'nip_nidn_wajib' => 'nip_nidn_wajib',
+            'no_hp_wajib' => 'no_hp_wajib',
+            'no_ktp' => 'no_ktp',
+            'jenis_kelamin' => 'jenis_kelamin',
+            'tempat_lahir' => 'tempat_lahir',
+            'tanggal_lahir' => 'tanggal_lahir',
+            'alamat' => 'alamat',
+            'kota' => 'kota',
+            'provinsi' => 'provinsi',
+            'kode_pos' => 'kode_pos',
+            'kebangsaan' => 'kebangsaan',
+            'agama' => 'agama',
+            'golongan_darah' => 'golongan_darah',
+            'status_kepegawaian_wajib' => 'status_kepegawaian_wajib',
+            'jenis_pegawai_wajib' => 'jenis_pegawai_wajib',
+            'status_dosen_wajib' => 'status_dosen_wajib',
+            'tanggal_masuk' => 'tanggal_masuk',
+            'jabatan' => 'jabatan',
+            'gelar' => 'gelar',
+            'bidang_keahlian' => 'bidang_keahlian',
+            'departemen' => 'departemen',
+            'fakultas' => 'fakultas',
+            'pendidikan_tertinggi' => 'pendidikan_tertinggi',
+            'institusi_pendidikan' => 'institusi_pendidikan',
+            'jurusan_pendidikan' => 'jurusan_pendidikan',
+            'tahun_lulus' => 'tahun_lulus',
+            'no_ruang_kantor' => 'no_ruang_kantor',
+            'catatan' => 'catatan'
         ];
 
         // Apply custom mapping if provided
@@ -149,8 +221,8 @@ class LecturersImport implements ToModel, WithHeadingRow, WithValidation, WithBa
         }
 
         $mappedData = [];
-        foreach ($mapping as $excelColumn => $dbField) {
-            $mappedData[$excelColumn] = $this->sanitizeValue($row[$dbField] ?? null);
+        foreach ($mapping as $excelColumn => $fieldName) {
+            $mappedData[$excelColumn] = $this->sanitizeValue($row[$fieldName] ?? null);
         }
 
         return $mappedData;
@@ -196,7 +268,7 @@ class LecturersImport implements ToModel, WithHeadingRow, WithValidation, WithBa
         }
 
         return Lecturer::create([
-            'employee_number' => $data['nip_nidn_wajib'],
+            'employee_number' => $this->formatEmployeeNumber($data['nip_nidn_wajib']),
             'name' => $data['nama_wajib'],
             'email' => $data['email_wajib'],
             'phone' => $data['no_hp_wajib'],
@@ -210,7 +282,7 @@ class LecturersImport implements ToModel, WithHeadingRow, WithValidation, WithBa
             'nationality' => $data['kebangsaan'] ?: 'Indonesia',
             'religion' => $data['agama'],
             'blood_type' => $this->mapBloodType($data['golongan_darah']),
-            'id_card_number' => $data['no_ktp_wajib'],
+            'id_card_number' => $data['no_ktp'], // Fixed: no_ktp instead of no_ktp_wajib
             'status' => $status,
             'employment_status' => $data['status_kepegawaian_wajib'],
             'employment_type' => $employmentType,
@@ -330,6 +402,20 @@ class LecturersImport implements ToModel, WithHeadingRow, WithValidation, WithBa
                 }
             }
 
+            // Check if it's an Excel serial number (like 29235, 40179)
+            if (is_numeric($date) && $date > 25000 && $date < 100000) {
+                // Excel base date is 1900-01-01, but Excel incorrectly treats 1900 as a leap year
+                // So we need to adjust by 1 day for dates after 1900-02-28
+                $excelDate = (int)$date;
+                if ($excelDate > 60) {
+                    $excelDate -= 1; // Adjust for Excel leap year bug
+                }
+
+                $baseDate = new DateTime('1900-01-01');
+                $dateObj = $baseDate->add(new DateInterval("P{$excelDate}D"));
+                return $dateObj->format('Y-m-d');
+            }
+
             // Try to parse as timestamp or standard format
             $timestamp = strtotime($date);
             if ($timestamp !== false) {
@@ -352,20 +438,34 @@ class LecturersImport implements ToModel, WithHeadingRow, WithValidation, WithBa
         return ($year >= 1950 && $year <= (date('Y') + 5)) ? $year : null;
     }
 
-    public function rules(): array
+    private function formatEmployeeNumber($employeeNumber): string
     {
-        return [
-            'nama_wajib' => 'required|string|max:255',
-            'email_wajib' => 'required|email|max:255',
-            'nip_nidn_wajib' => 'required|string|max:50',
-            'no_hp_wajib' => 'required|string|max:20',
-            'no_ktp_wajib' => 'required|string|max:30',
-            'status_kepegawaian_wajib' => 'required|string|max:50',
-            'jenis_pegawai_wajib' => 'required|string|max:50',
-            'status_dosen_wajib' => 'required|string|max:50',
-        ];
+        if (empty($employeeNumber)) {
+            return '';
+        }
+
+        // Handle scientific notation from Excel
+        if (is_numeric($employeeNumber)) {
+            // Convert scientific notation to string without decimal points
+            $formatted = number_format($employeeNumber, 0, '', '');
+
+            // Ensure it's a valid length for NIP/NIDN (typically 16-18 digits)
+            if (strlen($formatted) > 15) {
+                return $formatted;
+            }
+        }
+
+        // For non-numeric values, return as string
+        return (string) $employeeNumber;
     }
 
+
+    public function headingRow(): int
+    {
+        return 6; // Header di baris 6, data dimulai dari baris 7
+    }
+
+    
     public function chunkSize(): int
     {
         return 100;
@@ -374,6 +474,28 @@ class LecturersImport implements ToModel, WithHeadingRow, WithValidation, WithBa
     public function batchSize(): int
     {
         return 100;
+    }
+
+    public function getCsvSettings(): array
+    {
+        return [
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'escape' => '\\',
+            'input_encoding' => 'UTF-8'
+        ];
+    }
+
+    public function sheets(): array
+    {
+        return [
+            $this
+        ];
+    }
+
+    public function onUnknownSheet($sheetName)
+    {
+        return null;
     }
 
     public function getResults(): array

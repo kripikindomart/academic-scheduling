@@ -6,9 +6,7 @@ class LecturerService {
   constructor() {
     this.api = axios.create({
       baseURL: API_BASE_URL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      // Don't set default Content-Type here to allow FormData to set multipart/form-data
     });
 
     // Add auth token to requests
@@ -83,14 +81,25 @@ class LecturerService {
 
   // Create new lecturer
   async create(data) {
-    const response = await this.api.post('/', data);
+    // If data is FormData, don't set content-type to let browser set it with boundary
+    const config = data instanceof FormData
+      ? {}
+      : {};
+    const response = await this.api.post('/', data, config);
     return response.data;
   }
 
   // Update lecturer
   async update(id, data) {
-    const response = await this.api.put(`/${id}`, data);
-    return response.data;
+    // Use POST method for FormData to properly handle multipart data with _method override
+    if (data instanceof FormData) {
+      // Laravel will automatically handle _method field to route to PUT method
+      const response = await this.api.post(`/${id}?_method=PUT`, data);
+      return response.data;
+    } else {
+      const response = await this.api.put(`/${id}`, data);
+      return response.data;
+    }
   }
 
   // Delete lecturer
@@ -225,6 +234,17 @@ class LecturerService {
 
   async assignCourse(lecturerId, courseId) {
     const response = await this.api.post(`/${lecturerId}/assign-course/${courseId}`);
+    return response.data;
+  }
+
+  async createUserAccount(lecturerId, password = null) {
+    const data = password ? { password } : {};
+    const response = await this.api.post(`/${lecturerId}/create-user-account`, data);
+    return response.data;
+  }
+
+  async bulkCreateUserAccounts(lecturerIds) {
+    const response = await this.api.post('/bulk-create-user-accounts', { ids: lecturerIds });
     return response.data;
   }
 

@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   title: {
@@ -73,22 +73,19 @@ const props = defineProps({
   },
   type: {
     type: String,
-    default: 'info', // success, error, warning, info
+    default: 'info' // success, error, warning, info
   },
   duration: {
     type: Number,
     default: 5000
+  },
+  show: {
+    type: Boolean,
+    default: true
   }
 })
 
 const emit = defineEmits(['close'])
-
-const show = ref(false)
-
-// Auto show toast when component is mounted
-onMounted(() => {
-  showToast()
-})
 
 
 const getToastClasses = () => {
@@ -156,24 +153,16 @@ const getCloseButtonClasses = () => {
   }
 }
 
-const showToast = () => {
-  show.value = true
+const hideToast = () => {
+  emit('close')
+}
 
-  // Auto hide after duration
-  if (props.duration > 0) {
+// Auto hide after duration when component is shown
+watch(() => props.show, (newValue) => {
+  if (newValue && props.duration > 0) {
     setTimeout(() => {
       hideToast()
     }, props.duration)
   }
-}
-
-const hideToast = () => {
-  show.value = false
-  emit('close')
-}
-
-defineExpose({
-  showToast,
-  hideToast
 })
 </script>

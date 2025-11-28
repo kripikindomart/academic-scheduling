@@ -1778,14 +1778,15 @@ const executeBulkAction = async () => {
   try {
     const service = activeMenu.value === 'gedung' ? buildingService : roomService;
     const itemType = activeMenu.value === 'gedung' ? 'Gedung' : 'Ruangan';
+    const idField = activeMenu.value === 'gedung' ? 'building_ids' : 'room_ids';
 
     switch (bulkAction.value) {
       case 'activate':
-        await service.bulkToggleStatus({ room_ids: selectedItems.value, is_active: true });
+        await service.bulkToggleStatus({ [idField]: selectedItems.value, is_active: true });
         showToast('Sukses', `${selectedItems.value.length} ${itemType.toLowerCase()} berhasil diaktifkan`, 'success');
         break;
       case 'deactivate':
-        await service.bulkToggleStatus({ room_ids: selectedItems.value, is_active: false });
+        await service.bulkToggleStatus({ [idField]: selectedItems.value, is_active: false });
         showToast('Sukses', `${selectedItems.value.length} ${itemType.toLowerCase()} berhasil dinonaktifkan`, 'success');
         break;
       case 'restore':
@@ -1797,10 +1798,10 @@ const executeBulkAction = async () => {
         break;
       case 'delete':
         if (activeTab.value === 'active') {
-          await service.bulkDelete({ room_ids: selectedItems.value });
+          await service.bulkDelete({ [idField]: selectedItems.value });
           showToast('Sukses', `${selectedItems.value.length} ${itemType.toLowerCase()} berhasil dipindahkan ke trash`, 'success');
         } else {
-          await service.bulkForceDelete({ room_ids: selectedItems.value });
+          await service.bulkForceDelete({ [idField]: selectedItems.value });
           showToast('Sukses', `${selectedItems.value.length} ${itemType.toLowerCase()} berhasil dihapus permanen`, 'success');
         }
         break;
@@ -1812,7 +1813,9 @@ const executeBulkAction = async () => {
     bulkActionMessage.value = '';
     await loadData();
   } catch (error) {
-    showToast('Error', error.userMessage || 'Gagal melakukan operasi bulk', 'error');
+    // Close modal first, then show error toast
+    showBulkConfirmDialog.value = false;
+    showToast('Error', error.response?.data?.message || error.userMessage || 'Gagal melakukan operasi bulk', 'error');
   }
 };
 

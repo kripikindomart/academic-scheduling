@@ -219,6 +219,7 @@ const mainMenuItems = [
 const academicMenuItems = [
   { path: '/courses', name: 'Mata Kuliah', icon: 'book' },
   { path: '/program-studies', name: 'Program Studi', icon: 'building' },
+  { path: '/lecturers', name: 'Dosen', icon: 'users' },
   { path: '/room-dashboard', name: 'Manajemen Ruangan', icon: 'room' },
   { path: '/students', name: 'Mahasiswa', icon: 'users' },
 ];
