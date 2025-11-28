@@ -6,6 +6,7 @@ use App\Models\Lecturer;
 use App\Models\ProgramStudy;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -13,11 +14,11 @@ use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use DateTime;
-use DateInterval;
 
-class LecturersImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading, WithCustomCsvSettings, WithMultipleSheets
+class LecturersImport implements ToModel, WithHeadingRow, WithStartRow, WithBatchInserts, WithChunkReading, WithCustomCsvSettings, WithMultipleSheets
 {
+    protected $programStudyId = null;
+    protected $user = null;
     protected $skipDuplicates = true;
     protected $updateExisting = false;
     protected $forceImportInvalid = false;
@@ -37,8 +38,10 @@ class LecturersImport implements ToModel, WithHeadingRow, WithBatchInserts, With
     ];
     protected $currentRow = 0;
 
-    public function __construct($skipDuplicates = true, $updateExisting = false, $forceImportInvalid = false, $mappingData = [])
+    public function __construct($programStudyId = null, $user = null, $skipDuplicates = true, $updateExisting = false, $forceImportInvalid = false, $mappingData = [])
     {
+        $this->programStudyId = $programStudyId;
+        $this->user = $user;
         $this->skipDuplicates = $skipDuplicates;
         $this->updateExisting = $updateExisting;
         $this->forceImportInvalid = $forceImportInvalid;
@@ -48,6 +51,25 @@ class LecturersImport implements ToModel, WithHeadingRow, WithBatchInserts, With
     public function model(array $row)
     {
         $this->results['total_rows']++;
+
+        // Log debugging info
+        Log::info("Processing row {$this->results['total_rows']}", [
+            'row_data' => $row,
+            'row_keys' => array_keys($row),
+            'row_data_count' => count($row)
+        ]);
+
+        // Check if this looks like instruction/title rows or data rows
+        $firstKey = array_key_first($row);
+        $isInstructionRow = $this->isInstructionRow($row, $firstKey);
+
+        if ($isInstructionRow) {
+            Log::info("Skipping instruction/title row", [
+                'first_key' => $firstKey,
+                'row_data_sample' => array_slice($row, 0, 3)
+            ]);
+            return null; // Skip instruction/title rows
+        }
 
         // Map column names from Excel to database fields
         $mappedData = $this->mapColumns($row);
@@ -77,13 +99,39 @@ class LecturersImport implements ToModel, WithHeadingRow, WithBatchInserts, With
                 $error_msg = "Field {$field} wajib diisi";
                 $errors[] = $error_msg;
                 $errors_array[] = $error_msg;
+
+                Log::warning("Missing required field in row {$this->results['total_rows']}", [
+                    'field' => $field,
+                    'value' => $mappedData[$field] ?? 'NULL'
+                ]);
             }
         }
 
-        // Validate email format
-        if (!empty($mappedData['email_wajib']) && !filter_var($mappedData['email_wajib'], FILTER_VALIDATE_EMAIL)) {
-            $errors[] = "Format email tidak valid";
-            $errors_array[] = "Format email tidak valid";
+        // Validate email format and duplicates - CRITICAL ERROR
+        if (!empty($mappedData['email_wajib'])) {
+            // Check email format
+            if (!filter_var($mappedData['email_wajib'], FILTER_VALIDATE_EMAIL)) {
+                $errors[] = "Format email tidak valid";
+                $errors_array[] = "Format email tidak valid";
+
+                Log::warning("Invalid email format in row {$this->results['total_rows']}", [
+                    'email' => $mappedData['email_wajib']
+                ]);
+            } else {
+                // Check for duplicate email
+                $existingEmail = Lecturer::where('email', $mappedData['email_wajib'])->first();
+                if ($existingEmail) {
+                    $errors[] = "Email sudah ada di sistem";
+                    $errors_array[] = "Email sudah ada di sistem";
+
+                    Log::info("Duplicate email found in row {$this->results['total_rows']}", [
+                        'email' => $mappedData['email_wajib'],
+                        'existing_lecturer_id' => $existingEmail->id
+                    ]);
+                }
+            }
+        } else {
+            Log::warning("Empty email in row {$this->results['total_rows']}");
         }
 
         // Check for duplicate employee_number
@@ -94,87 +142,139 @@ class LecturersImport implements ToModel, WithHeadingRow, WithBatchInserts, With
             $this->results['duplicate_rows']++;
             $errors[] = "NIP/NIDN sudah ada di sistem";
             $errors_array[] = "NIP/NIDN sudah ada di sistem";
+
+            Log::info("Duplicate NIP/NIDN found in row {$this->results['total_rows']}", [
+                'employee_number' => $mappedData['nip_nidn_wajib'],
+                'existing_lecturer_id' => $existingLecturer->id
+            ]);
         }
 
-        // Validate phone format
+        // Validate phone format - WARNING ONLY
         if (!empty($mappedData['no_hp_wajib']) && !preg_match('/^[0-9+\-\s()]+$/', $mappedData['no_hp_wajib'])) {
-            $errors[] = "Format nomor HP tidak valid";
-            $errors_array[] = "Format nomor HP tidak valid";
+            $warnings[] = "Format nomor HP tidak valid";
+            $warnings_array[] = "Format nomor HP tidak valid";
+
+            Log::warning("Invalid phone format in row {$this->results['total_rows']}", [
+                'phone' => $mappedData['no_hp_wajib']
+            ]);
         }
 
-        // Validate program study if provided - NOW AS WARNING, NOT BLOCKING ERROR
+        // Validate program study if provided - CRITICAL ERROR
         if (!empty($mappedData['departemen']) || !empty($mappedData['fakultas'])) {
-            $programStudy = ProgramStudy::where(function($query) use ($mappedData) {
-                if (!empty($mappedData['departemen'])) {
-                    $query->where('name', 'like', '%' . $mappedData['departemen'] . '%');
+            $departemen = trim($mappedData['departemen'] ?? '');
+            $fakultas = trim($mappedData['fakultas'] ?? '');
+
+            Log::info("Validating program study in row {$this->results['total_rows']}", [
+                'departemen' => $departemen,
+                'fakultas' => $fakultas
+            ]);
+
+            // Try exact match first, then partial match
+            $programStudy = ProgramStudy::where(function($query) use ($departemen, $fakultas) {
+                if (!empty($departemen)) {
+                    // Exact match first
+                    $query->where('name', '=', $departemen);
                 }
-                if (!empty($mappedData['fakultas'])) {
-                    $query->orWhere('faculty', 'like', '%' . $mappedData['fakultas'] . '%');
+            })->orWhere(function($query) use ($departemen, $fakultas) {
+                if (!empty($departemen)) {
+                    // Partial match for departemen
+                    $query->where('name', 'like', '%' . $departemen . '%');
+                }
+            })->orWhere(function($query) use ($fakultas) {
+                if (!empty($fakultas)) {
+                    // Match by faculty
+                    $query->where('faculty', 'like', '%' . $fakultas . '%');
                 }
             })->first();
 
             if (!$programStudy) {
-                $warning_msg = "Program studi '{$mappedData['departemen']}' tidak ditemukan. Silakan pilih dari program studi yang tersedia atau biarkan kosong.";
-                $warnings[] = $warning_msg;
-                $warnings_array[] = $warning_msg;
+                // Get available programs for error message
+                $availablePrograms = ProgramStudy::select('name', 'faculty')->get()->toArray();
+                $programList = implode(', ', array_map(fn($p) => $p['name'], $availablePrograms));
+
+                $searchTerm = !empty($departemen) ? $departemen : $fakultas;
+                $error_msg = "Program studi tidak ditemukan. '{$searchTerm}' tidak ada di database. Program studi yang tersedia: {$programList}";
+                $errors[] = $error_msg;
+                $errors_array[] = $error_msg;
+
+                Log::warning("Program study not found in row {$this->results['total_rows']}", [
+                    'search_term' => $searchTerm,
+                    'departemen' => $departemen,
+                    'fakultas' => $fakultas,
+                    'available_programs' => $programList
+                ]);
+            } else {
+                Log::info("Program study found in row {$this->results['total_rows']}", [
+                    'program_study_id' => $programStudy->id,
+                    'program_study_name' => $programStudy->name,
+                    'faculty' => $programStudy->faculty
+                ]);
             }
         }
 
         // Update the last entry with validation results
         $lastIndex = count($this->results['all_data']) - 1;
 
-        // Data considered valid if no critical errors (warnings are OK)
-        $hasOnlyWarnings = empty($errors) && !empty($warnings);
-        $this->results['all_data'][$lastIndex]['is_valid'] = empty($errors) && !$isDuplicate;
+        // CRITICAL ERRORS: Missing required fields OR invalid email OR duplicate (when not updating)
+        $hasCriticalErrors = !empty($errors);
+
+        // If duplicate and not updating, it's a critical error
+        if ($isDuplicate && !$this->updateExisting && !$this->skipDuplicates) {
+            $hasCriticalErrors = true;
+            if (!in_array("NIP/NIDN sudah ada di sistem. Pilih opsi 'Update Data Ada' atau 'Lewati Duplikat'.", $errors)) {
+                $errors[] = "NIP/NIDN sudah ada di sistem. Pilih opsi 'Update Data Ada' atau 'Lewati Duplikat'.";
+                $errors_array[] = "NIP/NIDN sudah ada di sistem";
+            }
+        }
+
+        // Set validation status
+        $this->results['all_data'][$lastIndex]['is_valid'] = !$hasCriticalErrors;
         $this->results['all_data'][$lastIndex]['is_duplicate'] = $isDuplicate;
         $this->results['all_data'][$lastIndex]['errors'] = empty($errors) ? null : implode(', ', $errors);
         $this->results['all_data'][$lastIndex]['errors_array'] = $errors_array;
         $this->results['all_data'][$lastIndex]['warnings'] = empty($warnings) ? null : implode(', ', $warnings);
         $this->results['all_data'][$lastIndex]['warnings_array'] = $warnings_array;
 
-        // If there are errors, add to invalid_data (warnings don't make it invalid)
-        if (!empty($errors) && !$this->forceImportInvalid) {
-            $this->results['invalid_rows']++;
-            $this->results['invalid_data'][] = $this->results['all_data'][$lastIndex];
-        }
-
-        // Handle duplicates
+        // Handle duplicates and force import
         if ($isDuplicate) {
             if ($this->skipDuplicates) {
                 $this->results['skipped']++;
-                return null;
-            }
-
-            if ($this->updateExisting) {
-                // Update existing record
-                $this->updateLecturer($existingLecturer, $mappedData);
-                $this->results['updated']++;
-                $this->results['total_processed']++;
-                return null;
+            } elseif (!$this->updateExisting) {
+                $this->results['invalid_rows']++;
+                $this->results['invalid_data'][] = $this->results['all_data'][$lastIndex];
             }
         }
 
-        // If data is valid and not a duplicate, create new lecturer
-        if (empty($errors) && !$isDuplicate) {
-            try {
-                $lecturer = $this->createLecturer($mappedData);
-                $this->results['imported']++;
-                $this->results['valid_rows']++;
-                $this->results['total_processed']++;
-
-                return $lecturer;
-
-            } catch (\Exception $e) {
-                $this->results['failed']++;
-                $error_msg = $e->getMessage();
-                $this->results['all_data'][$lastIndex]['errors'] = $error_msg;
-                $this->results['all_data'][$lastIndex]['errors_array'] = [$error_msg];
-                $this->results['all_data'][$lastIndex]['is_valid'] = false;
-
-                $this->results['invalid_rows']++;
+        // Handle invalid data
+        if ($hasCriticalErrors && !$this->forceImportInvalid) {
+            $this->results['invalid_rows']++;
+            if (!$isDuplicate || !$this->skipDuplicates) {
                 $this->results['invalid_data'][] = $this->results['all_data'][$lastIndex];
-                return null;
             }
+        } elseif ($hasCriticalErrors && $this->forceImportInvalid) {
+            // Force import invalid data - mark as valid despite errors
+            $this->results['all_data'][$lastIndex]['is_valid'] = true;
+            $this->results['all_data'][$lastIndex]['errors'] = null;
+            $this->results['all_data'][$lastIndex]['errors_array'] = [];
+            $this->results['all_data'][$lastIndex]['warnings'] = 'Data diimport dengan warning: ' . implode(', ', $errors);
+            $this->results['all_data'][$lastIndex]['warnings_array'] = array_merge($errors_array, $warnings_array);
+        }
+
+        // Count valid rows
+        if (!$hasCriticalErrors || $this->forceImportInvalid) {
+            $this->results['valid_rows']++;
+
+            Log::info("Row {$this->results['total_rows']} marked as valid", [
+                'is_duplicate' => $isDuplicate,
+                'skip_duplicates' => $this->skipDuplicates,
+                'update_existing' => $this->updateExisting,
+                'force_import_invalid' => $this->forceImportInvalid
+            ]);
+        } else {
+            Log::warning("Row {$this->results['total_rows']} marked as invalid", [
+                'errors' => $errors,
+                'warnings' => $warnings
+            ]);
         }
 
         return null;
@@ -348,7 +448,19 @@ class LecturersImport implements ToModel, WithHeadingRow, WithBatchInserts, With
     private function mapGender($gender): string
     {
         $gender = strtolower(trim($gender));
-        return in_array($gender, ['l', 'laki-laki', 'pria', 'male']) ? 'L' : 'P';
+        if (in_array($gender, ['l', 'laki-laki', 'pria', 'male'])) {
+            return 'L';
+        } elseif (in_array($gender, ['p', 'perempuan', 'female'])) {
+            return 'P';
+        }
+
+        // If it's already L or P, return as-is
+        if (in_array(strtoupper($gender), ['L', 'P'])) {
+            return strtoupper($gender);
+        }
+
+        // Default fallback
+        return 'L';
     }
 
     private function mapEmploymentType($type): string
@@ -462,7 +574,73 @@ class LecturersImport implements ToModel, WithHeadingRow, WithBatchInserts, With
 
     public function headingRow(): int
     {
-        return 6; // Header di baris 6, data dimulai dari baris 7
+        return 7; // Field names di baris 7
+    }
+
+    public function startRow(): int
+    {
+        return 9; // Skip baris 8 (contoh data), mulai import dari baris 9
+    }
+
+    /**
+     * Check if row is instruction/title row or data row
+     */
+    private function isInstructionRow(array $row, string $firstKey): bool
+    {
+        // Skip empty rows or rows with non-data first keys
+        if (empty($firstKey) || trim($firstKey) === '') {
+            Log::info("Row identified as instruction: empty first key");
+            return true;
+        }
+
+        // Check if first key looks like an instruction or title
+        $instructionPatterns = [
+            'petunjuk_import_data_dosen',
+            '1',
+            '2',
+            '3',
+            '4',
+            'nama_wajib*', // Title row with asterisks
+            '* nama lengkap', // Title row with asterisks and spaces
+        ];
+
+        // If the first key contains instruction keywords or is just numbers, skip it
+        foreach ($instructionPatterns as $pattern) {
+            if (stripos($firstKey, $pattern) !== false || is_numeric($firstKey)) {
+                Log::info("Row identified as instruction by pattern", [
+                    'first_key' => $firstKey,
+                    'pattern_matched' => $pattern,
+                    'is_numeric' => is_numeric($firstKey)
+                ]);
+                return true;
+            }
+        }
+
+        // Check if all required field names are missing (indicating title row)
+        $requiredFields = ['nama_wajib', 'email_wajib', 'nip_nidn_wajib', 'no_hp_wajib'];
+        $hasRequiredFields = false;
+        $foundKeys = [];
+
+        foreach ($requiredFields as $field) {
+            if (isset($row[$field])) {
+                $hasRequiredFields = true;
+                $foundKeys[] = $field;
+                break;
+            }
+        }
+
+        $isInstruction = !$hasRequiredFields;
+
+        Log::info("Row type detection", [
+            'first_key' => $firstKey,
+            'row_keys_count' => count($row),
+            'row_keys_sample' => array_slice(array_keys($row), 0, 5),
+            'found_required_fields' => $foundKeys,
+            'has_required_fields' => $hasRequiredFields,
+            'is_instruction_row' => $isInstruction
+        ]);
+
+        return $isInstruction;
     }
 
     
@@ -501,5 +679,20 @@ class LecturersImport implements ToModel, WithHeadingRow, WithBatchInserts, With
     public function getResults(): array
     {
         return $this->results;
+    }
+
+    public function getImportedCount(): int
+    {
+        return $this->results['imported'] ?? 0;
+    }
+
+    public function getFailedCount(): int
+    {
+        return $this->results['invalid_rows'] ?? 0;
+    }
+
+    public function getErrors(): array
+    {
+        return $this->results['invalid_data'] ?? [];
     }
 }

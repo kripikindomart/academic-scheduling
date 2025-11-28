@@ -253,55 +253,143 @@
                   </div>
                 </div>
 
-                <!-- Quick Fix Bar -->
-                <div v-if="validationResults.invalid_data && validationResults.invalid_data.length > 0"
-                     class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                  <div class="flex items-center justify-between mb-3">
-                    <h4 class="text-sm font-semibold text-blue-800 flex items-center">
-                      <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
-                      </svg>
-                      Quick Fix Bar
-                    </h4>
-                    <span class="text-xs text-blue-600">{{ validationResults.invalid_data.length }} item bermasalah</span>
+                <!-- Enhanced Quick Fix Bar -->
+                <div v-if="(validationResults.invalid_data && validationResults.invalid_data.length > 0) || (validationResults.all_data && validationResults.all_data.length > 0)"
+                     class="mb-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                  <!-- Header -->
+                  <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-xl">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center">
+                        <div class="p-2 bg-white/20 rounded-lg mr-3">
+                          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 class="text-sm font-semibold">Quick Fix Tools</h4>
+                          <p class="text-xs text-white/80">Perbaiki data dengan cepat dan otomatis</p>
+                        </div>
+                      </div>
+                      <div class="text-right">
+                        <span class="text-lg font-bold">{{ (validationResults.invalid_data?.length || 0) + (validationResults.all_data?.length || 0) }}</span>
+                        <span class="text-xs block text-white/80">items perlu diperbaiki</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                    <button @click="autoFillProgramStudy"
-                            class="group flex flex-col items-center justify-center p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all duration-200">
-                      <svg class="w-5 h-5 mb-1 text-gray-600 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                      </svg>
-                      <span class="text-xs font-medium text-gray-700 group-hover:text-blue-600">Program Studi</span>
-                      <span class="text-xs text-gray-500">Auto-fill kosong</span>
-                    </button>
+                  <!-- Tools Grid -->
+                  <div class="p-6 space-y-4">
+                    <!-- Program Study Fix -->
+                    <div class="flex items-center gap-4 p-3 bg-blue-50 rounded-lg">
+                      <div class="flex-shrink-0">
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                          <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                          </svg>
+                        </div>
+                      </div>
+                      <div class="flex-1">
+                        <h5 class="text-sm font-medium text-gray-900">Program Studi</h5>
+                        <p class="text-xs text-gray-600">Auto-fill program studi yang kosong</p>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <select v-model="selectedProgramStudy"
+                                class="text-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                          <option value="">Pilih Program Studi</option>
+                          <option v-for="ps in programStudies" :key="ps.id" :value="ps.name">
+                            {{ ps.name }}
+                          </option>
+                        </select>
+                        <button @click="applyProgramStudyToAll"
+                                :disabled="!selectedProgramStudy"
+                                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+                          Apply All
+                        </button>
+                      </div>
+                    </div>
 
-                    <button @click="fixAllDates"
-                            class="group flex flex-col items-center justify-center p-3 bg-white rounded-lg border border-gray-200 hover:border-green-300 hover:shadow-sm transition-all duration-200">
-                      <svg class="w-5 h-5 mb-1 text-gray-600 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                      </svg>
-                      <span class="text-xs font-medium text-gray-700 group-hover:text-green-600">Format Tanggal</span>
-                      <span class="text-xs text-gray-500">Perbaiki semua</span>
-                    </button>
+                    <!-- Enum Fields Fix -->
+                    <div class="flex items-center gap-4 p-3 bg-purple-50 rounded-lg">
+                      <div class="flex-shrink-0">
+                        <div class="p-2 bg-purple-100 rounded-lg">
+                          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                          </svg>
+                        </div>
+                      </div>
+                      <div class="flex-1">
+                        <h5 class="text-sm font-medium text-gray-900">Field Enum</h5>
+                        <p class="text-xs text-gray-600">Perbaiki field enum (gender, status, dll)</p>
+                      </div>
+                      <div class="flex gap-2">
+                        <button @click="fixAllEnumFields"
+                                class="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
+                          Fix All Enums
+                        </button>
+                      </div>
+                    </div>
 
-                    <button @click="fixEmails"
-                            class="group flex flex-col items-center justify-center p-3 bg-white rounded-lg border border-gray-200 hover:border-purple-300 hover:shadow-sm transition-all duration-200">
-                      <svg class="w-5 h-5 mb-1 text-gray-600 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                      </svg>
-                      <span class="text-xs font-medium text-gray-700 group-hover:text-purple-600">Email</span>
-                      <span class="text-xs text-gray-500">Format ulang</span>
-                    </button>
+                    <!-- Duplicates Management -->
+                    <div class="flex items-center gap-4 p-3 bg-red-50 rounded-lg">
+                      <div class="flex-shrink-0">
+                        <div class="p-2 bg-red-100 rounded-lg">
+                          <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                          </svg>
+                        </div>
+                      </div>
+                      <div class="flex-1">
+                        <h5 class="text-sm font-medium text-gray-900">Data Duplikat</h5>
+                        <p class="text-xs text-gray-600">Hapus semua data duplikat dengan satu klik</p>
+                      </div>
+                      <div class="flex gap-2">
+                        <div class="text-right">
+                          <span class="text-lg font-bold text-red-600">{{ validationResults.duplicate_rows || 0 }}</span>
+                          <span class="text-xs block text-gray-600">duplikat</span>
+                        </div>
+                        <button @click="deleteAllDuplicates"
+                                :disabled="(validationResults.duplicate_rows || 0) === 0"
+                                class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">
+                          🗑️ Hapus Semua
+                        </button>
+                      </div>
+                    </div>
 
-                    <button @click="fixPhones"
-                            class="group flex flex-col items-center justify-center p-3 bg-white rounded-lg border border-gray-200 hover:border-orange-300 hover:shadow-sm transition-all duration-200">
-                      <svg class="w-5 h-5 mb-1 text-gray-600 group-hover:text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                      </svg>
-                      <span class="text-xs font-medium text-gray-700 group-hover:text-orange-600">No. HP</span>
-                      <span class="text-xs text-gray-500">Format ulang</span>
-                    </button>
+                    <!-- Format Fix Tools -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <button @click="fixAllDates"
+                              class="flex items-center justify-center gap-2 p-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <div class="text-left">
+                          <span class="text-xs font-medium text-green-800 block">Format Tanggal</span>
+                          <span class="text-xs text-green-600">Auto-fix dates</span>
+                        </div>
+                      </button>
+
+                      <button @click="fixEmails"
+                              class="flex items-center justify-center gap-2 p-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors">
+                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <div class="text-left">
+                          <span class="text-xs font-medium text-indigo-800 block">Format Email</span>
+                          <span class="text-xs text-indigo-600">Auto-fix emails</span>
+                        </div>
+                      </button>
+
+                      <button @click="fixPhones"
+                              class="flex items-center justify-center gap-2 p-3 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-lg transition-colors">
+                        <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        </svg>
+                        <div class="text-left">
+                          <span class="text-xs font-medium text-orange-800 block">Format No. HP</span>
+                          <span class="text-xs text-orange-600">Auto-fix phones</span>
+                        </div>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -646,6 +734,7 @@ const validationResults = ref({})
 const importResults = ref(null)
 const showSuccessModal = ref(false)
 const programStudies = ref([])
+const selectedProgramStudy = ref('')
 const selectedRowsCount = ref(0)
 const selectAllChecked = ref(false)
 
@@ -713,7 +802,7 @@ const loadProgramStudies = async () => {
 const downloadTemplate = async () => {
   try {
     downloadingTemplate.value = true
-    const response = await axios.get('/api/lecturers/import/download-template', {
+    const response = await axios.get('/api/lecturers/import/template-download', {
       responseType: 'blob'
     })
 
@@ -943,6 +1032,113 @@ const closeSuccessModal = () => {
   emit('import-success', importResults.value)
 }
 
+// Quick Fix Functions
+const applyProgramStudyToAll = () => {
+  if (!selectedProgramStudy.value) return
+
+  let updatedCount = 0
+  validationResults.value.all_data.forEach(item => {
+    // Always update departemen with selected program study (overwrite existing data)
+    item.mapped_data.departemen = selectedProgramStudy.value
+    updatedCount++
+
+    // Always set fakultas to "Sekolah Pascasarjana" (overwrite existing data)
+    item.mapped_data.fakultas = 'Sekolah Pascasarjana'
+    updatedCount++
+  })
+
+  toastStore.success(
+    'Program Studi & Fakultas Updated',
+    `Departemen diisi dengan "${selectedProgramStudy.value}" dan Fakultas diisi dengan "Sekolah Pascasarjana" untuk ${validationResults.value.all_data.length} data`
+  )
+
+  // Don't call revalidateEditedData immediately to avoid date validation issues
+  // revalidateEditedData()
+}
+
+const fixAllEnumFields = () => {
+  let updatedCount = 0
+
+  validationResults.value.all_data.forEach(item => {
+    // Fix gender
+    if (item.mapped_data.jenis_kelamin) {
+      const gender = item.mapped_data.jenis_kelamin.toLowerCase().trim()
+      if (gender === 'laki-laki' || gender === 'pria' || gender === 'male') {
+        item.mapped_data.jenis_kelamin = 'L'
+        updatedCount++
+      } else if (gender === 'perempuan' || gender === 'wanita' || gender === 'female') {
+        item.mapped_data.jenis_kelamin = 'P'
+        updatedCount++
+      }
+    }
+
+    // Fix status
+    if (item.mapped_data.status_dosen_wajib) {
+      const status = item.mapped_data.status_dosen_wajib.toLowerCase().trim()
+      if (status === 'aktif' || status === 'active') {
+        item.mapped_data.status_dosen_wajib = 'Aktif'
+        updatedCount++
+      } else if (status === 'cuti' || status === 'on_leave') {
+        item.mapped_data.status_dosen_wajib = 'Cuti'
+        updatedCount++
+      } else if (status === 'tidak aktif' || status === 'non-aktif' || status === 'inactive') {
+        item.mapped_data.status_dosen_wajib = 'Tidak'
+        updatedCount++
+      }
+    }
+
+    // Fix employment type
+    if (item.mapped_data.jenis_pegawai_wajib) {
+      const type = item.mapped_data.jenis_pegawai_wajib.toLowerCase().trim()
+      if (type.includes('tetap') || type.includes('pns') || type.includes('permanent')) {
+        item.mapped_data.jenis_pegawai_wajib = 'Tetap'
+        updatedCount++
+      } else if (type.includes('kontrak') || type.includes('contract')) {
+        item.mapped_data.jenis_pegawai_wajib = 'Kontrak'
+        updatedCount++
+      } else if (type.includes('paruh') || type.includes('part-time')) {
+        item.mapped_data.jenis_pegawai_wajib = 'Paruh'
+        updatedCount++
+      } else if (type.includes('tamu') || type.includes('guest')) {
+        item.mapped_data.jenis_pegawai_wajib = 'Tamu'
+        updatedCount++
+      }
+    }
+
+    // Fix blood type
+    if (item.mapped_data.golongan_darah) {
+      const blood = item.mapped_data.golongan_darah.toUpperCase().trim()
+      if (['A', 'B', 'AB', 'O'].includes(blood)) {
+        item.mapped_data.golongan_darah = blood
+        updatedCount++
+      }
+    }
+  })
+
+  toastStore.success(
+    'Enum Fields Fixed',
+    `${updatedCount} enum fields corrected`
+  )
+  revalidateEditedData()
+}
+
+const deleteAllDuplicates = () => {
+  const duplicateCount = validationResults.value.duplicate_rows || 0
+  if (duplicateCount === 0) return
+
+  // Filter out duplicate rows
+  validationResults.value.all_data = validationResults.value.all_data.filter(item => !item.is_duplicate)
+
+  // Update counts
+  validationResults.value.duplicate_rows = 0
+  validationResults.value.total_rows = validationResults.value.all_data.length
+
+  toastStore.success(
+    'Duplicates Deleted',
+    `${duplicateCount} duplicate rows removed`
+  )
+}
+
 // Helper Functions
 const getColumnWidth = (index) => {
   return `width: ${columns.value[index]?.width || '120px'}; min-width: ${columns.value[index]?.width || '120px'};`
@@ -959,20 +1155,57 @@ const getPlaceholder = (column) => {
 }
 
 const getCellClass = (item, column) => {
-  const hasError = item.errors_array?.some(error =>
-    error.toLowerCase().includes(column.field) ||
-    error.toLowerCase().includes(column.name.toLowerCase())
-  )
+  // First check if this item has any errors
+  const hasErrors = item.errors_array && item.errors_array.length > 0
 
-  if (hasError) {
-    return 'bg-red-50 border-red-300 text-red-900'
+  if (hasErrors) {
+    const hasFieldError = item.errors_array.some(error => {
+      const lowerError = error.toLowerCase()
+      const lowerField = column.field.toLowerCase()
+      const lowerName = column.name.toLowerCase()
+
+      // Check for "wajib diisi" (required field) errors
+      if (lowerError.includes('wajib diisi') && column.field.includes('_wajib')) {
+        return true
+      }
+
+      // Check for field-specific required errors
+      if (lowerError.includes(`field ${lowerField} wajib diisi`)) {
+        return true
+      }
+
+      // Check for specific error types by field
+      if (column.field === 'email_wajib' && lowerError.includes('email')) {
+        return true
+      }
+      if (column.field === 'nip_nidn_wajib' && (lowerError.includes('nip') || lowerError.includes('duplicate'))) {
+        return true
+      }
+      if (column.field === 'no_hp_wajib' && lowerError.includes('hp')) {
+        return true
+      }
+
+      // Check if the error mentions any part of the field name
+      if (lowerError.includes(lowerField.replace('_wajib', '')) ||
+          lowerError.includes(lowerName.replace(' (wajib)', ''))) {
+        return true
+      }
+
+      return false
+    })
+
+    if (hasFieldError) {
+      return 'bg-red-50 border-red-300 text-red-900 ring-1 ring-red-200'
+    }
   }
 
-  if (!item.mapped_data[column.field] && column.required) {
-    return 'bg-yellow-50 border-yellow-300 text-yellow-900'
+  // Check for empty required fields (yellow highlight)
+  if (column.required && (!item.mapped_data[column.field] || item.mapped_data[column.field] === '')) {
+    return 'bg-yellow-50 border-yellow-300 text-yellow-900 ring-1 ring-yellow-200'
   }
 
-  return 'bg-white border-gray-200 text-gray-900'
+  // Normal state
+  return 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'
 }
 
 const getRowClass = (item) => {

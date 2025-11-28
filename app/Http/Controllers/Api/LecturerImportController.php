@@ -22,13 +22,34 @@ class LecturerImportController extends Controller
     /**
      * Download template for import
      */
-    public function downloadTemplate(): BinaryFileResponse
+    public function downloadTemplate()
     {
         try {
             $filename = 'template-import-dosen-' . date('Y-m-d') . '.xlsx';
 
-            return Excel::download(new LecturersTemplateExport(), $filename);
+            // Create the export object
+            $export = new LecturersTemplateExport();
+
+            // Generate and get the file content
+            $fileContent = Excel::raw($export, \Maatwebsite\Excel\Excel::XLSX);
+
+            // Set headers for Excel download
+            $headers = [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Cache-Control' => 'max-age=0',
+                'Pragma' => 'no-cache',
+                'Expires' => '0',
+            ];
+
+            return response($fileContent, 200, $headers);
+
         } catch (\Exception $e) {
+            Log::error('Template download failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengunduh template: ' . $e->getMessage()
@@ -57,17 +78,34 @@ class LecturerImportController extends Controller
             $file = $request->file('file');
             $filename = time() . '_import_dosen.' . $file->getClientOriginalExtension();
 
-            
+            Log::info("Starting file validation", [
+                'filename' => $filename,
+                'original_filename' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize(),
+                'mime_type' => $file->getMimeType()
+            ]);
+
             // Store file temporarily
             $path = $file->storeAs('temp/imports', $filename, 'local');
 
             // Process the file and validate data
             $import = new LecturersImport();
+
+            Log::info("Beginning Excel import process", [
+                'file_path' => $path
+            ]);
+
             Excel::import($import, $path);
 
             $results = $import->getResults();
 
-            
+            Log::info("Excel import completed", [
+                'results' => $results,
+                'all_data_count' => count($results['all_data'] ?? []),
+                'invalid_data_count' => count($results['invalid_data'] ?? [])
+            ]);
+
+
             // Remove temporary file
             Storage::disk('local')->delete($path);
 
@@ -122,32 +160,73 @@ class LecturerImportController extends Controller
             $updateExisting = $request->input('update_existing', false);
             $forceImportInvalid = $request->input('force_import_invalid', false);
             $mappingData = $request->input('mapping_data', []);
-            $results = [];
+
+            Log::info('Starting bulk import', [
+                'skip_duplicates' => $skipDuplicates,
+                'update_existing' => $updateExisting,
+                'force_import_invalid' => $forceImportInvalid,
+                'has_corrected_data' => $request->has('corrected_data'),
+                'has_file' => $request->hasFile('file')
+            ]);
+
+            $results = [
+                'imported' => 0,
+                'updated' => 0,
+                'skipped' => 0,
+                'failed' => 0,
+                'total_processed' => 0,
+                'failed_records' => [] // Store detailed failure information
+            ];
 
             // Process corrected data if provided (from manual mapping)
             if ($request->has('corrected_data')) {
                 $correctedData = $request->input('corrected_data');
+                Log::info('Processing corrected data', ['count' => count($correctedData)]);
 
-                foreach ($correctedData as $data) {
+                foreach ($correctedData as $index => $data) {
+                    $results['total_processed']++;
+
                     try {
-                        // Create lecturer from corrected data
-                        $import = new LecturersImport(
-                            $skipDuplicates,
-                            $updateExisting,
-                            $forceImportInvalid,
-                            $mappingData
-                        );
+                        // Validate email before creating lecturer
+                        if (!empty($data['email_wajib']) && !filter_var($data['email_wajib'], FILTER_VALIDATE_EMAIL)) {
+                            Log::warning("Skipping invalid email in corrected data", [
+                                'index' => $index,
+                                'email' => $data['email_wajib']
+                            ]);
+                            $results['failed']++;
+                            continue;
+                        }
 
-                        // Use the model method directly with the corrected data
-                        $lecturer = $import->model($data);
+                        // Create lecturer from validated data
+                        $lecturerService = new \App\Services\LecturerService();
+                        $lecturer = $lecturerService->createLecturerFromValidatedData($data, auth()->user());
 
-                        // Count results
                         if ($lecturer) {
-                            $results['imported'] = ($results['imported'] ?? 0) + 1;
-                            $results['total_processed'] = ($results['total_processed'] ?? 0) + 1;
+                            $results['imported']++;
+
+                            Log::info('Successfully imported lecturer from corrected data', [
+                                'lecturer_id' => $lecturer->id,
+                                'employee_number' => $lecturer->employee_number,
+                                'name' => $lecturer->name
+                            ]);
                         }
                     } catch (\Exception $e) {
-                        $results['failed'] = ($results['failed'] ?? 0) + 1;
+                        Log::error('Failed to import lecturer from corrected data', [
+                            'index' => $index,
+                            'data' => $data,
+                            'error' => $e->getMessage()
+                        ]);
+                        $results['failed']++;
+
+                        // Add detailed failure information
+                        $results['failed_records'][] = [
+                            'row_number' => $index + 1,
+                            'name' => $data['nama_wajib'] ?? 'Unknown',
+                            'email' => $data['email_wajib'] ?? 'Unknown',
+                            'employee_number' => $data['nip_nidn_wajib'] ?? 'Unknown',
+                            'error' => $e->getMessage(),
+                            'data_preview' => array_intersect_key($data, array_flip(['nama_wajib', 'email_wajib', 'nip_nidn_wajib', 'jenis_kelamin']))
+                        ];
                     }
                 }
             } else {
@@ -156,8 +235,12 @@ class LecturerImportController extends Controller
                 $filename = time() . '_bulk_import_dosen.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('temp/imports', $filename, 'local');
 
-                // Process import with options
+                Log::info('Processing file import', ['filename' => $filename, 'path' => $path]);
+
+                // Process validation first
                 $import = new LecturersImport(
+                    null, // programStudyId
+                    auth()->user(), // user
                     $skipDuplicates,
                     $updateExisting,
                     $forceImportInvalid,
@@ -165,7 +248,72 @@ class LecturerImportController extends Controller
                 );
 
                 Excel::import($import, $path);
-                $results = $import->getResults();
+                $validationResults = $import->getResults();
+
+                Log::info('File validation completed', [
+                    'total_rows' => $validationResults['total_rows'],
+                    'valid_rows' => $validationResults['valid_rows'],
+                    'invalid_rows' => $validationResults['invalid_rows'],
+                    'duplicate_rows' => $validationResults['duplicate_rows']
+                ]);
+
+                // Now actually import the valid data
+                $lecturerService = new \App\Services\LecturerService();
+                $importedCount = 0;
+                $failedCount = 0;
+
+                foreach ($validationResults['all_data'] as $data) {
+                    if ($data['is_valid'] && !$data['is_duplicate']) {
+                        try {
+                            $lecturer = $lecturerService->createLecturerFromValidatedData($data['mapped_data'], auth()->user());
+                            if ($lecturer) {
+                                $importedCount++;
+
+                                Log::info('Successfully imported lecturer', [
+                                    'row_number' => $data['row_number'],
+                                    'lecturer_id' => $lecturer->id,
+                                    'employee_number' => $lecturer->employee_number,
+                                    'name' => $lecturer->name
+                                ]);
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('Failed to import lecturer', [
+                                'row_number' => $data['row_number'],
+                                'data' => $data['mapped_data'],
+                                'error' => $e->getMessage()
+                            ]);
+                            $failedCount++;
+
+                            // Add detailed failure information
+                            $results['failed_records'][] = [
+                                'row_number' => $data['row_number'],
+                                'name' => $data['mapped_data']['nama_wajib'] ?? 'Unknown',
+                                'email' => $data['mapped_data']['email_wajib'] ?? 'Unknown',
+                                'employee_number' => $data['mapped_data']['nip_nidn_wajib'] ?? 'Unknown',
+                                'error' => $e->getMessage(),
+                                'data_preview' => array_intersect_key($data['mapped_data'], array_flip(['nama_wajib', 'email_wajib', 'nip_nidn_wajib', 'jenis_kelamin']))
+                            ];
+                        }
+                    } elseif ($data['is_duplicate']) {
+                        Log::info('Skipped duplicate lecturer', [
+                            'row_number' => $data['row_number'],
+                            'employee_number' => $data['mapped_data']['nip_nidn_wajib'] ?? 'N/A'
+                        ]);
+                    } else {
+                        Log::warning('Skipped invalid lecturer', [
+                            'row_number' => $data['row_number'],
+                            'errors' => $data['errors'] ?? 'Unknown error'
+                        ]);
+                    }
+                }
+
+                $results = [
+                    'imported' => $importedCount,
+                    'updated' => 0,
+                    'skipped' => $validationResults['duplicate_rows'],
+                    'failed' => $failedCount + $validationResults['invalid_rows'],
+                    'total_processed' => $validationResults['total_rows']
+                ];
 
                 // Clean up
                 Storage::disk('local')->delete($path);
@@ -173,20 +321,42 @@ class LecturerImportController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Import data dosen berhasil',
-                'data' => [
-                    'imported' => $results['imported'] ?? 0,
-                    'updated' => $results['updated'] ?? 0,
-                    'skipped' => $results['skipped'] ?? 0,
-                    'failed' => $results['failed'] ?? 0,
-                    'total_processed' => $results['total_processed'] ?? 0
-                ]
-            ]);
+            Log::info('Bulk import completed', $results);
+
+            // Determine if import was actually successful
+            $hasSuccess = $results['imported'] > 0 || $results['updated'] > 0;
+            $hasFailures = $results['failed'] > 0;
+
+            if ($hasFailures && !$hasSuccess) {
+                // All data failed to import
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Semua data gagal diimport. Periksa kembali format data Anda.',
+                    'data' => $results
+                ], 400);
+            } elseif ($hasFailures && $hasSuccess) {
+                // Partial success
+                return response()->json([
+                    'success' => true,
+                    'message' => "Import selesai dengan {$results['failed']} data gagal dan {$results['imported']} berhasil",
+                    'data' => $results
+                ]);
+            } else {
+                // Full success
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Import data dosen berhasil',
+                    'data' => $results
+                ]);
+            }
 
         } catch (\Exception $e) {
             DB::rollBack();
+
+            Log::error('Bulk import failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return response()->json([
                 'success' => false,
@@ -298,9 +468,18 @@ class LecturerImportController extends Controller
                     }
                 }
 
-                // Validate email format
-                if (!empty($mappedData['email_wajib']) && !filter_var($mappedData['email_wajib'], FILTER_VALIDATE_EMAIL)) {
-                    $errors[] = "Format email tidak valid";
+                // Validate email format and duplicate
+                if (!empty($mappedData['email_wajib'])) {
+                    // Check email format
+                    if (!filter_var($mappedData['email_wajib'], FILTER_VALIDATE_EMAIL)) {
+                        $errors[] = "Format email tidak valid";
+                    } else {
+                        // Check for duplicate email
+                        $existingEmail = Lecturer::where('email', $mappedData['email_wajib'])->first();
+                        if ($existingEmail) {
+                            $errors[] = "Email sudah ada di sistem";
+                        }
+                    }
                 }
 
                 // Validate NIP/NIDN duplicates

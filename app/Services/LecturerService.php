@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Carbon\Carbon;
+use DateTime;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\LecturersExport;
 use App\Imports\LecturersImport;
@@ -105,7 +106,7 @@ class LecturerService
         return DB::transaction(function () use ($data) {
             // Set default values for required fields if not provided
             $defaults = [
-                'gender' => 'male',
+                'gender' => 'L',
                 'nationality' => 'Indonesia',
                 'birth_date' => now()->subYears(25)->format('Y-m-d'), // Default 25 years old
                 'birth_place' => '', // Default empty string
@@ -523,16 +524,50 @@ class LecturerService
     /**
      * Import lecturers from file.
      */
-    public function importLecturers($file, ?int $programStudyId = null, $user): array
+    public function importLecturers($file, $user, ?int $programStudyId = null): array
     {
         try {
             $import = new LecturersImport($programStudyId, $user);
             Excel::import($import, $file);
 
+            // Process actual import from validated data
+            $results = $import->getResults();
+            $importedCount = 0;
+            $updatedCount = 0;
+            $skippedCount = 0;
+            $failedCount = 0;
+
+            // Process all valid data
+            foreach ($results['all_data'] as $data) {
+                if ($data['is_valid'] && !$data['is_duplicate']) {
+                    try {
+                        // Create lecturer from validated data
+                        $lecturer = $this->createLecturerFromValidatedData($data['mapped_data'], $user, $programStudyId);
+                        if ($lecturer) {
+                            $importedCount++;
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to import lecturer row', [
+                            'row_number' => $data['row_number'],
+                            'data' => $data['mapped_data'],
+                            'error' => $e->getMessage()
+                        ]);
+                        $failedCount++;
+                    }
+                } elseif ($data['is_duplicate']) {
+                    $skippedCount++;
+                } else {
+                    $failedCount++;
+                }
+            }
+
             return [
                 'success' => true,
-                'imported_count' => $import->getImportedCount(),
-                'failed_count' => $import->getFailedCount(),
+                'imported' => $importedCount,
+                'updated' => $updatedCount,
+                'skipped' => $skippedCount,
+                'failed' => $failedCount,
+                'total_processed' => $importedCount + $updatedCount + $skippedCount + $failedCount,
                 'errors' => $import->getErrors(),
             ];
         } catch (\Exception $e) {
@@ -547,6 +582,265 @@ class LecturerService
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Create lecturer from validated data
+     */
+    public function createLecturerFromValidatedData(array $data, $user, ?int $programStudyId = null): Lecturer
+    {
+        // Validate email format - same as in LecturersImport
+        if (!empty($data['email_wajib']) && !filter_var($data['email_wajib'], FILTER_VALIDATE_EMAIL)) {
+            throw new \Exception("Format email tidak valid: " . $data['email_wajib']);
+        }
+
+        // Map enum values
+        $gender = $this->mapGender($data['jenis_kelamin'] ?? '');
+        $employmentType = $this->mapEmploymentType($data['jenis_pegawai_wajib'] ?? '');
+        $status = $this->mapStatus($data['status_dosen_wajib'] ?? '');
+
+        // Validate gender mapping
+        if (!empty($data['jenis_kelamin']) && empty($gender)) {
+            throw new \Exception("Jenis kelamin tidak valid. Gunakan 'L' atau 'P'.");
+        }
+
+        // Find program study if specified - STRICT VALIDATION
+        $programStudyId = $programStudyId;
+        if (!$programStudyId && (!empty($data['departemen']) || !empty($data['fakultas']))) {
+            $departemen = trim($data['departemen'] ?? '');
+            $fakultas = trim($data['fakultas'] ?? '');
+
+            Log::info('Looking for program study', [
+                'departemen' => $departemen,
+                'fakultas' => $fakultas
+            ]);
+
+            // Try exact match first, then partial match
+            $programStudy = ProgramStudy::where(function($query) use ($departemen, $fakultas) {
+                if (!empty($departemen)) {
+                    // Exact match first
+                    $query->where('name', '=', $departemen);
+                }
+            })->orWhere(function($query) use ($departemen, $fakultas) {
+                if (!empty($departemen)) {
+                    // Partial match for departemen
+                    $query->where('name', 'like', '%' . $departemen . '%');
+                }
+            })->orWhere(function($query) use ($fakultas) {
+                if (!empty($fakultas)) {
+                    // Match by faculty
+                    $query->where('faculty', 'like', '%' . $fakultas . '%');
+                }
+            })->first();
+
+            if (!$programStudy) {
+                // Program study not found - throw error
+                $availablePrograms = ProgramStudy::select('name', 'faculty')->get()->toArray();
+                $programList = implode(', ', array_map(fn($p) => $p['name'], $availablePrograms));
+
+                throw new \Exception(
+                    "Program studi tidak ditemukan. '" . ($departemen ?: $fakultas) . "' tidak ada di database. " .
+                    "Program studi yang tersedia: " . $programList
+                );
+            }
+
+            $programStudyId = $programStudy->id;
+
+            Log::info('Program study found', [
+                'program_study_id' => $programStudyId,
+                'program_study_name' => $programStudy->name,
+                'faculty' => $programStudy->faculty
+            ]);
+        }
+
+        return Lecturer::create([
+            'employee_number' => $data['nip_nidn_wajib'] ?? '',
+            'name' => $data['nama_wajib'] ?? '',
+            'email' => $data['email_wajib'] ?? '',
+            'phone' => $data['no_hp_wajib'] ?? '',
+            'gender' => $gender,
+            'birth_date' => $this->formatDate($data['tanggal_lahir'] ?? null),
+            'birth_place' => $data['tempat_lahir'] ?? '',
+            'address' => $data['alamat'] ?? '',
+            'city' => $data['kota'] ?? '',
+            'province' => $data['provinsi'] ?? '',
+            'postal_code' => $data['kode_pos'] ?? '',
+            'nationality' => $data['kebangsaan'] ?: 'Indonesia',
+            'religion' => $data['agama'] ?? '',
+            'blood_type' => $this->mapBloodType($data['golongan_darah'] ?? ''),
+            'id_card_number' => $data['no_ktp'] ?? '',
+            'status' => $status,
+            'employment_status' => $data['status_kepegawaian_wajib'] ?? '',
+            'employment_type' => $employmentType,
+            'hire_date' => $this->formatDate($data['tanggal_masuk'] ?? null),
+            'position' => $data['jabatan'] ?? '',
+            'rank' => $data['gelar'] ?? '',
+            'specialization' => $data['bidang_keahlian'] ?? '',
+            'department' => $data['departemen'] ?? '',
+            'faculty' => $data['fakultas'] ?? '',
+            'highest_education' => $this->mapHighestEducation($data['pendidikan_tertinggi'] ?? ''),
+            'education_institution' => $data['institusi_pendidikan'] ?? '',
+            'education_major' => $data['jurusan_pendidikan'] ?? '',
+            'graduation_year' => $this->formatYear($data['tahun_lulus'] ?? null),
+            'office_room' => $data['no_ruang_kantor'] ?? '',
+            'notes' => $data['catatan'] ?? '',
+            'program_study_id' => $programStudyId,
+            'is_active' => $status === 'Aktif',
+            'created_by' => $user->id ?? null,
+        ]);
+    }
+
+    /**
+     * Helper methods for data mapping
+     */
+    private function mapGender($gender): string
+    {
+        if (empty($gender)) return 'L'; // Default to 'L' for empty
+
+        $gender = strtolower(trim($gender));
+        if (in_array($gender, ['l', 'laki-laki', 'pria', 'male'])) {
+            return 'L';  // Fixed: Database enum is ['L', 'P']
+        } elseif (in_array($gender, ['p', 'perempuan', 'female'])) {
+            return 'P';  // Fixed: Database enum is ['L', 'P']
+        }
+
+        // If it's already L or P, return as-is
+        if (in_array(strtoupper($gender), ['L', 'P'])) {
+            return strtoupper($gender);
+        }
+
+        // Default fallback
+        return 'L';
+    }
+
+    private function mapEmploymentType($type): string
+    {
+        if (empty($type)) return '';
+
+        $type = strtolower(trim($type));
+        if (in_array($type, ['tetap', 'permanent'])) {
+            return 'Tetap';  // Fixed: Database enum is ['Tetap', 'Kontrak', 'Paruh', 'Tamu']
+        } elseif (in_array($type, ['kontrak', 'contract'])) {
+            return 'Kontrak';  // Fixed: Database enum is ['Tetap', 'Kontrak', 'Paruh', 'Tamu']
+        } elseif (in_array($type, ['paruh waktu', 'part_time', 'paruh'])) {
+            return 'Paruh';  // Fixed: Database enum is ['Tetap', 'Kontrak', 'Paruh', 'Tamu']
+        } elseif (in_array($type, ['honorer', 'guest', 'tamu'])) {
+            return 'Tamu';  // Fixed: Database enum is ['Tetap', 'Kontrak', 'Paruh', 'Tamu']
+        }
+
+        // If it's already a valid Indonesian enum value, return as-is
+        if (in_array(ucfirst($type), ['Tetap', 'Kontrak', 'Paruh', 'Tamu'])) {
+            return ucfirst($type);
+        }
+
+        return $type;
+    }
+
+    private function mapStatus($status): string
+    {
+        if (empty($status)) return '';
+
+        $status = strtolower(trim($status));
+        if (in_array($status, ['aktif', 'active'])) {
+            return 'Aktif';
+        } elseif (in_array($status, ['cuti', 'on_leave'])) {
+            return 'Cuti';
+        } elseif (in_array($status, ['tidak aktif', 'inactive'])) {
+            return 'Tidak Aktif';
+        }
+
+        return $status;
+    }
+
+    private function mapBloodType($bloodType): ?string
+    {
+        if (empty($bloodType)) return null;
+
+        $bloodType = strtoupper(trim($bloodType));
+        if (in_array($bloodType, ['A', 'B', 'AB', 'O'])) {
+            return $bloodType;
+        }
+
+        return null;
+    }
+
+    private function formatDate($date): ?string
+    {
+        if (empty($date)) return null;
+
+        try {
+            // Handle Excel serial numbers
+            if (is_numeric($date)) {
+                $date = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($date)->format('Y-m-d');
+            } else {
+                // Try various date formats
+                $dateObj = DateTime::createFromFormat('Y-m-d', $date);
+                if (!$dateObj) {
+                    $dateObj = DateTime::createFromFormat('d/m/Y', $date);
+                }
+                if (!$dateObj) {
+                    $dateObj = DateTime::createFromFormat('d-m-Y', $date);
+                }
+                if (!$dateObj) {
+                    $dateObj = DateTime::createFromFormat('m/d/Y', $date);
+                }
+
+                if ($dateObj) {
+                    $date = $dateObj->format('Y-m-d');
+                }
+            }
+
+            return $date;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    private function mapHighestEducation($education): string
+    {
+        if (empty($education)) return 'S1';
+
+        $education = strtolower(trim($education));
+
+        // Handle formats like "S1/S2/S3" or "S1,S2,S3"
+        if (strpos($education, '/') !== false || strpos($education, ',') !== false) {
+            // Split by / or , and take the highest level
+            $levels = preg_split('[/,/]', $education);
+            $validLevels = ['s1', 's2', 's3', 'strata-1', 'strata-2', 'strata-3'];
+
+            // Find highest level
+            $highestLevel = 'S1';
+            foreach ($validLevels as $level) {
+                if (in_array($level, $levels)) {
+                    $highestLevel = strtoupper(str_replace('strata-', 'S', $level));
+                }
+            }
+
+            return $highestLevel;
+        }
+
+        // Map individual values
+        $mapping = [
+            'strata-1' => 'S1',
+            'strata-2' => 'S2',
+            'strata-3' => 'S3',
+            's1' => 'S1',
+            's2' => 'S2',
+            's3' => 'S3',
+            'sarjana' => 'S1',
+            'magister' => 'S2',
+            'doktor' => 'S3'
+        ];
+
+        return $mapping[$education] ?? 'S1';
+    }
+
+    private function formatYear($year): ?int
+    {
+        if (empty($year)) return null;
+
+        $year = (int) $year;
+        return ($year >= 1950 && $year <= (date('Y') + 5)) ? $year : null;
     }
 
     /**

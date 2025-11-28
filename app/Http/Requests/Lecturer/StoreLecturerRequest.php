@@ -25,7 +25,7 @@ class StoreLecturerRequest extends FormRequest
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:lecturers,email',
             'phone' => 'nullable|string|max:50',
-            'gender' => 'required|in:male,female,other',
+            'gender' => 'required|in:L,P',
             'birth_date' => 'required|date|before:today',
             'birth_place' => 'required|string|max:255',
             'address' => 'required|string',

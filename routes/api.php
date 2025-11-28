@@ -277,6 +277,10 @@ Route::get('/dashboard', function () {
     ]);
 })->middleware('auth:sanctum');
 
+
+// Public template download route
+Route::get('/lecturers/import/template-download', [LecturerImportController::class, 'downloadTemplate']);
+
 // API info route
 Route::get('/', function () {
     return response()->json([

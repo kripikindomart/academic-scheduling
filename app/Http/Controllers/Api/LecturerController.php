@@ -553,8 +553,8 @@ class LecturerController extends Controller
 
         $result = $this->lecturerService->importLecturers(
             $request->file('file'),
-            $request->input('program_study_id'),
-            $request->user()
+            $request->user(),
+            $request->input('program_study_id')
         );
 
         return response()->json(["success" => true, "message" => 'Lecturers import completed', "data" => $result]);
