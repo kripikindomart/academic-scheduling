@@ -214,6 +214,7 @@ const pageTitle = computed(() => {
     '/schedule': 'Jadwal',
     '/courses': 'Mata Kuliah',
     '/students': 'Mahasiswa',
+    '/lecturers': 'Data Dosen',
     '/users': 'Pengguna',
     '/settings': 'Pengaturan',
   };
@@ -232,6 +233,8 @@ const breadcrumbs = computed(() => {
     breadcrumbItems.push({ name: 'Mata Kuliah', link: path });
   } else if (path === '/students') {
     breadcrumbItems.push({ name: 'Mahasiswa', link: path });
+  } else if (path === '/lecturers') {
+    breadcrumbItems.push({ name: 'Data Dosen', link: path });
   } else if (path === '/users') {
     breadcrumbItems.push({ name: 'Pengguna', link: path });
   } else if (path === '/settings') {
