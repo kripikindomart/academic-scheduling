@@ -23,7 +23,7 @@ class LecturersTemplateExport implements FromCollection, WithHeadings, WithStyle
                 'email_wajib' => 'budi.santoso@universitas.ac.id',
                 'nip_nidn_wajib' => '123456789012345678',
                 'no_hp_wajib' => '081234567890',
-                'no_ktp_wajib' => '3214011234560001',
+                'no_ktp' => '3214011234560001 (opsional)',
                 'jenis_kelamin' => 'L/P (Laki-laki/Perempuan)',
                 'tempat_lahir' => 'Jakarta',
                 'tanggal_lahir' => '1980-01-15 (YYYY-MM-DD)',
@@ -60,7 +60,7 @@ class LecturersTemplateExport implements FromCollection, WithHeadings, WithStyle
             'email_wajib*',
             'nip_nidn_wajib*',
             'no_hp_wajib*',
-            'no_ktp_wajib*',
+            'no_ktp',
             'jenis_kelamin',
             'tempat_lahir',
             'tanggal_lahir',
@@ -128,7 +128,7 @@ class LecturersTemplateExport implements FromCollection, WithHeadings, WithStyle
         $sheet->getRowDimension(2)->setRowHeight(25);
 
         // Style required fields indicator
-        $requiredColumns = ['A', 'B', 'C', 'D', 'E', 'P', 'Q', 'R'];
+        $requiredColumns = ['A', 'B', 'C', 'D', 'P', 'Q', 'R'];
 
         foreach ($requiredColumns as $column) {
             $sheet->getStyle($column . '1')->applyFromArray([

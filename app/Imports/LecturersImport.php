@@ -47,7 +47,7 @@ class LecturersImport implements ToModel, WithHeadingRow, WithValidation, WithBa
         $mappedData = $this->mapColumns($row);
 
         // Validate required fields
-        $requiredFields = ['nama_wajib', 'email_wajib', 'nip_nidn_wajib', 'no_hp_wajib', 'no_ktp_wajib', 'status_kepegawaian_wajib', 'jenis_pegawai_wajib', 'status_dosen_wajib'];
+        $requiredFields = ['nama_wajib', 'email_wajib', 'nip_nidn_wajib', 'no_hp_wajib', 'status_kepegawaian_wajib', 'jenis_pegawai_wajib', 'status_dosen_wajib'];
         $missingFields = [];
 
         foreach ($requiredFields as $field) {
@@ -115,7 +115,7 @@ class LecturersImport implements ToModel, WithHeadingRow, WithValidation, WithBa
             'email_wajib' => 'email',
             'nip_nidn_wajib' => 'employee_number',
             'no_hp_wajib' => 'phone',
-            'no_ktp_wajib' => 'id_card_number',
+            'no_ktp' => 'id_card_number',
             'jenis_kelamin' => 'gender',
             'tempat_lahir' => 'birth_place',
             'tanggal_lahir' => 'birth_date',
