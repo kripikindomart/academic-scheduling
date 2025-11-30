@@ -49,7 +49,7 @@ const router = createRouter({
         {
             path: '/students',
             name: 'students',
-            component: () => import('./views/StudentsSimple.vue'),
+            component: () => import('./views/Students.vue'),
             meta: { requiresAuth: true },
         },
         {
@@ -77,6 +77,12 @@ const router = createRouter({
             meta: { requiresAuth: true },
         },
         {
+            path: '/class-dashboard',
+            name: 'class-dashboard',
+            component: () => import('./views/ClassDashboard.vue'),
+            meta: { requiresAuth: true },
+        },
+                {
             path: '/users',
             name: 'users',
             component: () => import('./views/Users.vue'),

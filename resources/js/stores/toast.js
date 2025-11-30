@@ -145,3 +145,29 @@ export const useToastStore = defineStore('toast', () => {
     addToast
   };
 });
+
+// Export individual functions for direct import
+export const showToast = (title, description = '', type = 'info', duration = 5000) => {
+  const toastStore = useToastStore();
+  return toastStore.showToast(title, description, type, duration);
+};
+
+export const success = (title, description = '', duration = 3000) => {
+  const toastStore = useToastStore();
+  return toastStore.success(title, description, duration);
+};
+
+export const error = (title, description = '', duration = 0) => {
+  const toastStore = useToastStore();
+  return toastStore.error(title, description, duration);
+};
+
+export const warning = (title, description = '', duration = 5000) => {
+  const toastStore = useToastStore();
+  return toastStore.warning(title, description, duration);
+};
+
+export const info = (title, description = '', duration = 5000) => {
+  const toastStore = useToastStore();
+  return toastStore.info(title, description, duration);
+};

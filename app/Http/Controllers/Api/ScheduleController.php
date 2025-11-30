@@ -10,6 +10,7 @@ use App\Models\Schedule;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use AppServicesResponseService;
 
 class ScheduleController extends Controller
 {
@@ -51,7 +52,7 @@ class ScheduleController extends Controller
             $request->input('sort_direction', 'asc')
         );
 
-        return response()->success($result['data'], $result['message'], $result['meta']);
+        return ResponseService::success($result['data'], $result['message'], $result['meta']);
     }
 
     /**
@@ -62,7 +63,7 @@ class ScheduleController extends Controller
         try {
             $schedule = $this->scheduleService->createSchedule($request->validated());
 
-            return response()->success($schedule, 'Schedule created successfully');
+            return ResponseService::success($schedule, 'Schedule created successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to create schedule: ' . $e->getMessage(),
@@ -89,7 +90,7 @@ class ScheduleController extends Controller
             'canceller',
         ]);
 
-        return response()->success($schedule, 'Schedule retrieved successfully');
+        return ResponseService::success($schedule, 'Schedule retrieved successfully');
     }
 
     /**
@@ -100,7 +101,7 @@ class ScheduleController extends Controller
         try {
             $updatedSchedule = $this->scheduleService->updateSchedule($schedule, $request->validated());
 
-            return response()->success($updatedSchedule, 'Schedule updated successfully');
+            return ResponseService::success($updatedSchedule, 'Schedule updated successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to update schedule: ' . $e->getMessage(),
@@ -118,7 +119,7 @@ class ScheduleController extends Controller
         try {
             $this->scheduleService->deleteSchedule($schedule);
 
-            return response()->success(null, 'Schedule deleted successfully');
+            return ResponseService::success(null, 'Schedule deleted successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to delete schedule: ' . $e->getMessage(),
@@ -136,7 +137,7 @@ class ScheduleController extends Controller
         try {
             $statistics = $this->scheduleService->getScheduleStatistics();
 
-            return response()->success($statistics, 'Schedule statistics retrieved successfully');
+            return ResponseService::success($statistics, 'Schedule statistics retrieved successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to retrieve schedule statistics: ' . $e->getMessage(),
@@ -163,7 +164,7 @@ class ScheduleController extends Controller
 
             $conflicts = $this->scheduleService->checkConflicts($validated);
 
-            return response()->success($conflicts, 'Conflict check completed');
+            return ResponseService::success($conflicts, 'Conflict check completed');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to check conflicts: ' . $e->getMessage(),
@@ -193,7 +194,7 @@ class ScheduleController extends Controller
                 $validated['min_capacity'] ?? 1
             );
 
-            return response()->success($availableRooms, 'Available rooms retrieved successfully');
+            return ResponseService::success($availableRooms, 'Available rooms retrieved successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to get available rooms: ' . $e->getMessage(),
@@ -223,7 +224,7 @@ class ScheduleController extends Controller
                 $validated['program_study_id'] ?? null
             );
 
-            return response()->success($availableLecturers, 'Available lecturers retrieved successfully');
+            return ResponseService::success($availableLecturers, 'Available lecturers retrieved successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to get available lecturers: ' . $e->getMessage(),
@@ -258,7 +259,7 @@ class ScheduleController extends Controller
                 $filters
             );
 
-            return response()->success($result['data'], $result['message']);
+            return ResponseService::success($result['data'], $result['message']);
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to get schedules: ' . $e->getMessage(),
@@ -284,7 +285,7 @@ class ScheduleController extends Controller
                 $validated['month']
             );
 
-            return response()->success($result, 'Calendar view data retrieved successfully');
+            return ResponseService::success($result, 'Calendar view data retrieved successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to get calendar view: ' . $e->getMessage(),
@@ -309,7 +310,7 @@ class ScheduleController extends Controller
                 $validated['approval_notes'] ?? null
             );
 
-            return response()->success($approvedSchedule, 'Schedule approved successfully');
+            return ResponseService::success($approvedSchedule, 'Schedule approved successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to approve schedule: ' . $e->getMessage(),
@@ -334,7 +335,7 @@ class ScheduleController extends Controller
                 $validated['rejection_reason']
             );
 
-            return response()->success($rejectedSchedule, 'Schedule rejected successfully');
+            return ResponseService::success($rejectedSchedule, 'Schedule rejected successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to reject schedule: ' . $e->getMessage(),
@@ -359,7 +360,7 @@ class ScheduleController extends Controller
                 $validated['cancellation_reason']
             );
 
-            return response()->success($cancelledSchedule, 'Schedule cancelled successfully');
+            return ResponseService::success($cancelledSchedule, 'Schedule cancelled successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to cancel schedule: ' . $e->getMessage(),
@@ -390,7 +391,7 @@ class ScheduleController extends Controller
                 $validated['updates']
             );
 
-            return response()->success(
+            return ResponseService::success(
                 ['updated_count' => $updatedCount],
                 "Successfully updated {$updatedCount} schedules"
             );
@@ -416,7 +417,7 @@ class ScheduleController extends Controller
 
             $deletedCount = $this->scheduleService->bulkDeleteSchedules($validated['schedule_ids']);
 
-            return response()->success(
+            return ResponseService::success(
                 ['deleted_count' => $deletedCount],
                 "Successfully deleted {$deletedCount} schedules"
             );
@@ -452,7 +453,7 @@ class ScheduleController extends Controller
             $format = $request->input('format', 'csv');
             $filePath = $this->scheduleService->exportSchedules($filters, $format);
 
-            return response()->success(
+            return ResponseService::success(
                 ['download_url' => asset($filePath)],
                 'Schedules export completed'
             );
@@ -480,7 +481,7 @@ class ScheduleController extends Controller
                 $request->input('sort_direction', 'asc')
             );
 
-            return response()->success($result['data'], $result['message'], $result['meta']);
+            return ResponseService::success($result['data'], $result['message'], $result['meta']);
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to get course schedules: ' . $e->getMessage(),
@@ -505,7 +506,7 @@ class ScheduleController extends Controller
                 $request->input('sort_direction', 'asc')
             );
 
-            return response()->success($result['data'], $result['message'], $result['meta']);
+            return ResponseService::success($result['data'], $result['message'], $result['meta']);
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to get lecturer schedules: ' . $e->getMessage(),
@@ -530,7 +531,7 @@ class ScheduleController extends Controller
                 $request->input('sort_direction', 'asc')
             );
 
-            return response()->success($result['data'], $result['message'], $result['meta']);
+            return ResponseService::success($result['data'], $result['message'], $result['meta']);
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to get room schedules: ' . $e->getMessage(),

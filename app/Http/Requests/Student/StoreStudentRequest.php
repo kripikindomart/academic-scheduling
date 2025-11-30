@@ -21,40 +21,49 @@ class StoreStudentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'student_number' => 'nullable|string|max:20|unique:students,student_number',
+            // Field wajib dasar
+            'student_number' => 'required|string|max:20|unique:students,student_number',
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:students,email',
+            'program_study_id' => 'required|exists:program_studies,id',
+
+            // Field informasi pribadi (optional)
             'phone' => 'nullable|string|max:50',
-            'gender' => 'required|in:male,female,other',
-            'birth_date' => 'required|date|before:today',
-            'birth_place' => 'required|string|max:255',
-            'address' => 'required|string',
-            'city' => 'required|string|max:255',
-            'province' => 'required|string|max:255',
-            'postal_code' => 'required|string|max:20',
-            'nationality' => 'nullable|string|max:100|default:Indonesia',
-            'religion' => 'required|string|max:100',
+            'gender' => 'nullable|in:L,P',
+            'birth_date' => 'nullable|date|before:today',
+            'birth_place' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'city' => 'nullable|string|max:255',
+            'province' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
+            'nationality' => 'nullable|string|max:100',
+            'religion' => 'nullable|string|max:100',
             'blood_type' => 'nullable|string|max:10',
-            'id_card_number' => 'required|string|max:50|unique:students,id_card_number',
+            'id_card_number' => 'nullable|string|max:50|unique:students,id_card_number',
             'passport_number' => 'nullable|string|max:50|unique:students,passport_number',
-            'status' => 'nullable|in:active,inactive,graduated,dropped_out,on_leave|default:active',
-            'enrollment_date' => 'required|date',
+
+            // Field akademik (optional)
+            'status' => 'nullable|in:active,inactive,graduated,dropped_out,on_leave',
+            'enrollment_date' => 'nullable|date',
             'graduation_date' => 'nullable|date|after:enrollment_date',
-            'current_semester' => 'nullable|integer|min:1|max:12|default:1',
-            'current_year' => 'nullable|integer|min:1|max:10|default:1',
-            'gpa' => 'nullable|numeric|min:0|max:4|default:0.00',
-            'class' => 'required|string|max:50',
-            'batch_year' => 'required|string|size:4',
-            'is_regular' => 'nullable|boolean|default:true',
-            'is_active' => 'nullable|boolean|default:true',
+            'current_semester' => 'nullable|integer|min:1|max:12',
+            'current_year' => 'nullable|integer|min:1|max:10',
+            'gpa' => 'nullable|numeric|min:0|max:4',
+            'class' => 'nullable|string|max:50',
+            'batch_year' => 'nullable|string|size:4',
+            'is_regular' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
+
+            // Field orang tua (optional)
             'father_name' => 'nullable|string|max:255',
             'mother_name' => 'nullable|string|max:255',
             'parent_phone' => 'nullable|string|max:50',
             'parent_email' => 'nullable|email|max:255',
             'parent_address' => 'nullable|string',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+
+            // Field tambahan (optional)
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
             'notes' => 'nullable|string|max:1000',
-            'program_study_id' => 'required|exists:program_studies,id',
         ];
     }
 

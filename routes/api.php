@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\BuildingController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\ConflictDetectionController;
+use App\Http\Controllers\Api\ClassController;
 
 // Authentication routes
 Route::prefix('auth')->group(function () {
@@ -83,27 +84,127 @@ Route::middleware(['auth:sanctum'])->prefix('program-studies')->group(function (
 
 // Student management routes
 Route::middleware(['auth:sanctum'])->prefix('students')->group(function () {
+    // Basic CRUD
     Route::get('/', [StudentController::class, 'index'])->middleware('permission:students.view');
     Route::post('/', [StudentController::class, 'store'])->middleware('permission:students.create');
     Route::get('/statistics', [StudentController::class, 'statistics'])->middleware('permission:students.view');
     Route::get('/active', [StudentController::class, 'getActive'])->middleware('permission:students.view');
     Route::get('/low-gpa', [StudentController::class, 'getLowGpaStudents'])->middleware('permission:students.view');
     Route::get('/search-suggestions', [StudentController::class, 'searchSuggestions'])->middleware('permission:students.view');
-    Route::post('/bulk-update', [StudentController::class, 'bulkUpdate'])->middleware('permission:students.edit');
+
+    // Import/Export
+    Route::get('/download-template', [StudentController::class, 'downloadTemplate'])->middleware('permission:students.create');
     Route::post('/import', [StudentController::class, 'import'])->middleware('permission:students.create');
     Route::get('/export', [StudentController::class, 'export'])->middleware('permission:students.view');
-    Route::post('/restore/{id}', [StudentController::class, 'restore'])->middleware('permission:students.delete');
+
+    // Bulk Operations
+    Route::post('/bulk-update', [StudentController::class, 'bulkUpdate'])->middleware('permission:students.edit');
+    Route::post('/bulk-delete', [StudentController::class, 'bulkDelete'])->middleware('permission:students.delete');
+    Route::post('/bulk-restore', [StudentController::class, 'bulkRestore'])->middleware('permission:students.delete');
+    Route::post('/bulk-force-delete', [StudentController::class, 'bulkForceDelete'])->middleware('permission:students.delete');
+    Route::post('/bulk-create-user-accounts', [StudentController::class, 'bulkCreateUserAccounts'])->middleware('permission:students.edit');
+
+    // Trash Management (More specific routes first)
+    Route::get('/trash', [StudentController::class, 'trash'])->middleware('permission:students.view');
+    Route::post('/{id}/restore', [StudentController::class, 'restore'])->middleware('permission:students.delete');
     Route::delete('/force-delete/{id}', [StudentController::class, 'forceDelete'])->middleware('permission:students.delete');
 
+    // Filtering Routes
     Route::get('/program-study/{programStudyId}', [StudentController::class, 'getByProgramStudy'])->middleware('permission:students.view');
     Route::get('/batch-year/{batchYear}', [StudentController::class, 'getByBatchYear'])->middleware('permission:students.view');
+    Route::get('/class/{className}', [StudentController::class, 'getByClass'])->middleware('permission:students.view');
+    Route::get('/semester/{semester}', [StudentController::class, 'getBySemester'])->middleware('permission:students.view');
+    Route::get('/gender/{gender}', [StudentController::class, 'getByGender'])->middleware('permission:students.view');
+    Route::get('/gpa-range', [StudentController::class, 'getByGpaRange'])->middleware('permission:students.view');
+    Route::get('/age-range', [StudentController::class, 'getByAgeRange'])->middleware('permission:students.view');
+    Route::get('/enrollment-year/{year}', [StudentController::class, 'getByEnrollmentYear'])->middleware('permission:students.view');
+    Route::get('/expected-graduation/{year}', [StudentController::class, 'getExpectedGraduation'])->middleware('permission:students.view');
 
+    // Status-based Routes
+    Route::get('/graduated', [StudentController::class, 'getGraduated'])->middleware('permission:students.view');
+    Route::get('/on-leave', [StudentController::class, 'getOnLeave'])->middleware('permission:students.view');
+    Route::get('/dropped-out', [StudentController::class, 'getDroppedOut'])->middleware('permission:students.view');
+    Route::get('/regular', [StudentController::class, 'getRegular'])->middleware('permission:students.view');
+    Route::get('/non-regular', [StudentController::class, 'getNonRegular'])->middleware('permission:students.view');
+
+    // Individual Student Routes
     Route::get('/{student}', [StudentController::class, 'show'])->middleware('permission:students.view');
     Route::put('/{student}', [StudentController::class, 'update'])->middleware('permission:students.edit');
     Route::delete('/{student}', [StudentController::class, 'destroy'])->middleware('permission:students.delete');
+    Route::post('/{student}/duplicate', [StudentController::class, 'duplicate'])->middleware('permission:students.create');
+
+    // Student-specific operations
     Route::get('/{student}/academic-progress', [StudentController::class, 'academicProgress'])->middleware('permission:students.view');
     Route::put('/{student}/status', [StudentController::class, 'updateStatus'])->middleware('permission:students.edit');
     Route::get('/{student}/attendance-summary', [StudentController::class, 'attendanceSummary'])->middleware('permission:students.view');
+    Route::post('/{student}/create-user-account', [StudentController::class, 'createUserAccount'])->middleware('permission:students.edit');
+    Route::delete('/{student}/user-account', [StudentController::class, 'removeUserAccount'])->middleware('permission:students.edit');
+
+    // Academic operations
+    Route::post('/{student}/enroll-course/{course}', [StudentController::class, 'enrollInCourse'])->middleware('permission:students.edit');
+    Route::delete('/{student}/drop-course/{course}', [StudentController::class, 'dropFromCourse'])->middleware('permission:students.edit');
+    Route::get('/{student}/grades', [StudentController::class, 'getGrades'])->middleware('permission:students.view');
+    Route::get('/{student}/schedule', [StudentController::class, 'getSchedule'])->middleware('permission:students.view');
+    Route::get('/{student}/transcript', [StudentController::class, 'getTranscript'])->middleware('permission:students.view');
+
+    // File operations
+    Route::post('/{student}/upload-photo', [StudentController::class, 'uploadPhoto'])->middleware('permission:students.edit');
+    Route::delete('/{student}/remove-photo', [StudentController::class, 'removePhoto'])->middleware('permission:students.edit');
+    Route::get('/{student}/print-card', [StudentController::class, 'printStudentCard'])->middleware('permission:students.view');
+    Route::get('/{student}/print-transcript', [StudentController::class, 'printTranscript'])->middleware('permission:students.view');
+
+    // Reporting
+    Route::get('/reports/data', [StudentController::class, 'getReportData'])->middleware('permission:students.view');
+    Route::get('/reports/academic', [StudentController::class, 'getAcademicReport'])->middleware('permission:students.view');
+    Route::get('/reports/attendance', [StudentController::class, 'getAttendanceReport'])->middleware('permission:students.view');
+    Route::get('/reports/performance', [StudentController::class, 'getPerformanceReport'])->middleware('permission:students.view');
+
+    // Export selected students
+    Route::post('/export-selected', [StudentController::class, 'exportSelected'])->middleware('permission:students.view');
+});
+
+// Class management routes
+Route::middleware(['auth:sanctum'])->prefix('classes')->group(function () {
+    // Basic CRUD
+    Route::get('/', [ClassController::class, 'index'])->middleware('permission:classes.view');
+    Route::post('/', [ClassController::class, 'store'])->middleware('permission:classes.create');
+    Route::get('/statistics', [ClassController::class, 'statistics'])->middleware('permission:classes.view');
+    Route::get('/available', [ClassController::class, 'available'])->middleware('permission:classes.view');
+
+    // Bulk operations
+    Route::post('/bulk-update', [ClassController::class, 'bulkUpdate'])->middleware('permission:classes.edit');
+    Route::post('/bulk-delete', [ClassController::class, 'bulkDelete'])->middleware('permission:classes.delete');
+
+    // Trash Management
+    Route::get('/trashed', [ClassController::class, 'trashed'])->middleware('permission:classes.view');
+    Route::post('/bulk-restore', [ClassController::class, 'bulkRestore'])->middleware('permission:classes.delete');
+    Route::post('/bulk-force-delete', [ClassController::class, 'bulkForceDelete'])->middleware('permission:classes.delete');
+
+    // Auto-generation and enrollment
+    Route::post('/generate-codes', [ClassController::class, 'generateClassCodes'])->middleware('permission:classes.create');
+    Route::post('/auto-enroll', [ClassController::class, 'autoEnrollStudents'])->middleware('permission:classes.edit');
+
+    // Reporting
+    Route::get('/enrollment-report', [ClassController::class, 'enrollmentReport'])->middleware('permission:classes.view');
+
+    // Filtered routes
+    Route::get('/program-study/{programStudy}', [ClassController::class, 'getByProgramStudy'])->middleware('permission:classes.view');
+    Route::get('/batch-year/{batchYear}', [ClassController::class, 'getByBatchYear'])->middleware('permission:classes.view');
+    Route::get('/academic-year/{academicYear}', [ClassController::class, 'getByAcademicYear'])->middleware('permission:classes.view');
+
+    // Individual class routes
+    Route::get('/{class}', [ClassController::class, 'show'])->middleware('permission:classes.view');
+    Route::put('/{class}', [ClassController::class, 'update'])->middleware('permission:classes.edit');
+    Route::delete('/{class}', [ClassController::class, 'destroy'])->middleware('permission:classes.delete');
+    Route::post('/{class}/restore', [ClassController::class, 'restore'])->middleware('permission:classes.delete');
+    Route::delete('/{class}/force-delete', [ClassController::class, 'forceDelete'])->middleware('permission:classes.delete');
+
+    // Student management in classes
+    Route::get('/{class}/students', [ClassController::class, 'students'])->middleware('permission:classes.view');
+    Route::post('/{class}/enroll-students', [ClassController::class, 'enrollStudents'])->middleware('permission:classes.edit');
+    Route::post('/{class}/remove-student', [ClassController::class, 'removeStudent'])->middleware('permission:classes.edit');
+    Route::post('/{class}/transfer-student', [ClassController::class, 'transferStudent'])->middleware('permission:classes.edit');
+    Route::post('/{class}/update-student-status', [ClassController::class, 'updateStudentStatus'])->middleware('permission:classes.edit');
 });
 
 // Lecturer management routes
@@ -299,6 +400,7 @@ Route::get('/', function () {
             'courses' => '/api/courses',
             'program_studies' => '/api/program-studies',
             'students' => '/api/students',
+            'classes' => '/api/classes',
             'lecturers' => '/api/lecturers',
             'rooms' => '/api/rooms',
             'dashboard' => '/api/dashboard'

@@ -1,0 +1,536 @@
+<template>
+  <Transition name="modal">
+    <div
+      v-if="show"
+      class="fixed inset-0 z-50 overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <!-- Backdrop -->
+      <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" @click="closeModal"></div>
+
+      <!-- Modal Panel -->
+      <div class="flex min-h-full items-center justify-center p-4">
+        <Transition
+          enter="ease-out duration-300"
+          enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+          enter-to="opacity-100 translate-y-0 sm:scale-100"
+          leave="ease-in duration-200"
+          leave-from="opacity-100 translate-y-0 sm:scale-100"
+          leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        >
+          <div class="relative transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all w-full max-w-2xl">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 border-b border-gray-200">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-semibold text-white" id="modal-title">
+                  {{ isEditing ? 'Edit Kelas' : 'Tambah Kelas Baru' }}
+                </h3>
+                <button
+                  @click="closeModal"
+                  class="text-white hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-white hover:bg-opacity-20"
+                >
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Modal Body -->
+            <form @submit.prevent="submitForm" class="px-6 py-4">
+              <!-- Two Column Layout -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left Column -->
+                <div class="space-y-4">
+                  <!-- Nama Kelas -->
+                  <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                      Nama Kelas <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                      <input
+                        v-model="form.name"
+                        id="name"
+                        type="text"
+                        required
+                        class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                        placeholder="Contoh: Teknik Informatika A"
+                        :class="{ 'border-red-500': errors.name }"
+                      />
+                      <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                      </div>
+                    </div>
+                    <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
+                  </div>
+
+                  <!-- Kode Kelas -->
+                  <div>
+                    <label for="code" class="block text-sm font-medium text-gray-700 mb-2">
+                      Kode Kelas <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                      <input
+                        v-model="form.code"
+                        id="code"
+                        type="text"
+                        required
+                        class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm uppercase"
+                        placeholder="Contoh: TI-A"
+                        :class="{ 'border-red-500': errors.code }"
+                      />
+                      <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4m-4-4l-4 4" />
+                        </svg>
+                      </div>
+                    </div>
+                    <p v-if="errors.code" class="mt-1 text-sm text-red-600">{{ errors.code }}</p>
+                  </div>
+
+                  <!-- Program Studi -->
+                  <div>
+                    <label for="program_study_id" class="block text-sm font-medium text-gray-700 mb-2">
+                      Program Studi <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      v-model="form.program_study_id"
+                      id="program_study_id"
+                      required
+                      class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                      :class="{ 'border-red-500': errors.program_study_id }"
+                    >
+                      <option value="">Pilih Program Studi</option>
+                      <option
+                        v-for="program in programStudies"
+                        :key="program.id"
+                        :value="program.id"
+                      >
+                        {{ program.name }}
+                      </option>
+                    </select>
+                    <p v-if="errors.program_study_id" class="mt-1 text-sm text-red-600">{{ errors.program_study_id }}</p>
+                  </div>
+
+                  <!-- Batch Year -->
+                  <div>
+                    <label for="batch_year" class="block text-sm font-medium text-gray-700 mb-2">
+                      Tahun Angkatan <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      v-model="form.batch_year"
+                      id="batch_year"
+                      required
+                      class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                      :class="{ 'border-red-500': errors.batch_year }"
+                    >
+                      <option value="">Pilih Tahun</option>
+                      <option
+                        v-for="year in batchYears"
+                        :key="year.value"
+                        :value="year.value"
+                      >
+                        {{ year.label }}
+                      </option>
+                    </select>
+                    <p v-if="errors.batch_year" class="mt-1 text-sm text-red-600">{{ errors.batch_year }}</p>
+                  </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-4">
+                  <!-- Semester -->
+                  <div>
+                    <label for="semester" class="block text-sm font-medium text-gray-700 mb-2">
+                      Semester <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      v-model="form.semester"
+                      id="semester"
+                      required
+                      class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                      :class="{ 'border-red-500': errors.semester }"
+                    >
+                      <option value="">Pilih Semester</option>
+                      <option value="ganjil">Ganjil</option>
+                      <option value="genap">Genap</option>
+                    </select>
+                    <p v-if="errors.semester" class="mt-1 text-sm text-red-600">{{ errors.semester }}</p>
+                  </div>
+
+                  <!-- Academic Year -->
+                  <div>
+                    <label for="academic_year" class="block text-sm font-medium text-gray-700 mb-2">
+                      Tahun Akademik <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                      <input
+                        v-model="form.academic_year"
+                        id="academic_year"
+                        type="text"
+                        required
+                        class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                        placeholder="Contoh: 2023/2024"
+                        :class="{ 'border-red-500': errors.academic_year }"
+                      />
+                      <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <p v-if="errors.academic_year" class="mt-1 text-sm text-red-600">{{ errors.academic_year }}</p>
+                  </div>
+
+                  <!-- Kapasitas -->
+                  <div>
+                    <label for="capacity" class="block text-sm font-medium text-gray-700 mb-2">
+                      Kapasitas <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                      <input
+                        v-model="form.capacity"
+                        id="capacity"
+                        type="number"
+                        required
+                        min="1"
+                        class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                        placeholder="Contoh: 40"
+                        :class="{ 'border-red-500': errors.capacity }"
+                      />
+                      <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zm7 5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <p v-if="errors.capacity" class="mt-1 text-sm text-red-600">{{ errors.capacity }}</p>
+                  </div>
+
+                  <!-- Nomor Ruangan -->
+                  <div>
+                    <label for="room_number" class="block text-sm font-medium text-gray-700 mb-2">
+                      Nomor Ruangan
+                    </label>
+                    <div class="relative">
+                      <input
+                        v-model="form.room_number"
+                        id="room_number"
+                        type="text"
+                        class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                        placeholder="Contoh: 301"
+                      />
+                      <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1" />
+                        </svg>
+                      </div>
+                    </div>
+                    <p v-if="errors.room_number" class="mt-1 text-sm text-red-600">{{ errors.room_number }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Description (Full Width) -->
+              <div class="mt-6">
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                  Deskripsi
+                </label>
+                <textarea
+                  v-model="form.description"
+                  id="description"
+                  rows="3"
+                  class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+                  placeholder="Tambahkan deskripsi kelas..."
+                ></textarea>
+              </div>
+
+              <!-- Status Toggle -->
+              <div class="mt-6">
+                <label class="flex items-center cursor-pointer">
+                  <input
+                    v-model="form.is_active"
+                    type="checkbox"
+                    class="sr-only peer"
+                  />
+                  <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <span class="ml-3 text-sm font-medium text-gray-700">
+                    Kelas Aktif
+                  </span>
+                </label>
+              </div>
+
+              <!-- Error Message -->
+              <div v-if="errorMessage" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div class="flex">
+                  <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 01-1.414 1.414l2 2a1 1 0 001.414 0l4-4a1 1 0 00-1.414-1.414l-2.829 2.829z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm text-red-700">{{ errorMessage }}</p>
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            <!-- Modal Footer -->
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                @click="closeModal"
+                type="button"
+                class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                Batal
+              </button>
+              <button
+                @click="submitForm"
+                type="submit"
+                :disabled="loading"
+                class="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <div v-if="loading" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                {{ isEditing ? 'Update' : 'Simpan' }}
+              </button>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </div>
+  </Transition>
+</template>
+
+<script setup>
+import { ref, reactive, computed, watch, onMounted } from 'vue';
+import classService from '../../services/classService';
+
+// Props
+const props = defineProps({
+  show: {
+    type: Boolean,
+    default: false
+  },
+  kelas: {
+    type: Object,
+    default: null
+  }
+});
+
+// Emits
+const emit = defineEmits(['close', 'success']);
+
+// Reactive data
+const form = reactive({
+  name: '',
+  code: '',
+  program_study_id: '',
+  batch_year: '',
+  semester: '',
+  academic_year: '',
+  capacity: '',
+  room_number: '',
+  description: '',
+  is_active: true
+});
+
+// Set default academic year based on current year
+const currentYear = new Date().getFullYear();
+const nextYear = currentYear + 1;
+form.academic_year = `${currentYear}/${nextYear}`;
+
+const errors = reactive({});
+const errorMessage = ref('');
+const loading = ref(false);
+const programStudies = ref([]);
+const batchYears = ref([]);
+
+// Computed
+const isEditing = computed(() => {
+  return props.kelas !== null;
+});
+
+// Methods
+const closeModal = () => {
+  resetForm();
+  emit('close');
+};
+
+const resetForm = () => {
+  Object.keys(form).forEach(key => {
+    if (key === 'is_active') {
+      form[key] = true;
+    } else {
+      form[key] = '';
+    }
+  });
+
+  Object.keys(errors).forEach(key => {
+    delete errors[key];
+  });
+  errorMessage.value = '';
+};
+
+const validateForm = () => {
+  const newErrors = {};
+
+  if (!form.name.trim()) {
+    newErrors.name = 'Nama kelas harus diisi';
+  }
+
+  if (!form.code.trim()) {
+    newErrors.code = 'Kode kelas harus diisi';
+  }
+
+  if (!form.program_study_id) {
+    newErrors.program_study_id = 'Program studi harus dipilih';
+  }
+
+  if (!form.batch_year) {
+    newErrors.batch_year = 'Tahun angkatan harus dipilih';
+  }
+
+  if (!form.semester) {
+    newErrors.semester = 'Semester harus dipilih';
+  }
+
+  if (!form.academic_year.trim()) {
+    newErrors.academic_year = 'Tahun akademik harus diisi';
+  } else {
+    // Validate academic year format (YYYY/YYYY or YYYY-YYYY)
+    const academicYearPattern = /^\d{4}[\/-]\d{4}$/;
+    if (!academicYearPattern.test(form.academic_year.trim())) {
+      newErrors.academic_year = 'Format tahun ajaran tidak valid. Gunakan format "YYYY/YYYY" atau "YYYY-YYYY"';
+    }
+  }
+
+  if (!form.capacity || form.capacity < 1) {
+    newErrors.capacity = 'Kapasitas harus diisi dengan angka minimal 1';
+  }
+
+  // Copy errors to reactive errors
+  Object.keys(errors).forEach(key => {
+    delete errors[key];
+  });
+  Object.assign(errors, newErrors);
+
+  return Object.keys(newErrors).length === 0;
+};
+
+const generateBatchYears = () => {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let year = currentYear - 5; year <= currentYear + 2; year++) {
+    years.push({ value: year, label: `Angkatan ${year}` });
+  }
+  batchYears.value = years;
+};
+
+const loadProgramStudies = async () => {
+  try {
+    const response = await fetch('/api/program-studies');
+    const data = await response.json();
+    programStudies.value = data.data || data;
+  } catch (error) {
+    console.error('Error loading program studies:', error);
+  }
+};
+
+const submitForm = async () => {
+  if (!validateForm()) {
+    return;
+  }
+
+  loading.value = true;
+  errorMessage.value = '';
+
+  try {
+    let response;
+
+    if (isEditing.value) {
+      response = await classService.update(props.kelas.id, form);
+    } else {
+      response = await classService.create(form);
+    }
+
+    emit('success', isEditing.value);
+    closeModal();
+
+  } catch (error) {
+    console.error('Error submitting form:', error);
+
+    if (error.response?.data?.errors) {
+      Object.keys(error.response.data.errors).forEach(key => {
+        errors[key] = error.response.data.errors[key][0];
+      });
+      errorMessage.value = 'Periksa kembali input Anda';
+    } else if (error.response?.data?.message) {
+      errorMessage.value = error.response.data.message;
+    } else {
+      errorMessage.value = 'Terjadi kesalahan saat menyimpan data';
+    }
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Watchers
+watch(() => props.editData, (newData) => {
+  if (newData) {
+    // Set form values from editData
+    Object.keys(form).forEach(key => {
+      if (newData[key] !== undefined) {
+        form[key] = newData[key];
+      }
+    });
+  } else {
+    resetForm();
+  }
+}, { immediate: true });
+
+// Watch for changes in kelas prop
+watch(() => props.kelas, (newKelas) => {
+  if (newKelas) {
+    // Load edit data into form
+    console.log('Loading edit data:', newKelas);
+    Object.keys(form).forEach(key => {
+      if (newKelas[key] !== undefined) {
+        form[key] = newKelas[key];
+      }
+    });
+  }
+}, { immediate: true });
+
+// Lifecycle
+onMounted(() => {
+  loadProgramStudies();
+  generateBatchYears();
+});
+</script>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+/* Custom animations */
+@keyframes spin {
+   to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+</style>

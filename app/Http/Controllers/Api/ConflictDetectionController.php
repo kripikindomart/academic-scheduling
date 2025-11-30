@@ -113,7 +113,7 @@ class ConflictDetectionController extends Controller
         $perPage = $request->input('per_page', 15);
         $conflicts = $query->paginate($perPage);
 
-        return response()->success($conflicts, 'Conflicts retrieved successfully');
+        return ResponseService::success($conflicts, 'Conflicts retrieved successfully');
     }
 
     /**
@@ -140,7 +140,7 @@ class ConflictDetectionController extends Controller
             'escalatedTo',
         ]);
 
-        return response()->success($conflict, 'Conflict details retrieved successfully');
+        return ResponseService::success($conflict, 'Conflict details retrieved successfully');
     }
 
     /**
@@ -151,7 +151,7 @@ class ConflictDetectionController extends Controller
         try {
             $conflicts = $this->conflictService->detectConflictsForSchedule($schedule);
 
-            return response()->success($conflicts, 'Conflict detection completed');
+            return ResponseService::success($conflicts, 'Conflict detection completed');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to detect conflicts: ' . $e->getMessage(),
@@ -174,7 +174,7 @@ class ConflictDetectionController extends Controller
 
             $conflicts = $this->conflictService->detectConflictsForMultiple($validated['schedule_ids']);
 
-            return response()->success($conflicts, 'Conflict detection completed');
+            return ResponseService::success($conflicts, 'Conflict detection completed');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to detect conflicts: ' . $e->getMessage(),
@@ -199,7 +199,7 @@ class ConflictDetectionController extends Controller
 
             $conflicts = $this->conflictService->detectAllConflicts($filters);
 
-            return response()->success($conflicts, 'Global conflict detection completed');
+            return ResponseService::success($conflicts, 'Global conflict detection completed');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to detect conflicts: ' . $e->getMessage(),
@@ -222,7 +222,7 @@ class ConflictDetectionController extends Controller
 
             $statistics = $this->conflictService->getConflictStatistics($filters);
 
-            return response()->success($statistics, 'Conflict statistics retrieved successfully');
+            return ResponseService::success($statistics, 'Conflict statistics retrieved successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to retrieve conflict statistics: ' . $e->getMessage(),
@@ -241,7 +241,7 @@ class ConflictDetectionController extends Controller
             $limit = $request->input('limit', 20);
             $conflicts = $this->conflictService->getHighPriorityConflicts($limit);
 
-            return response()->success($conflicts, 'High-priority conflicts retrieved successfully');
+            return ResponseService::success($conflicts, 'High-priority conflicts retrieved successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to retrieve high-priority conflicts: ' . $e->getMessage(),
@@ -260,7 +260,7 @@ class ConflictDetectionController extends Controller
             $resolutionData = $request->validated();
             $result = $this->conflictService->resolveConflicts($conflict->primarySchedule, $resolutionData);
 
-            return response()->success($result, 'Conflict resolved successfully');
+            return ResponseService::success($result, 'Conflict resolved successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to resolve conflict: ' . $e->getMessage(),
@@ -306,7 +306,7 @@ class ConflictDetectionController extends Controller
                 }
             }
 
-            return response()->success([
+            return ResponseService::success([
                 'resolved' => $resolved,
                 'failed' => $failed,
                 'total_processed' => count($conflictIds),
@@ -339,7 +339,7 @@ class ConflictDetectionController extends Controller
                 'resolved_at' => now(),
             ]);
 
-            return response()->success($conflict, 'Conflict ignored successfully');
+            return ResponseService::success($conflict, 'Conflict ignored successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to ignore conflict: ' . $e->getMessage(),
@@ -368,7 +368,7 @@ class ConflictDetectionController extends Controller
                 'updated_by' => auth()->id(),
             ]);
 
-            return response()->success($conflict, 'Conflict escalated successfully');
+            return ResponseService::success($conflict, 'Conflict escalated successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to escalate conflict: ' . $e->getMessage(),
@@ -392,7 +392,7 @@ class ConflictDetectionController extends Controller
             $scheduleIds = $validated['schedule_ids'] ?? [];
             $result = $this->conflictService->bulkDetectConflicts($scheduleIds);
 
-            return response()->success($result, 'Bulk conflict detection completed');
+            return ResponseService::success($result, 'Bulk conflict detection completed');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to perform bulk conflict detection: ' . $e->getMessage(),
@@ -409,7 +409,7 @@ class ConflictDetectionController extends Controller
     {
         $types = ConflictDetection::CONFLICT_TYPES;
 
-        return response()->success($types, 'Conflict types retrieved successfully');
+        return ResponseService::success($types, 'Conflict types retrieved successfully');
     }
 
     /**
@@ -419,7 +419,7 @@ class ConflictDetectionController extends Controller
     {
         $levels = ConflictDetection::SEVERITY_LEVELS;
 
-        return response()->success($levels, 'Severity levels retrieved successfully');
+        return ResponseService::success($levels, 'Severity levels retrieved successfully');
     }
 
     /**
@@ -429,7 +429,7 @@ class ConflictDetectionController extends Controller
     {
         $strategies = ConflictDetection::RESOLUTION_STRATEGIES;
 
-        return response()->success($strategies, 'Resolution strategies retrieved successfully');
+        return ResponseService::success($strategies, 'Resolution strategies retrieved successfully');
     }
 
     /**
@@ -456,7 +456,7 @@ class ConflictDetectionController extends Controller
                 'top_conflict_sources' => $this->getTopConflictSources($dateFrom, $dateTo),
             ];
 
-            return response()->success($analytics, 'Conflict analytics retrieved successfully');
+            return ResponseService::success($analytics, 'Conflict analytics retrieved successfully');
         } catch (\Exception $e) {
             return response()->error(
                 'Failed to retrieve conflict analytics: ' . $e->getMessage(),

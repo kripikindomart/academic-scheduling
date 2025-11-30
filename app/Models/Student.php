@@ -46,6 +46,7 @@ class Student extends Model
         'photo',
         'notes',
         'program_study_id',
+        'user_id',
         'created_by',
         'updated_by',
     ];
@@ -82,6 +83,11 @@ class Student extends Model
         return $this->belongsTo(ProgramStudy::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function enrollments()
     {
         return $this->hasMany(CourseEnrollment::class);
@@ -102,6 +108,33 @@ class Student extends Model
         return $this->belongsToMany(Schedule::class, 'student_schedules')
             ->withPivot('enrollment_date', 'status')
             ->withTimestamps();
+    }
+
+    public function classes()
+    {
+        return $this->belongsToMany(Kelas::class, 'class_student', 'student_id', 'class_id')
+            ->withPivot('enrollment_date', 'status', 'notes', 'created_by')
+            ->withTimestamps()
+            ->wherePivot('status', 'active');
+    }
+
+    public function allClasses()
+    {
+        return $this->belongsToMany(Kelas::class, 'class_student', 'student_id', 'class_id')
+            ->withPivot('enrollment_date', 'status', 'notes', 'created_by')
+            ->withTimestamps();
+    }
+
+    public function activeClasses()
+    {
+        return $this->classes()->where('classes.is_active', true);
+    }
+
+    public function currentClass()
+    {
+        return $this->activeClasses()
+            ->where('classes.academic_year', 'like', '%' . date('Y') . '%')
+            ->first();
     }
 
     public function scopeActive($query)
@@ -137,6 +170,41 @@ class Student extends Model
     public function scopeBySemester($query, $semester)
     {
         return $query->where('current_semester', $semester);
+    }
+
+    public function scopeByEnrollmentYear($query, $enrollmentYear)
+    {
+        return $query->whereYear('enrollment_date', $enrollmentYear);
+    }
+
+    public function scopeByExpectedGraduation($query, $expectedGraduation)
+    {
+        return $query->whereYear('graduation_date', $expectedGraduation);
+    }
+
+    public function scopeByGpaRange($query, $minGpa, $maxGpa = null)
+    {
+        $query->where('gpa', '>=', $minGpa);
+        if ($maxGpa) {
+            $query->where('gpa', '<=', $maxGpa);
+        }
+        return $query;
+    }
+
+    public function scopeByCreditsCompleted($query, $credits)
+    {
+        // This would need to be implemented based on actual credits tracking
+        return $query;
+    }
+
+    public function scopeRegular($query)
+    {
+        return $query->where('is_regular', true);
+    }
+
+    public function scopeNonRegular($query)
+    {
+        return $query->where('is_regular', false);
     }
 
     public function getFullNameAttribute()
@@ -246,5 +314,100 @@ class Student extends Model
             default:
                 return $this->status;
         }
+    }
+
+    // Additional business logic methods similar to Lecturer model
+    public function getExpectedGraduationDateAttribute()
+    {
+        if ($this->enrollment_date && $this->programStudy) {
+            $duration = $this->programStudy->duration_years;
+            return Carbon::parse($this->enrollment_date)->addYears($duration);
+        }
+        return null;
+    }
+
+    public function getAcademicStandingAttribute()
+    {
+        if ($this->gpa >= 3.5) return 'Cum Laude';
+        if ($this->gpa >= 3.0) return 'Sangat Memuaskan';
+        if ($this->gpa >= 2.5) return 'Memuaskan';
+        if ($this->gpa >= 2.0) return 'Cukup';
+        return 'Kurang';
+    }
+
+    public function getCreditsCompletedAttribute()
+    {
+        // This should be calculated from course enrollments
+        // For now return 0 as placeholder
+        return 0;
+    }
+
+    public function getMaxCreditsAttribute()
+    {
+        return $this->programStudy ? $this->programStudy->minimum_credits : 144;
+    }
+
+    public function getRemainingCreditsAttribute()
+    {
+        return max(0, $this->getMaxCreditsAttribute() - $this->getCreditsCompletedAttribute());
+    }
+
+    public function getEnrollmentStatusAttribute()
+    {
+        if ($this->isGraduated()) return 'Lulus';
+        if ($this->isDroppedOut()) return 'Drop Out';
+        if ($this->isOnLeave()) return 'Cuti';
+        if ($this->isActive()) return 'Aktif';
+        return 'Tidak Aktif';
+    }
+
+    public function canRegisterForCourses()
+    {
+        return $this->isActive() && $this->current_semester && !$this->isGraduated();
+    }
+
+    public function getBatchLabelAttribute()
+    {
+        return "Angkatan {$this->batch_year}";
+    }
+
+    public function getFormattedGpaAttribute()
+    {
+        return number_format($this->gpa, 2);
+    }
+
+    public function getFullNameWithDetailsAttribute()
+    {
+        $status = $this->getStatusLabelAttribute();
+        return "{$this->name} ({$this->student_number}) - {$status}";
+    }
+
+    public function hasUserAccount()
+    {
+        return !is_null($this->user_id);
+    }
+
+    public function isOnlineStudent()
+    {
+        return $this->hasUserAccount() && $this->user && $this->user->email_verified_at;
+    }
+
+    public function getAttendanceRateAttribute()
+    {
+        // Calculate attendance rate from attendance records
+        $totalClasses = $this->attendances()->count();
+        if ($totalClasses === 0) return 0;
+
+        $attendedClasses = $this->attendances()->where('status', 'present')->count();
+        return round(($attendedClasses / $totalClasses) * 100, 2);
+    }
+
+    public function getAverageGradeAttribute()
+    {
+        // Calculate average grade from grades table
+        $grades = $this->grades()->whereNotNull('score')->pluck('score');
+        if ($grades->isEmpty()) return 0;
+
+        return round($grades->avg(), 2);
     }
 }
