@@ -15,8 +15,11 @@ use App\Http\Controllers\Api\ConflictDetectionController;
 use App\Http\Controllers\Api\ClassController;
 use App\Http\Controllers\Api\AcademicYearController;
 
+// Public template download routes (no auth required) - HARUS DI ATAS!
+Route::get('/courses/template-download', [CourseController::class, 'downloadTemplate']);
+
 // Authentication routes
-Route::prefix('auth')->group(function () {
+Route::middleware('sanctum')->prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::post('/register', [AuthController::class, 'register']);
@@ -25,7 +28,7 @@ Route::prefix('auth')->group(function () {
 });
 
 // User management routes
-Route::middleware(['auth:sanctum'])->prefix('users')->group(function () {
+Route::middleware(['sanctum', 'auth:sanctum'])->prefix('users')->group(function () {
     Route::get('/', [UserController::class, 'index'])->middleware('permission:users.view');
     Route::post('/', [UserController::class, 'store'])->middleware('permission:users.create');
     Route::get('/{user}', [UserController::class, 'show'])->middleware('permission:users.view');
@@ -41,18 +44,27 @@ Route::middleware(['auth:sanctum'])->prefix('courses')->group(function () {
     Route::post('/', [CourseController::class, 'store'])->middleware('permission:courses.create');
     Route::get('/available', [CourseController::class, 'available'])->middleware('permission:courses.view');
     Route::get('/statistics', [CourseController::class, 'statistics'])->middleware('permission:courses.view');
+    Route::get('/trash', [CourseController::class, 'trash'])->middleware('permission:courses.view');
+
+    // Bulk operations (must come before parameterized routes)
+    Route::put('/bulk', [CourseController::class, 'bulkUpdate'])->middleware('permission:courses.edit');
+    Route::delete('/bulk', [CourseController::class, 'bulkDelete'])->middleware('permission:courses.delete');
+    Route::put('/bulk/status', [CourseController::class, 'bulkToggleStatus'])->middleware('permission:courses.edit');
+    Route::post('/import', [CourseController::class, 'import'])->middleware('permission:courses.create');
+    Route::get('/export', [CourseController::class, 'export'])->middleware('permission:courses.view');
+
+    // Specific parameterized routes
+    Route::post('/{course}/prerequisites', [CourseController::class, 'addPrerequisite'])->middleware('permission:courses.edit');
+    Route::delete('/{course}/prerequisites', [CourseController::class, 'removePrerequisite'])->middleware('permission:courses.edit');
+    Route::post('/{course}/duplicate', [CourseController::class, 'duplicate'])->middleware('permission:courses.create');
+    Route::patch('/{course}/toggle-status', [CourseController::class, 'toggleStatus'])->middleware('permission:courses.edit');
+    Route::post('/{id}/restore', [CourseController::class, 'restore'])->middleware('permission:courses.delete');
+    Route::delete('/{id}/force', [CourseController::class, 'forceDelete'])->middleware('permission:courses.delete');
+
+    // Generic CRUD routes (must come last)
     Route::get('/{course}', [CourseController::class, 'show'])->middleware('permission:courses.view');
     Route::put('/{course}', [CourseController::class, 'update'])->middleware('permission:courses.edit');
     Route::delete('/{course}', [CourseController::class, 'destroy'])->middleware('permission:courses.delete');
-    Route::post('/{course}/prerequisites', [CourseController::class, 'addPrerequisite'])->middleware('permission:courses.edit');
-    Route::delete('/{course}/prerequisites', [CourseController::class, 'removePrerequisite'])->middleware('permission:courses.edit');
-
-    // Bulk operations
-    Route::post('/bulk-update', [CourseController::class, 'bulkUpdate'])->middleware('permission:courses.edit');
-    Route::post('/bulk-delete', [CourseController::class, 'bulkDelete'])->middleware('permission:courses.delete');
-    Route::post('/bulk-toggle-status', [CourseController::class, 'bulkToggleStatus'])->middleware('permission:courses.edit');
-    Route::post('/import', [CourseController::class, 'import'])->middleware('permission:courses.create');
-    Route::get('/export', [CourseController::class, 'export'])->middleware('permission:courses.view');
 });
 
 // Academic Year management routes

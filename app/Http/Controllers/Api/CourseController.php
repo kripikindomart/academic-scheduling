@@ -8,8 +8,13 @@ use App\Http\Requests\Course\StoreCourseRequest;
 use App\Http\Requests\Course\UpdateCourseRequest;
 use App\Services\ResponseService;
 use App\Services\CourseService;
+use App\Exports\CoursesTemplateExport;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
+use App\Exports\LecturersTemplateExport;
 
 class CourseController extends Controller
 {
@@ -36,7 +41,6 @@ class CourseController extends Controller
             $filters = $request->only([
                 'program_study_id',
                 'semester',
-                'academic_year',
                 'course_type',
                 'level',
                 'is_active',
@@ -185,7 +189,7 @@ class CourseController extends Controller
     {
         try {
             $validated = $request->validate([
-                'prerequisite_course_id' => 'required|exists:courses,id|different:' . $course->id,
+                'prerequisite_course_id' => 'required|exists:courses,id|different:course',
             ]);
 
             $this->courseService->addPrerequisite($course->id, $validated['prerequisite_course_id']);
@@ -331,6 +335,137 @@ class CourseController extends Controller
     }
 
     /**
+     * Duplicate a course.
+     */
+    public function duplicate(Request $request, Course $course): JsonResponse
+    {
+        try {
+            $user = $request->user();
+
+            // Only admin can duplicate courses
+            if (!$user || !$user->isAdmin()) {
+                return ResponseService::error(
+                    'Unauthorized. Only admin can duplicate courses.',
+                    null,
+                    403
+                );
+            }
+
+            $duplicatedCourse = $this->courseService->duplicateCourse($course->id, $user->id);
+
+            return ResponseService::success(
+                $duplicatedCourse,
+                'Course duplicated successfully',
+                201
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to duplicate course: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Toggle active status for a course.
+     */
+    public function toggleStatus(Request $request, Course $course): JsonResponse
+    {
+        try {
+            $user = $request->user();
+
+            // Only admin can toggle course status
+            if (!$user || !$user->isAdmin()) {
+                return ResponseService::error(
+                    'Unauthorized. Only admin can toggle course status.',
+                    null,
+                    403
+                );
+            }
+
+            $updatedCourse = $this->courseService->toggleCourseStatus($course->id, $user->id);
+
+            return ResponseService::success(
+                $updatedCourse,
+                'Course status updated successfully'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to toggle course status: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Restore a soft-deleted course.
+     */
+    public function restore(Request $request, $id): JsonResponse
+    {
+        try {
+            $user = $request->user();
+
+            // Only admin can restore courses
+            if (!$user || !$user->isAdmin()) {
+                return ResponseService::error(
+                    'Unauthorized. Only admin can restore courses.',
+                    null,
+                    403
+                );
+            }
+
+            $course = Course::withTrashed()->findOrFail($id);
+            $course->restore();
+
+            return ResponseService::success(
+                $course,
+                'Course restored successfully'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to restore course: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Force delete a course.
+     */
+    public function forceDelete(Request $request, $id): JsonResponse
+    {
+        try {
+            $user = $request->user();
+
+            // Only admin can force delete courses
+            if (!$user || !$user->isAdmin()) {
+                return ResponseService::error(
+                    'Unauthorized. Only admin can permanently delete courses.',
+                    null,
+                    403
+                );
+            }
+
+            $course = Course::withTrashed()->findOrFail($id);
+            $course->forceDelete();
+
+            return ResponseService::success(
+                null,
+                'Course permanently deleted'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to permanently delete course: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
      * Import courses from file.
      */
     public function import(Request $request): JsonResponse
@@ -377,6 +512,81 @@ class CourseController extends Controller
         } catch (\Exception $e) {
             return ResponseService::error(
                 'Failed to export courses: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Download template for import
+     */
+   public function downloadTemplate()
+    {
+        try {
+            $filename = 'template-import-mata-kuliah-' . date('Y-m-d') . '.xlsx';
+
+            // Create the export object
+            $export = new CoursesTemplateExport();
+
+            // Generate and get the file content
+            $fileContent = Excel::raw($export, \Maatwebsite\Excel\Excel::XLSX);
+
+            // Set headers for Excel download
+            $headers = [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Cache-Control' => 'max-age=0',
+                'Pragma' => 'no-cache',
+                'Expires' => '0',
+            ];
+
+            return response($fileContent, 200, $headers);
+
+        } catch (\Exception $e) {
+            Log::error('Template download failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengunduh template: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get trashed courses.
+     */
+    public function trash(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+
+            // Apply program study filter for non-admin users
+            if ($user && !$user->isAdmin() && $user->program_study_id) {
+                $request->merge(['program_study_id' => $user->program_study_id]);
+            }
+
+            $filters = $request->only([
+                'program_study_id',
+                'semester',
+                'course_type',
+                'level',
+                'search'
+            ]);
+
+            $perPage = $request->get('per_page', 20);
+            $courses = $this->courseService->getTrashedCourses($perPage, $filters);
+
+            return ResponseService::paginated(
+                $courses,
+                'Trashed courses retrieved successfully'
+            );
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to retrieve trashed courses: ' . $e->getMessage(),
                 null,
                 500
             );

@@ -30,11 +30,9 @@ class StoreCourseRequest extends FormRequest
             'course_name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'credits' => ['required', 'integer', 'min:1', 'max:12'],
-            'semester' => ['required', 'string', 'max:20'],
-            'academic_year' => ['required', 'string', 'max:10', 'regex:/^\d{4}\/\d{4}$/'],
+            'semester' => ['required', 'string', 'in:ganjil,genap'],
             'course_type' => ['required', 'string', 'in:mandatory,elective'],
-            'level' => ['required', 'string', 'in:undergraduate,graduate,doctoral'],
-            'capacity' => ['required', 'integer', 'min:1', 'max:500'],
+            'level' => ['nullable', 'string', 'in:undergraduate,graduate,doctoral'],
             'is_active' => ['sometimes', 'boolean'],
             'program_study_id' => ['required', 'exists:program_studies,id'],
         ];
@@ -48,27 +46,22 @@ class StoreCourseRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'course_code.required' => 'Course code is required',
-            'course_code.unique' => 'Course code already exists',
-            'course_name.required' => 'Course name is required',
-            'course_name.max' => 'Course name may not be greater than 255 characters',
-            'credits.required' => 'Credits is required',
-            'credits.integer' => 'Credits must be an integer',
-            'credits.min' => 'Credits must be at least 1',
-            'credits.max' => 'Credits may not be greater than 12',
-            'semester.required' => 'Semester is required',
-            'academic_year.required' => 'Academic year is required',
-            'academic_year.regex' => 'Academic year must be in format YYYY/YYYY (e.g., 2024/2025)',
-            'course_type.required' => 'Course type is required',
-            'course_type.in' => 'Course type must be either mandatory or elective',
-            'level.required' => 'Course level is required',
-            'level.in' => 'Level must be undergraduate, graduate, or doctoral',
-            'capacity.required' => 'Capacity is required',
-            'capacity.integer' => 'Capacity must be an integer',
-            'capacity.min' => 'Capacity must be at least 1',
-            'capacity.max' => 'Capacity may not be greater than 500',
-            'program_study_id.required' => 'Program study is required',
-            'program_study_id.exists' => 'Selected program study is invalid',
+            'course_code.required' => 'Kode matakuliah wajib diisi',
+            'course_code.unique' => 'Kode matakuliah sudah ada',
+            'course_name.required' => 'Nama matakuliah wajib diisi',
+            'course_name.max' => 'Nama matakuliah maksimal 255 karakter',
+            'credits.required' => 'SKS wajib diisi',
+            'credits.integer' => 'SKS harus berupa angka',
+            'credits.min' => 'SKS minimal 1',
+            'credits.max' => 'SKS maksimal 12',
+            'semester.required' => 'Semester wajib diisi',
+            'semester.in' => 'Semester harus ganjil atau genap',
+            'course_type.required' => 'Tipe matakuliah wajib diisi',
+            'course_type.in' => 'Tipe matakuliah harus wajib atau pilihan',
+            'level.required' => 'Jenjang pendidikan wajib diisi',
+            'level.in' => 'Jenjang harus S1, S2, atau S3',
+            'program_study_id.required' => 'Program studi wajib dipilih',
+            'program_study_id.exists' => 'Program studi tidak valid',
         ];
     }
 
@@ -80,17 +73,15 @@ class StoreCourseRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'course_code' => 'Course Code',
-            'course_name' => 'Course Name',
-            'description' => 'Description',
-            'credits' => 'Credits',
+            'course_code' => 'Kode Matakuliah',
+            'course_name' => 'Nama Matakuliah',
+            'description' => 'Deskripsi',
+            'credits' => 'SKS',
             'semester' => 'Semester',
-            'academic_year' => 'Academic Year',
-            'course_type' => 'Course Type',
-            'level' => 'Level',
-            'capacity' => 'Capacity',
-            'is_active' => 'Active Status',
-            'program_study_id' => 'Program Study',
+            'course_type' => 'Tipe Matakuliah',
+            'level' => 'Jenjang Pendidikan',
+            'is_active' => 'Status Aktif',
+            'program_study_id' => 'Program Studi',
         ];
     }
 

@@ -53,6 +53,11 @@ Route::get('/api/v1', function () {
     ]);
 });
 
+// Test simple route first
+Route::get('/api/test-simple', function() {
+    return response()->json(['message' => 'Test route works!']);
+});
+
 // SPA routes - serve Vue application
 Route::get('/{any?}', function () {
     return view('app');

@@ -87,8 +87,8 @@ export const useAuthStore = defineStore('auth', {
         console.log('User roles:', this.user?.roles?.map(r => r.name));
         console.log('Is admin:', this.isAdmin);
 
-        // Force flush Spatie permission cache
-        if (this.user) {
+        // Force flush Spatie permission cache (if method exists)
+        if (this.user && typeof this.user.flushCache === 'function') {
             this.user.flushCache();
         }
 
