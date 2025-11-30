@@ -2,21 +2,47 @@ import { defineStore } from 'pinia';
 import axios from 'axios';
 
 export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    user: null,
-    token: localStorage.getItem('token') || null,
-    loading: false,
-    error: null,
-  }),
+  state: () => {
+    const token = localStorage.getItem('token') || null;
+
+    // Set axios default header if token exists
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+
+    return {
+      user: null,
+      token: token,
+      loading: false,
+      error: null,
+    };
+  },
 
   getters: {
     isAuthenticated: (state) => !!state.token,
     userRole: (state) => {
-      // Check if user has roles and get the first role name
+      // Use Spatie Laravel Permission roles
       if (state.user?.roles && state.user.roles.length > 0) {
-        return state.user.roles[0].name?.toLowerCase();
+        const primaryRole = state.user.roles[0].name;
+        return primaryRole.toLowerCase();
       }
-      return 'user'; // Default role
+      return 'user'; // Default role if no roles assigned
+    },
+
+    isAdmin: (state) => {
+      // Check if user has admin role or super admin role
+      if (state.user?.roles && state.user.roles.length > 0) {
+        const hasAdminRole = state.user.roles.some(role =>
+          ['admin', 'super admin', 'super_admin'].includes(role.name.toLowerCase())
+        );
+        console.log('Admin check:', {
+          userRoles: state.user.roles.map(r => r.name),
+          hasAdminRole
+        });
+        return hasAdminRole;
+      }
+      console.log('No roles found for user');
+      return false;
     },
   },
 
@@ -58,6 +84,13 @@ export const useAuthStore = defineStore('auth', {
         console.log('Login successful, user:', this.user);
         console.log('Token stored:', this.token);
         console.log('User role:', this.userRole);
+        console.log('User roles:', this.user?.roles?.map(r => r.name));
+        console.log('Is admin:', this.isAdmin);
+
+        // Force flush Spatie permission cache
+        if (this.user) {
+            this.user.flushCache();
+        }
 
         return { success: true, user: this.user };
       } catch (error) {
@@ -89,12 +122,28 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async checkAuth() {
-      if (!this.token) return;
+      if (!this.token) {
+        console.log('No token found during checkAuth');
+        return;
+      }
 
       try {
+        // Set authorization header before making request
+        axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
+
+        console.log('Checking auth with token:', this.token);
         const response = await axios.get('/api/auth/user');
         this.user = response.data.data;
+        console.log('Auth check successful, user loaded:', this.user);
+
+        // Force flush Spatie permission cache to ensure roles are loaded
+        if (this.user && typeof this.user.flushCache === 'function') {
+            this.user.flushCache();
+        }
       } catch (error) {
+        console.error('Auth check failed:', error);
+        console.error('Error response:', error.response?.data);
+
         // Token is invalid, clear auth
         this.token = null;
         this.user = null;

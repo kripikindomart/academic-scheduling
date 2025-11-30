@@ -27,13 +27,21 @@ class ProgramStudyController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
+            $user = $request->user();
+
+            // Apply program study filter for non-admin users
+            if ($user && !$user->isAdmin() && $user->program_study_id) {
+                $request->merge(['program_study_filter' => $user->program_study_id]);
+            }
+
             $filters = $request->only([
                 'faculty',
                 'level',
                 'degree',
                 'is_active',
                 'status',
-                'search'
+                'search',
+                'program_study_filter'
             ]);
 
             // Map frontend status to backend is_active
@@ -87,9 +95,20 @@ class ProgramStudyController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(ProgramStudy $programStudy): JsonResponse
+    public function show(Request $request, ProgramStudy $programStudy): JsonResponse
     {
         try {
+            $user = $request->user();
+
+            // Check if user has access to this program study
+            if ($user && !$user->isAdmin() && $user->program_study_id && $programStudy->id !== $user->program_study_id) {
+                return ResponseService::error(
+                    'Unauthorized access to this program study',
+                    null,
+                    403
+                );
+            }
+
             $programStudy->load([
                 'creator',
                 'courses' => function ($query) {

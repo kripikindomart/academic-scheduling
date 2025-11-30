@@ -55,7 +55,8 @@ class CleanupInactiveStudents extends Command
                     $newCount = max(0, $class->current_students - $classData->inactive_count);
                     $class->update(['current_students' => $newCount]);
 
-                    $this->info("Updated class {$class->name}: reduced current_students from {$class->current_students + $classData->inactive_count} to {$newCount}");
+                    $oldCount = $class->current_students + $classData->inactive_count;
+                    $this->info("Updated class {$class->name}: reduced current_students from {$oldCount} to {$newCount}");
                 }
             }
 

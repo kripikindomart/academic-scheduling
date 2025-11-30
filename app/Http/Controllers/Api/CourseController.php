@@ -26,6 +26,13 @@ class CourseController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
+            $user = $request->user();
+
+            // Apply program study filter for non-admin users
+            if ($user && !$user->isAdmin() && $user->program_study_id) {
+                $request->merge(['program_study_id' => $user->program_study_id]);
+            }
+
             $filters = $request->only([
                 'program_study_id',
                 'semester',

@@ -27,32 +27,47 @@ class LecturerController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $filters = [
-            'search' => $request->input('search'),
-            'program_study_id' => $request->input('program_study_id'),
-            'status' => $request->input('status'),
-            'employment_type' => $request->input('employment_type'),
-            'faculty' => $request->input('faculty'),
-            'department' => $request->input('department'),
-            'rank' => $request->input('rank'),
-            'highest_education' => $request->input('highest_education'),
-            'is_active' => $request->input('is_active'),
-            'specialization' => $request->input('specialization'),
-        ];
+        try {
+            $user = $request->user();
 
-        $result = $this->lecturerService->getLecturers(
-            $filters,
-            $request->input('per_page', 15),
-            $request->input('sort_by', 'name'),
-            $request->input('sort_direction', 'asc')
-        );
+            // Apply program study filter for non-admin users
+            if ($user && !$user->isAdmin() && $user->program_study_id) {
+                $request->merge(['program_study_id' => $user->program_study_id]);
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => $result['message'],
-            'data' => $result['data'],
-            'meta' => $result['meta'] ?? []
-        ]);
+            $filters = [
+                'search' => $request->input('search'),
+                'program_study_id' => $request->input('program_study_id'),
+                'status' => $request->input('status'),
+                'employment_type' => $request->input('employment_type'),
+                'faculty' => $request->input('faculty'),
+                'department' => $request->input('department'),
+                'rank' => $request->input('rank'),
+                'highest_education' => $request->input('highest_education'),
+                'is_active' => $request->input('is_active'),
+                'specialization' => $request->input('specialization'),
+            ];
+
+            $result = $this->lecturerService->getLecturers(
+                $filters,
+                $request->input('per_page', 15),
+                $request->input('sort_by', 'name'),
+                $request->input('sort_direction', 'asc')
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => $result['message'],
+                'data' => $result['data'],
+                'meta' => $result['meta'] ?? []
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve lecturers: ' . $e->getMessage(),
+                'data' => null
+            ], 500);
+        }
     }
 
     /**

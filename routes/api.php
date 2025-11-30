@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\ConflictDetectionController;
 use App\Http\Controllers\Api\ClassController;
+use App\Http\Controllers\Api\AcademicYearController;
 
 // Authentication routes
 Route::prefix('auth')->group(function () {
@@ -52,6 +53,27 @@ Route::middleware(['auth:sanctum'])->prefix('courses')->group(function () {
     Route::post('/bulk-toggle-status', [CourseController::class, 'bulkToggleStatus'])->middleware('permission:courses.edit');
     Route::post('/import', [CourseController::class, 'import'])->middleware('permission:courses.create');
     Route::get('/export', [CourseController::class, 'export'])->middleware('permission:courses.view');
+});
+
+// Academic Year management routes
+Route::middleware(['auth:sanctum'])->prefix('academic-years')->group(function () {
+    // Basic CRUD
+    Route::get('/', [AcademicYearController::class, 'index'])->middleware('permission:academic_years.view');
+    Route::post('/', [AcademicYearController::class, 'store'])->middleware('permission:academic_years.create');
+
+    // Special endpoints (must come before {id} routes)
+    Route::get('/active', [AcademicYearController::class, 'active'])->middleware('permission:academic_years.view');
+    Route::get('/statistics', [AcademicYearController::class, 'statistics'])->middleware('permission:academic_years.view');
+    Route::post('/set-active', [AcademicYearController::class, 'setActive'])->middleware('permission:academic_years.manage');
+
+    // Individual academic year actions
+    Route::post('/{id}/duplicate', [AcademicYearController::class, 'duplicate'])->middleware('permission:academic_years.create');
+    Route::post('/{id}/toggle-active', [AcademicYearController::class, 'toggleActive'])->middleware('permission:academic_years.manage');
+
+    // Generic {id} routes (must come last)
+    Route::get('/{id}', [AcademicYearController::class, 'show'])->middleware('permission:academic_years.view');
+    Route::put('/{id}', [AcademicYearController::class, 'update'])->middleware('permission:academic_years.edit');
+    Route::delete('/{id}', [AcademicYearController::class, 'destroy'])->middleware('permission:academic_years.delete');
 });
 
 // Program study management routes

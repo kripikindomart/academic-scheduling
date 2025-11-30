@@ -31,26 +31,42 @@ class StudentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $filters = [
-            'search' => $request->input('search'),
-            'program_study_id' => $request->input('program_study_id'),
-            'status' => $request->input('status'),
-            'batch_year' => $request->input('batch_year'),
-            'gender' => $request->input('gender'),
-            'class' => $request->input('class'),
-            'semester' => $request->input('current_semester'),
-            'is_active' => $request->input('is_active'),
-            'is_regular' => $request->input('is_regular'),
-        ];
+        try {
+            $user = $request->user();
 
-        $result = $this->studentService->getStudents(
-            $filters,
-            $request->input('per_page', 15),
-            $request->input('sort_by', 'name'),
-            $request->input('sort_direction', 'asc')
-        );
+            // Apply program study filter for non-admin users
+            if ($user && !$user->isAdmin() && $user->program_study_id) {
+                // If user has program study, only show students from that program
+                $request->merge(['program_study_id' => $user->program_study_id]);
+            }
 
-        return ResponseService::success($result['data'], $result['message'], $result['meta']);
+            $filters = [
+                'search' => $request->input('search'),
+                'program_study_id' => $request->input('program_study_id'),
+                'status' => $request->input('status'),
+                'batch_year' => $request->input('batch_year'),
+                'gender' => $request->input('gender'),
+                'class' => $request->input('class'),
+                'semester' => $request->input('current_semester'),
+                'is_active' => $request->input('is_active'),
+                'is_regular' => $request->input('is_regular'),
+            ];
+
+            $result = $this->studentService->getStudents(
+                $filters,
+                $request->input('per_page', 15),
+                $request->input('sort_by', 'name'),
+                $request->input('sort_direction', 'asc')
+            );
+
+            return ResponseService::success($result['data'], $result['message'], $result['meta']);
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to retrieve students: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
     }
 
     /**
@@ -66,15 +82,34 @@ class StudentController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Student $student): JsonResponse
+    public function show(Request $request, Student $student): JsonResponse
     {
-        $student->load([
-            'programStudy',
-            'creator',
-            'updater'
-        ]);
+        try {
+            $user = $request->user();
 
-        return ResponseService::success($student, 'Student retrieved successfully');
+            // Check if user has access to this student's program study
+            if ($user && !$user->isAdmin() && $user->program_study_id && $student->program_study_id !== $user->program_study_id) {
+                return ResponseService::error(
+                    'Unauthorized access to this student',
+                    null,
+                    403
+                );
+            }
+
+            $student->load([
+                'programStudy',
+                'creator',
+                'updater'
+            ]);
+
+            return ResponseService::success($student, 'Student retrieved successfully');
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to retrieve student: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
     }
 
     /**

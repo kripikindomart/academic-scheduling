@@ -26,24 +26,39 @@ class ClassController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $filters = [
-            'search' => $request->input('search'),
-            'program_study_id' => $request->input('program_study_id'),
-            'batch_year' => $request->input('batch_year'),
-            'semester' => $request->input('semester'),
-            'academic_year' => $request->input('academic_year'),
-            'is_active' => $request->input('is_active'),
-            'has_capacity' => $request->input('has_capacity'),
-        ];
+        try {
+            $user = $request->user();
 
-        $result = $this->classService->getClasses(
-            $filters,
-            $request->input('per_page', 15),
-            $request->input('sort_by', 'name'),
-            $request->input('sort_direction', 'asc')
-        );
+            // Apply program study filter for non-admin users
+            if ($user && !$user->isAdmin() && $user->program_study_id) {
+                $request->merge(['program_study_id' => $user->program_study_id]);
+            }
 
-        return ResponseService::success($result['data'], $result['message'], $result['meta']);
+            $filters = [
+                'search' => $request->input('search'),
+                'program_study_id' => $request->input('program_study_id'),
+                'batch_year' => $request->input('batch_year'),
+                'semester' => $request->input('semester'),
+                'academic_year' => $request->input('academic_year'),
+                'is_active' => $request->input('is_active'),
+                'has_capacity' => $request->input('has_capacity'),
+            ];
+
+            $result = $this->classService->getClasses(
+                $filters,
+                $request->input('per_page', 15),
+                $request->input('sort_by', 'name'),
+                $request->input('sort_direction', 'asc')
+            );
+
+            return ResponseService::success($result['data'], $result['message'], $result['meta']);
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to retrieve classes: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
     }
 
     /**

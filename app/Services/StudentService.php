@@ -26,6 +26,9 @@ class StudentService
     {
         $query = Student::with(['programStudy', 'creator', 'updater', 'user']);
 
+        // Apply program study filtering based on user permissions
+        $this->applyProgramStudyFilter($query, $filters);
+
         // Apply filters
         if (!empty($filters['search'])) {
             $search = $filters['search'];
@@ -862,5 +865,32 @@ class StudentService
 
             return $restoredCount;
         });
+    }
+
+    /**
+     * Apply program study filtering based on user permissions.
+     */
+    private function applyProgramStudyFilter(Builder $query, array $filters = []): void
+    {
+        // If program_study_id is explicitly provided in filters, use it (admin override)
+        if (!empty($filters['program_study_id'])) {
+            $query->where('program_study_id', $filters['program_study_id']);
+            return;
+        }
+
+        // For authenticated users, apply program study filtering
+        if (auth()->check()) {
+            $user = auth()->user();
+
+            // Admin can see all program studies
+            if ($user->isAdmin()) {
+                return; // No filtering for admin
+            }
+
+            // Non-admin users can only see their program study
+            if ($user->program_study_id) {
+                $query->where('program_study_id', $user->program_study_id);
+            }
+        }
     }
 }

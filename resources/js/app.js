@@ -89,6 +89,12 @@ const router = createRouter({
             meta: { requiresAuth: true, roles: ['admin', 'super admin'] },
         },
         {
+            path: '/academic-years',
+            name: 'academic-years',
+            component: () => import('./views/AcademicYears.vue'),
+            meta: { requiresAuth: true },
+        },
+        {
             path: '/settings',
             name: 'settings',
             component: () => import('./views/Settings.vue'),
@@ -103,42 +109,25 @@ const router = createRouter({
     ],
 });
 
-// Enhanced navigation guard for auth
+// Simple navigation guard for auth
 router.beforeEach(async (to, from, next) => {
-    const authStore = useAuthStore();
     const token = localStorage.getItem('token');
 
-    // Initialize auth store if token exists but user is not loaded
-    if (token && !authStore.user) {
-        try {
-            await authStore.checkAuth();
-        } catch (error) {
-            console.error('Auth check failed:', error);
-        }
-    }
-
-    const isAuthenticated = authStore.isAuthenticated;
-    const userRole = authStore.userRole?.toLowerCase();
-
     // Redirect authenticated users from guest pages
-    if (to.meta.guest && isAuthenticated) {
+    if (to.meta.guest && token) {
         return next('/dashboard');
     }
 
     // Redirect unauthenticated users from protected pages
-    if (to.meta.requiresAuth && !isAuthenticated) {
+    if (to.meta.requiresAuth && !token) {
         return next('/login');
     }
 
-    // Check role-based access
-    if (to.meta.roles && isAuthenticated) {
-        const hasRequiredRole = to.meta.roles.some(role =>
-            userRole === role.toLowerCase() || userRole === role
-        );
-
-        if (!hasRequiredRole) {
-            return next('/dashboard'); // Redirect to dashboard if user doesn't have required role
-        }
+    // For role-based routes, do a simple check - let component handle detailed auth
+    if (to.meta.roles && token) {
+        // Just proceed to route, component will handle role checking
+        next();
+        return;
     }
 
     next();

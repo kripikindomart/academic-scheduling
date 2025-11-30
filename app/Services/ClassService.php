@@ -6,6 +6,7 @@ use App\Models\Kelas;
 use App\Models\Student;
 use App\Models\ClassStudent;
 use App\Models\ProgramStudy;
+use App\Services\AcademicYearService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,6 +21,12 @@ class ClassService
     public function getClasses(array $filters = [], int $perPage = 15, string $sortBy = 'name', string $sortDirection = 'asc'): array
     {
         $query = Kelas::with(['programStudy', 'creator', 'updater']);
+
+        // Apply program study filtering based on user permissions
+        $this->applyProgramStudyFilter($query, $filters);
+
+        // Apply academic year filtering (use active academic year as default)
+        $this->applyAcademicYearFilter($query, $filters);
 
         // Apply filters
         if (!empty($filters['search'])) {
@@ -1016,6 +1023,51 @@ class ClassService
                 'message' => 'Bulk force delete completed successfully'
             ];
         });
+    }
+
+    /**
+     * Apply program study filtering based on user permissions.
+     */
+    private function applyProgramStudyFilter(Builder $query, array $filters = []): void
+    {
+        // If program_study_id is explicitly provided in filters, use it (admin override)
+        if (!empty($filters['program_study_id'])) {
+            $query->where('program_study_id', $filters['program_study_id']);
+            return;
+        }
+
+        // For authenticated users, apply program study filtering
+        if (auth()->check()) {
+            $user = auth()->user();
+
+            // Admin can see all program studies
+            if ($user->isAdmin()) {
+                return; // No filtering for admin
+            }
+
+            // Non-admin users can only see their program study
+            if ($user->program_study_id) {
+                $query->where('program_study_id', $user->program_study_id);
+            }
+        }
+    }
+
+    /**
+     * Apply academic year filtering (use active academic year as default).
+     */
+    private function applyAcademicYearFilter(Builder $query, array $filters = []): void
+    {
+        // If academic_year is explicitly provided in filters, use it
+        if (!empty($filters['academic_year'])) {
+            $query->where('academic_year', $filters['academic_year']);
+            return;
+        }
+
+        // Otherwise, filter by active academic year
+        $activeAcademicYear = AcademicYearService::getCurrentActiveAcademicYearId();
+        if ($activeAcademicYear) {
+            $query->where('academic_year', $activeAcademicYear);
+        }
     }
 
     /**
