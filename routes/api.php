@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\ConflictDetectionController;
 use App\Http\Controllers\Api\ClassController;
 use App\Http\Controllers\Api\AcademicYearController;
+use App\Http\Controllers\Api\ClassScheduleController;
 
 // Public template download routes (no auth required) - HARUS DI ATAS!
 Route::get('/courses/template-download', [CourseController::class, 'downloadTemplate']);
@@ -40,7 +41,7 @@ Route::middleware(['sanctum', 'auth:sanctum'])->prefix('users')->group(function 
 
 // Course management routes
 Route::middleware(['auth:sanctum'])->prefix('courses')->group(function () {
-    Route::get('/', [CourseController::class, 'index'])->middleware('permission:courses.view');
+    Route::get('/', [CourseController::class, 'index']);
     Route::post('/', [CourseController::class, 'store'])->middleware('permission:courses.create');
     Route::get('/available', [CourseController::class, 'available'])->middleware('permission:courses.view');
     Route::get('/statistics', [CourseController::class, 'statistics'])->middleware('permission:courses.view');
@@ -70,8 +71,8 @@ Route::middleware(['auth:sanctum'])->prefix('courses')->group(function () {
 // Academic Year management routes
 Route::middleware(['auth:sanctum'])->prefix('academic-years')->group(function () {
     // Basic CRUD
-    Route::get('/', [AcademicYearController::class, 'index'])->middleware('permission:academic_years.view');
-    Route::post('/', [AcademicYearController::class, 'store'])->middleware('permission:academic_years.create');
+    Route::get('/', [AcademicYearController::class, 'index']);
+    Route::post('/', [AcademicYearController::class, 'store']);
 
     // Special endpoints (must come before {id} routes)
     Route::get('/active', [AcademicYearController::class, 'active'])->middleware('permission:academic_years.view');
@@ -90,13 +91,13 @@ Route::middleware(['auth:sanctum'])->prefix('academic-years')->group(function ()
 
 // Program study management routes
 Route::middleware(['auth:sanctum'])->prefix('program-studies')->group(function () {
-    Route::get('/', [ProgramStudyController::class, 'index'])->middleware('permission:program_studies.view');
+    Route::get('/', [ProgramStudyController::class, 'index']);
     Route::post('/', [ProgramStudyController::class, 'store'])->middleware('permission:program_studies.create');
-    Route::get('/faculties', [ProgramStudyController::class, 'faculties'])->middleware('permission:program_studies.view');
-    Route::get('/statistics', [ProgramStudyController::class, 'statistics'])->middleware('permission:program_studies.view');
-    Route::get('/trash', [ProgramStudyController::class, 'trash'])->middleware('permission:program_studies.view');
-    Route::get('/export', [ProgramStudyController::class, 'export'])->middleware('permission:program_studies.view');
-    Route::get('/download/{filename}', [ProgramStudyController::class, 'download'])->middleware('permission:program_studies.view');
+    Route::get('/faculties', [ProgramStudyController::class, 'faculties']);
+    Route::get('/statistics', [ProgramStudyController::class, 'statistics']);
+    Route::get('/trash', [ProgramStudyController::class, 'trash']);
+    Route::get('/export', [ProgramStudyController::class, 'export']);
+    Route::get('/download/{filename}', [ProgramStudyController::class, 'download']);
 
     // Bulk operations
     Route::post('/bulk-update', [ProgramStudyController::class, 'bulkUpdate'])->middleware('permission:program_studies.edit');
@@ -349,6 +350,29 @@ Route::middleware(['auth:sanctum'])->prefix('rooms')->group(function () {
     Route::post('/{room}/complete-maintenance', [RoomController::class, 'completeMaintenance'])->middleware('permission:rooms.edit');
 });
 
+// Class Schedule management routes
+Route::middleware(['auth:sanctum'])->prefix('class-schedules')->group(function () {
+    Route::get('/', [ClassScheduleController::class, 'index']);
+    Route::post('/', [ClassScheduleController::class, 'store']);
+    Route::get('/statistics', [ClassScheduleController::class, 'statistics']);
+
+    // Specific class schedule operations
+    Route::post('/{classSchedule}/add-course', [ClassScheduleController::class, 'addCourse']);
+    Route::delete('/{classSchedule}/remove-course/{detailId}', [ClassScheduleController::class, 'removeCourse']);
+    Route::post('/{classSchedule}/generate-schedules', [ClassScheduleController::class, 'generateSchedules']);
+    Route::get('/{classSchedule}/schedules', [ClassScheduleController::class, 'getSchedules']);
+    Route::patch('/{classSchedule}/status', [ClassScheduleController::class, 'updateStatus']);
+
+    // Bulk operations
+    Route::put('/bulk-update', [ClassScheduleController::class, 'bulkUpdate']);
+    Route::delete('/bulk-delete', [ClassScheduleController::class, 'bulkDelete']);
+
+    // Individual class schedule CRUD
+    Route::get('/{classSchedule}', [ClassScheduleController::class, 'show']);
+    Route::put('/{classSchedule}', [ClassScheduleController::class, 'update']);
+    Route::delete('/{classSchedule}', [ClassScheduleController::class, 'destroy']);
+});
+
 // Schedule management routes
 Route::middleware(['auth:sanctum'])->prefix('schedules')->group(function () {
     Route::get('/', [ScheduleController::class, 'index'])->middleware('permission:schedules.view');
@@ -363,6 +387,13 @@ Route::middleware(['auth:sanctum'])->prefix('schedules')->group(function () {
     Route::get('/lecturer/{lecturerId}', [ScheduleController::class, 'getByLecturer'])->middleware('permission:schedules.view');
     Route::get('/room/{roomId}', [ScheduleController::class, 'getByRoom'])->middleware('permission:schedules.view');
 
+    // Batch operations
+    Route::post('/batch-create', [ScheduleController::class, 'createBatch'])->middleware('permission:schedules.create');
+    Route::get('/recommendations', [ScheduleController::class, 'getRecommendations'])->middleware('permission:schedules.view');
+    Route::get('/academic-year/{academicYear}', [ScheduleController::class, 'getByAcademicYear'])->middleware('permission:schedules.view');
+    Route::get('/today', [ScheduleController::class, 'getTodaySchedules'])->middleware('permission:schedules.view');
+
+    // Bulk operations
     Route::post('/bulk-update', [ScheduleController::class, 'bulkUpdate'])->middleware('permission:schedules.edit');
     Route::post('/bulk-delete', [ScheduleController::class, 'bulkDelete'])->middleware('permission:schedules.delete');
     Route::get('/export', [ScheduleController::class, 'export'])->middleware('permission:schedules.view');
