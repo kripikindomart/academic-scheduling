@@ -27,8 +27,7 @@ class StoreClassRequest extends FormRequest
             'code' => 'nullable|string|max:50|unique:classes,code',
             'program_study_id' => 'required|exists:program_studies,id',
             'batch_year' => 'required|integer|min:2000|max:' . (date('Y') + 10),
-            'semester' => 'required|in:ganjil,genap',
-            'academic_year' => 'required|string|max:20',
+            'academic_year_id' => 'required|exists:academic_years,id',
             'capacity' => 'required|integer|min:1|max:200',
             'room_number' => 'nullable|string|max:50',
             'description' => 'nullable|string|max:1000',
@@ -54,10 +53,8 @@ class StoreClassRequest extends FormRequest
             'batch_year.integer' => 'Tahun angkatan harus berupa angka.',
             'batch_year.min' => 'Tahun angkatan minimal 2000.',
             'batch_year.max' => 'Tahun angkatan tidak valid.',
-            'semester.required' => 'Semester wajib dipilih.',
-            'semester.in' => 'Semester harus ganjil atau genap.',
-            'academic_year.required' => 'Tahun ajaran wajib diisi.',
-            'academic_year.max' => 'Tahun ajaran maksimal 20 karakter.',
+            'academic_year_id.required' => 'Tahun akademik wajib dipilih.',
+            'academic_year_id.exists' => 'Tahun akademik tidak valid.',
             'capacity.required' => 'Kapasitas kelas wajib diisi.',
             'capacity.min' => 'Kapasitas kelas minimal 1 mahasiswa.',
             'capacity.max' => 'Kapasitas kelas maksimal 200 mahasiswa.',
@@ -78,8 +75,7 @@ class StoreClassRequest extends FormRequest
             'code' => 'Kode Kelas',
             'program_study_id' => 'Program Studi',
             'batch_year' => 'Tahun Angkatan',
-            'semester' => 'Semester',
-            'academic_year' => 'Tahun Ajaran',
+            'academic_year_id' => 'Tahun Akademik',
             'capacity' => 'Kapasitas',
             'room_number' => 'Nomor Ruangan',
             'description' => 'Deskripsi',
@@ -108,11 +104,6 @@ class StoreClassRequest extends FormRequest
         $validator->after(function ($validator) {
             if ($this->capacity && $this->capacity < 1) {
                 $validator->errors()->add('capacity', 'Kapasitas kelas minimal 1 mahasiswa.');
-            }
-
-            // Validate academic year format (e.g., "2025/2026" or "2025-2026")
-            if ($this->academic_year && !preg_match('/^\d{4}[\/\-]\d{4}$/', $this->academic_year)) {
-                $validator->errors()->add('academic_year', 'Format tahun ajaran tidak valid. Gunakan format "YYYY/YYYY" atau "YYYY-YYYY".');
             }
         });
     }

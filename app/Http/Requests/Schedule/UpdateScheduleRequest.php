@@ -47,7 +47,7 @@ class UpdateScheduleRequest extends FormRequest
             'lecturer_id' => 'sometimes|exists:lecturers,id',
             'room_id' => 'sometimes|exists:rooms,id',
             'program_study_id' => 'sometimes|exists:program_studies,id',
-            'class_id' => 'sometimes|nullable|exists:school_classes,id',
+            'class_id' => 'sometimes|nullable|exists:classes,id',
 
             // Academic information
             'semester' => 'sometimes|in:ganjil,genap',

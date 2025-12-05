@@ -29,8 +29,8 @@ class ClassScheduleService
     {
         $query = ClassSchedule::with([
             'programStudy:id,name',
-            'schoolClass:id,name,code',
-            'academicYear:id,year,semester',
+            'schoolClass:id,name,code,batch_year,academic_year',
+            'academicYear:id,academic_calendar_year,admission_period',
             'creator:id,name,email',
         ]);
 
@@ -86,7 +86,7 @@ class ClassScheduleService
                 'schedule_code' => $classSchedule->schedule_code,
                 'title' => $classSchedule->title,
                 'program_study' => $classSchedule->programStudy->name,
-                'class' => $classSchedule->schoolClass->class_name,
+                'class' => $classSchedule->schoolClass->name,
                 'user_id' => auth('sanctum')->id(),
             ]);
 
@@ -278,7 +278,7 @@ class ClassScheduleService
                             'program_study_id' => $classSchedule->program_study_id,
                             'class_id' => $classSchedule->class_id,
                             'semester' => $classSchedule->semester,
-                            'academic_year' => $classSchedule->academicYear->year ?? '',
+                            'academic_year' => $classSchedule->academicYear->academic_calendar_year ?? '',
                             'status' => 'approved',
                             'conflict_status' => 'none',
                             'session_type' => $detail->is_online ? 'online' : 'regular',
@@ -518,7 +518,8 @@ class ClassScheduleService
 
             switch ($key) {
                 case 'search':
-                    $query->search($value);
+                    $query->where('title', 'like', "%{$value}%")
+                          ->orWhere('schedule_code', 'like', "%{$value}%");
                     break;
                 case 'program_study_id':
                     $query->where('program_study_id', $value);
@@ -534,6 +535,11 @@ class ClassScheduleService
                     break;
                 case 'status':
                     $query->where('status', $value);
+                    break;
+                // Ignore unsupported filters like 'day' and 'room_id' for ClassSchedule
+                case 'day':
+                case 'room_id':
+                    // These filters are not applicable to ClassSchedule queries
                     break;
             }
         }

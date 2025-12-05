@@ -986,7 +986,13 @@ const loadStatistics = async () => {
 
 const loadProgramStudies = async () => {
   try {
-    const response = await fetch('/api/program-studies');
+    const response = await fetch('/api/program-studies', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    });
     const data = await response.json();
     programStudies.value = data.data || data;
   } catch (error) {

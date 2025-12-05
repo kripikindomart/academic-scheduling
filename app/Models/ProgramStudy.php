@@ -56,6 +56,11 @@ class ProgramStudy extends Model
         return $this->hasMany(Student::class);
     }
 
+    public function classes()
+    {
+        return $this->hasMany(SchoolClass::class, 'program_study_id');
+    }
+
     public function lecturers()
     {
         return $this->belongsToMany(User::class, 'program_lecturers')

@@ -7,7 +7,7 @@ use App\Models\ConflictRule;
 use App\Models\Schedule;
 use App\Models\Room;
 use App\Models\Lecturer;
-use App\Models\SchoolClass;
+use App\Models\Kelas;
 use App\Models\Course;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;

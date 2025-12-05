@@ -35,13 +35,9 @@ export const useAuthStore = defineStore('auth', {
         const hasAdminRole = state.user.roles.some(role =>
           ['admin', 'super admin', 'super_admin'].includes(role.name.toLowerCase())
         );
-        console.log('Admin check:', {
-          userRoles: state.user.roles.map(r => r.name),
-          hasAdminRole
-        });
-        return hasAdminRole;
+          return hasAdminRole;
       }
-      console.log('No roles found for user');
+
       return false;
     },
   },
@@ -52,13 +48,13 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
 
       try {
-        console.log('Attempting login with:', credentials);
+
 
         // First get CSRF token
         await axios.get('/sanctum/csrf-cookie');
 
         const response = await axios.post('/api/auth/login', credentials);
-        console.log('API Response received:', response);
+
 
         // Check if we have a response with data
         if (!response || !response.data) {
@@ -66,7 +62,7 @@ export const useAuthStore = defineStore('auth', {
         }
 
         const data = response.data;
-        console.log('Response data:', data);
+
 
         // Extract token and user from response
         if (!data.token) {
@@ -81,11 +77,11 @@ export const useAuthStore = defineStore('auth', {
         // Set default axios header
         axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
 
-        console.log('Login successful, user:', this.user);
-        console.log('Token stored:', this.token);
-        console.log('User role:', this.userRole);
-        console.log('User roles:', this.user?.roles?.map(r => r.name));
-        console.log('Is admin:', this.isAdmin);
+
+
+
+
+
 
         // Force flush Spatie permission cache (if method exists)
         if (this.user && typeof this.user.flushCache === 'function') {
@@ -94,13 +90,8 @@ export const useAuthStore = defineStore('auth', {
 
         return { success: true, user: this.user };
       } catch (error) {
-        console.error('Login error:', error);
-        console.error('Error details:', {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status
-        });
 
+        
         this.error = error.response?.data?.message || error.message || 'Login failed';
         return { success: false, error: this.error };
       } finally {
@@ -112,7 +103,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         await axios.post('/api/auth/logout');
       } catch (error) {
-        console.error('Logout error:', error);
+
       } finally {
         this.token = null;
         this.user = null;
@@ -123,7 +114,7 @@ export const useAuthStore = defineStore('auth', {
 
     async checkAuth() {
       if (!this.token) {
-        console.log('No token found during checkAuth');
+
         return;
       }
 
@@ -131,18 +122,18 @@ export const useAuthStore = defineStore('auth', {
         // Set authorization header before making request
         axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
 
-        console.log('Checking auth with token:', this.token);
+
         const response = await axios.get('/api/auth/user');
         this.user = response.data.data;
-        console.log('Auth check successful, user loaded:', this.user);
+
 
         // Force flush Spatie permission cache to ensure roles are loaded
         if (this.user && typeof this.user.flushCache === 'function') {
             this.user.flushCache();
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
-        console.error('Error response:', error.response?.data);
+
+
 
         // Token is invalid, clear auth
         this.token = null;

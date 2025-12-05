@@ -45,7 +45,7 @@ class StoreScheduleRequest extends FormRequest
             'lecturer_id' => 'required|exists:lecturers,id',
             'room_id' => 'required|exists:rooms,id',
             'program_study_id' => 'required|exists:program_studies,id',
-            'class_id' => 'nullable|exists:school_classes,id',
+            'class_id' => 'nullable|exists:classes,id',
 
             // Academic information
             'semester' => 'required|in:ganjil,genap',

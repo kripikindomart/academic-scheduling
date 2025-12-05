@@ -19,6 +19,10 @@ const router = createRouter({
     routes: [
         {
             path: '/',
+            redirect: '/schedules',
+        },
+        {
+            path: '/home',
             name: 'home',
             component: () => import('./views/Home.vue'),
         },
@@ -35,9 +39,9 @@ const router = createRouter({
             meta: { requiresAuth: true },
         },
         {
-            path: '/schedule',
-            name: 'schedule',
-            component: () => import('./views/Schedule.vue'),
+            path: '/schedules',
+            name: 'schedules',
+            component: () => import('./views/Schedules.vue'),
             meta: { requiresAuth: true },
         },
         {
@@ -92,6 +96,12 @@ const router = createRouter({
             path: '/academic-years',
             name: 'academic-years',
             component: () => import('./views/AcademicYears.vue'),
+            meta: { requiresAuth: true },
+        },
+        {
+            path: '/whatsapp-gateway',
+            name: 'whatsapp-gateway',
+            component: () => import('./views/WhatsAppGateway.vue'),
             meta: { requiresAuth: true },
         },
         {

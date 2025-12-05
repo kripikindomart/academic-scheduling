@@ -130,9 +130,9 @@ class Schedule extends Model
         return $this->belongsTo(ProgramStudy::class);
     }
 
-    public function schoolClass(): BelongsTo
+    public function kelas(): BelongsTo
     {
-        return $this->belongsTo(SchoolClass::class, 'class_id');
+        return $this->belongsTo(Kelas::class, 'class_id');
     }
 
     public function creator(): BelongsTo

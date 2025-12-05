@@ -30,6 +30,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'program.filter' => \App\Http\Middleware\ProgramStudyFilter::class,
+            'api.auth' => \App\Http\Middleware\ApiAuthenticate::class,
+            'api.permission' => \App\Http\Middleware\HandleApiPermissionErrors::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -296,11 +296,11 @@ class Room extends Model
         $endOfWeek = now()->endOfWeek();
 
         return $this->schedules()
-            ->whereDate('start_time', '<=', $endOfWeek)
-            ->whereDate('end_time', '>=', $startOfWeek)
+            ->whereDate('date', '>=', $startOfWeek)
+            ->whereDate('date', '<=', $endOfWeek)
             ->where('status', 'active')
             ->with(['course', 'lecturer'])
-            ->orderBy('start_date')
+            ->orderBy('date')
             ->orderBy('start_time')
             ->get();
     }
@@ -318,8 +318,8 @@ class Room extends Model
 
         $totalPossibleHours = $this->calculateTotalAvailableHours($startDate, $endDate);
         $scheduledHours = $this->schedules()
-            ->whereDate('start_date', '<=', $endDate)
-            ->whereDate('end_date', '>=', $startDate)
+            ->whereDate('date', '>=', $startDate)
+            ->whereDate('date', '<=', $endDate)
             ->where('status', 'active')
             ->selectRaw('SUM(TIMESTAMPDIFF(HOUR, start_time, end_time)) as total_hours')
             ->value('total_hours') ?? 0;
@@ -330,9 +330,9 @@ class Room extends Model
     public function getUpcomingSchedulesAttribute($limit = 5)
     {
         return $this->schedules()
-            ->whereDate('end_time', '>=', now())
+            ->whereDate('date', '>=', now())
             ->where('status', 'active')
-            ->orderBy('start_date')
+            ->orderBy('date')
             ->orderBy('start_time')
             ->limit($limit)
             ->with(['course', 'lecturer'])

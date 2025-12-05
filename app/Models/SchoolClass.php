@@ -12,7 +12,7 @@ class SchoolClass extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'school_classes';
+    protected $table = 'classes';
 
     protected $fillable = [
         'class_name',
@@ -134,7 +134,8 @@ class SchoolClass extends Model
 
     public function getDisplayName(): string
     {
-        return "{$this->class_name} - {$this->programStudy->name ?? 'Unknown'}";
+        $programName = $this->programStudy?->name ?? 'Unknown';
+        return "{$this->class_name} - {$programName}";
     }
 
     public function getFullIdentifier(): string

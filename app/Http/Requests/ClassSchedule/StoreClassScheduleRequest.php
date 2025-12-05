@@ -24,7 +24,7 @@ class StoreClassScheduleRequest extends FormRequest
         return [
             'title' => 'required|string|max:255',
             'program_study_id' => 'required|exists:program_studies,id',
-            'class_id' => 'required|exists:school_classes,id',
+            'class_id' => 'required|exists:classes,id',
             'academic_year_id' => 'nullable|exists:academic_years,id',
             'semester' => 'required|string|max:255',
             'online_percentage' => 'nullable|numeric|min:0|max:100',

@@ -26,23 +26,38 @@ class ClassScheduleController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $filters = [
-            'search' => $request->input('search'),
-            'program_study_id' => $request->input('program_study_id'),
-            'class_id' => $request->input('class_id'),
-            'academic_year_id' => $request->input('academic_year_id'),
-            'semester' => $request->input('semester'),
-            'status' => $request->input('status'),
-        ];
+        try {
+            $user = $request->user();
 
-        $result = $this->classScheduleService->getClassSchedules(
-            $filters,
-            $request->input('per_page', 15),
-            $request->input('sort_by', 'created_at'),
-            $request->input('sort_direction', 'desc')
-        );
+            // Apply program study filter for non-admin users
+            if ($user && !$user->isAdmin() && $user->program_study_id) {
+                $request->merge(['program_study_id' => $user->program_study_id]);
+            }
 
-        return ResponseService::success($result['data'], $result['message'], $result['meta']);
+            $filters = [
+                'search' => $request->input('search'),
+                'program_study_id' => $request->input('program_study_id'),
+                'class_id' => $request->input('class_id'),
+                'academic_year_id' => $request->input('academic_year_id'),
+                'semester' => $request->input('semester'),
+                'status' => $request->input('status'),
+            ];
+
+            $result = $this->classScheduleService->getClassSchedules(
+                $filters,
+                $request->input('per_page', 15),
+                $request->input('sort_by', 'created_at'),
+                $request->input('sort_direction', 'desc')
+            );
+
+            return ResponseService::success($result['data'], $result['message'], $result['meta']);
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to retrieve class schedules: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
     }
 
     /**
@@ -70,7 +85,7 @@ class ClassScheduleController extends Controller
     {
         $classSchedule->load([
             'programStudy:id,name,faculty',
-            'schoolClass:id,class_name,class_code',
+            'schoolClass:id,name,code,batch_year,academic_year',
             'academicYear:id,year,semester',
             'details.course:id,course_code,course_name',
             'details.lecturer:id,name,email',

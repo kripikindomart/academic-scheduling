@@ -15,13 +15,14 @@ use App\Http\Controllers\Api\ConflictDetectionController;
 use App\Http\Controllers\Api\ClassController;
 use App\Http\Controllers\Api\AcademicYearController;
 use App\Http\Controllers\Api\ClassScheduleController;
+use App\Http\Controllers\Api\WhatsAppController;
 
 // Public template download routes (no auth required) - HARUS DI ATAS!
 Route::get('/courses/template-download', [CourseController::class, 'downloadTemplate']);
 
 // Authentication routes
 Route::middleware('sanctum')->prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::post('/register', [AuthController::class, 'register']);
     Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
@@ -351,7 +352,7 @@ Route::middleware(['auth:sanctum'])->prefix('rooms')->group(function () {
 });
 
 // Class Schedule management routes
-Route::middleware(['auth:sanctum'])->prefix('class-schedules')->group(function () {
+Route::prefix('class-schedules')->group(function () {
     Route::get('/', [ClassScheduleController::class, 'index']);
     Route::post('/', [ClassScheduleController::class, 'store']);
     Route::get('/statistics', [ClassScheduleController::class, 'statistics']);
@@ -374,10 +375,10 @@ Route::middleware(['auth:sanctum'])->prefix('class-schedules')->group(function (
 });
 
 // Schedule management routes
-Route::middleware(['auth:sanctum'])->prefix('schedules')->group(function () {
-    Route::get('/', [ScheduleController::class, 'index'])->middleware('permission:schedules.view');
-    Route::post('/', [ScheduleController::class, 'store'])->middleware('permission:schedules.create');
-    Route::get('/statistics', [ScheduleController::class, 'statistics'])->middleware('permission:schedules.view');
+Route::middleware(['api.auth'])->prefix('schedules')->group(function () {
+    Route::get('/', [ScheduleController::class, 'index'])->middleware('api.permission');
+    Route::post('/', [ScheduleController::class, 'store'])->middleware('api.permission');
+    Route::get('/statistics', [ScheduleController::class, 'statistics'])->middleware('api.permission');
     Route::get('/check-conflicts', [ScheduleController::class, 'checkConflicts'])->middleware('permission:schedules.view');
     Route::get('/available-rooms', [ScheduleController::class, 'getAvailableRooms'])->middleware('permission:schedules.view');
     Route::get('/available-lecturers', [ScheduleController::class, 'getAvailableLecturers'])->middleware('permission:schedules.view');
@@ -432,6 +433,31 @@ Route::middleware(['auth:sanctum'])->prefix('conflict-detections')->group(functi
     Route::post('/{conflict}/resolve', [ConflictDetectionController::class, 'resolve'])->middleware('permission:conflicts.resolve');
     Route::post('/{conflict}/ignore', [ConflictDetectionController::class, 'ignore'])->middleware('permission:conflicts.resolve');
     Route::post('/{conflict}/escalate', [ConflictDetectionController::class, 'escalate'])->middleware('permission:conflicts.escalate');
+});
+
+// WhatsApp Gateway routes
+Route::middleware(['auth:sanctum'])->prefix('whatsapp')->group(function () {
+    // Session management
+    Route::get('/sessions', [WhatsAppController::class, 'getSessions'])->middleware('permission:whatsapp.view');
+    Route::post('/sessions/initialize', [WhatsAppController::class, 'initializeSession'])->middleware('permission:whatsapp.manage');
+    Route::post('/sessions/connect-qr', [WhatsAppController::class, 'connectWithQR'])->middleware('permission:whatsapp.manage');
+    Route::get('/sessions/status', [WhatsAppController::class, 'checkSessionStatus'])->middleware('permission:whatsapp.view');
+    Route::post('/sessions/disconnect', [WhatsAppController::class, 'disconnectSession'])->middleware('permission:whatsapp.manage');
+    Route::delete('/sessions/delete', [WhatsAppController::class, 'deleteSession'])->middleware('permission:whatsapp.manage');
+    Route::post('/test-connection', [WhatsAppController::class, 'testConnection'])->middleware('permission:whatsapp.manage');
+
+    // Message sending
+    Route::post('/send-message', [WhatsAppController::class, 'sendMessage'])->middleware('permission:whatsapp.send');
+
+    // Notifications
+    Route::post('/notifications/schedule-reminder', [WhatsAppController::class, 'sendScheduleReminder'])->middleware('permission:whatsapp.notifications');
+    Route::post('/notifications/class-cancelled', [WhatsAppController::class, 'sendClassCancelledNotification'])->middleware('permission:whatsapp.notifications');
+    Route::post('/notifications/class-rescheduled', [WhatsAppController::class, 'sendClassRescheduledNotification'])->middleware('permission:whatsapp.notifications');
+    Route::post('/notifications/custom', [WhatsAppController::class, 'sendCustomNotification'])->middleware('permission:whatsapp.notifications');
+
+    // Analytics
+    Route::get('/notifications/statistics', [WhatsAppController::class, 'getNotificationStatistics'])->middleware('permission:whatsapp.view');
+    Route::get('/notifications/recent', [WhatsAppController::class, 'getRecentNotifications'])->middleware('permission:whatsapp.view');
 });
 
 // Dashboard route

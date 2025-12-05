@@ -40,7 +40,7 @@ class ResolveConflictRequest extends FormRequest
             'resolution_data' => 'nullable|array',
             'resolution_data.new_room_id' => 'nullable|exists:rooms,id',
             'resolution_data.new_lecturer_id' => 'nullable|exists:lecturers,id',
-            'resolution_data.new_class_id' => 'nullable|exists:school_classes,id',
+            'resolution_data.new_class_id' => 'nullable|exists:classes,id',
             'resolution_data.new_start_time' => 'nullable|date_format:H:i',
             'resolution_data.new_end_time' => 'nullable|date_format:H:i|after:resolution_data.new_start_time',
             'resolution_data.new_date' => 'nullable|date|after_or_equal:today',

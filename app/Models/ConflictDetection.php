@@ -198,9 +198,9 @@ class ConflictDetection extends Model
     /**
      * Get the class associated with the conflict.
      */
-    public function schoolClass(): BelongsTo
+    public function kelas(): BelongsTo
     {
-        return $this->belongsTo(SchoolClass::class, 'class_id');
+        return $this->belongsTo(Kelas::class, 'class_id');
     }
 
     /**

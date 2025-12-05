@@ -22,11 +22,12 @@ class ClassService
     {
         $query = Kelas::with(['programStudy', 'creator', 'updater']);
 
+        // TEMPORARY: Disable strict filters to show all data
         // Apply program study filtering based on user permissions
-        $this->applyProgramStudyFilter($query, $filters);
+        // $this->applyProgramStudyFilter($query, $filters);
 
         // Apply academic year filtering (use active academic year as default)
-        $this->applyAcademicYearFilter($query, $filters);
+        // $this->applyAcademicYearFilter($query, $filters);
 
         // Apply filters
         if (!empty($filters['search'])) {
@@ -34,7 +35,6 @@ class ClassService
             $query->where(function (Builder $q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('room_number', 'like', "%{$search}%")
                   ->orWhere('academic_year', 'like', "%{$search}%");
             });
         }
@@ -68,7 +68,7 @@ class ClassService
         }
 
         // Apply sorting
-        $allowedSorts = ['name', 'code', 'batch_year', 'semester', 'academic_year', 'current_students', 'capacity', 'created_at'];
+        $allowedSorts = ['name', 'code', 'semester', 'academic_year', 'current_students', 'capacity', 'created_at'];
         $sortBy = in_array($sortBy, $allowedSorts) ? $sortBy : 'name';
         $query->orderBy($sortBy, $sortDirection);
 
@@ -867,7 +867,6 @@ class ClassService
             $query->where(function (Builder $q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('room_number', 'like', "%{$search}%")
                   ->orWhere('academic_year', 'like', "%{$search}%");
             });
         }

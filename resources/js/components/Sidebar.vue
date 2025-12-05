@@ -221,7 +221,7 @@ const isCollapsed = ref(false);
 
 const mainMenuItems = [
   { path: '/dashboard', name: 'Dashboard', icon: 'home' },
-  { path: '/schedule', name: 'Jadwal', icon: 'calendar', badge: '3' },
+  { path: '/schedules', name: 'Jadwal', icon: 'calendar', badge: '3' },
 ];
 
 const academicMenuItems = [
@@ -236,6 +236,7 @@ const academicMenuItems = [
 
 const systemMenuItems = [
   { path: '/users', name: 'Pengguna', icon: 'users', adminOnly: true },
+  { path: '/whatsapp-gateway', name: 'WhatsApp Gateway', icon: 'message' },
   { path: '/settings', name: 'Pengaturan', icon: 'settings' },
 ];
 

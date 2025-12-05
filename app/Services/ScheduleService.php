@@ -3,11 +3,12 @@
 namespace App\Services;
 
 use App\Models\Schedule;
+use App\Models\ClassScheduleDetail;
 use App\Models\Course;
 use App\Models\Lecturer;
 use App\Models\Room;
 use App\Models\ProgramStudy;
-use App\Models\SchoolClass;
+use App\Models\Kelas;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +33,7 @@ class ScheduleService
             'lecturer:id,name,email',
             'room:id,room_code,name,building,capacity',
             'programStudy:id,name,faculty',
-            'schoolClass:id,class_name,class_code',
+            'kelas:id,name,code',
             'creator:id,name,email',
         ]);
 
@@ -191,19 +192,37 @@ class ScheduleService
             ->pluck('count', 'schedule_type')
             ->toArray();
 
-        // This week schedules
+        // This week schedules (using both schedules and class_schedule_details)
         $weekStart = now()->startOfWeek();
         $weekEnd = now()->endOfWeek();
-        $stats['this_week'] = Schedule::whereDate('start_date', '<=', $weekEnd)
-                                   ->whereDate('end_date', '>=', $weekStart)
+
+        // Count from schedules table
+        $schedulesThisWeek = Schedule::whereDate('date', '>=', $weekStart)
+                                   ->whereDate('date', '<=', $weekEnd)
                                    ->count();
 
-        // This month schedules
+        // Count from class_schedule_details table
+        $detailsThisWeek = \App\Models\ClassScheduleDetail::whereDate('start_date', '<=', $weekEnd)
+                                                         ->whereDate('end_date', '>=', $weekStart)
+                                                         ->count();
+
+        $stats['this_week'] = $schedulesThisWeek + $detailsThisWeek;
+
+        // This month schedules (using both schedules and class_schedule_details)
         $monthStart = now()->startOfMonth();
         $monthEnd = now()->endOfMonth();
-        $stats['this_month'] = Schedule::whereDate('start_date', '<=', $monthEnd)
-                                     ->whereDate('end_date', '>=', $monthStart)
+
+        // Count from schedules table
+        $schedulesThisMonth = Schedule::whereDate('date', '>=', $monthStart)
+                                     ->whereDate('date', '<=', $monthEnd)
                                      ->count();
+
+        // Count from class_schedule_details table
+        $detailsThisMonth = \App\Models\ClassScheduleDetail::whereDate('start_date', '<=', $monthEnd)
+                                                           ->whereDate('end_date', '>=', $monthStart)
+                                                           ->count();
+
+        $stats['this_month'] = $schedulesThisMonth + $detailsThisMonth;
 
         return $stats;
     }
@@ -784,7 +803,7 @@ class ScheduleService
             'lecturer:id,name,email',
             'room:id,room_code,name,building',
             'programStudy:id,name,faculty',
-            'schoolClass:id,class_name,class_code',
+            'kelas:id,name,code',
         ]);
 
         $this->applyFilters($schedules, $filters);

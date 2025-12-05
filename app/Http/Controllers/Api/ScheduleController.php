@@ -10,7 +10,7 @@ use App\Models\Schedule;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use AppServicesResponseService;
+use App\Services\ResponseService;
 
 class ScheduleController extends Controller
 {
@@ -65,7 +65,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success($schedule, 'Schedule created successfully');
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to create schedule: ' . $e->getMessage(),
                 null,
                 500
@@ -103,7 +103,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success($updatedSchedule, 'Schedule updated successfully');
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to update schedule: ' . $e->getMessage(),
                 null,
                 500
@@ -121,7 +121,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success(null, 'Schedule deleted successfully');
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to delete schedule: ' . $e->getMessage(),
                 null,
                 500
@@ -139,7 +139,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success($statistics, 'Schedule statistics retrieved successfully');
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to retrieve schedule statistics: ' . $e->getMessage(),
                 null,
                 500
@@ -159,14 +159,14 @@ class ScheduleController extends Controller
                 'end_time' => 'required|date_format:H:i|after:start_time',
                 'room_id' => 'required|exists:rooms,id',
                 'lecturer_id' => 'required|exists:lecturers,id',
-                'class_id' => 'nullable|exists:school_classes,id',
+                'class_id' => 'nullable|exists:classes,id',
             ]);
 
             $conflicts = $this->scheduleService->checkConflicts($validated);
 
             return ResponseService::success($conflicts, 'Conflict check completed');
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to check conflicts: ' . $e->getMessage(),
                 null,
                 500
@@ -196,7 +196,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success($availableRooms, 'Available rooms retrieved successfully');
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to get available rooms: ' . $e->getMessage(),
                 null,
                 500
@@ -226,7 +226,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success($availableLecturers, 'Available lecturers retrieved successfully');
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to get available lecturers: ' . $e->getMessage(),
                 null,
                 500
@@ -261,7 +261,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success($result['data'], $result['message']);
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to get schedules: ' . $e->getMessage(),
                 null,
                 500
@@ -287,7 +287,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success($result, 'Calendar view data retrieved successfully');
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to get calendar view: ' . $e->getMessage(),
                 null,
                 500
@@ -312,7 +312,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success($approvedSchedule, 'Schedule approved successfully');
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to approve schedule: ' . $e->getMessage(),
                 null,
                 500
@@ -337,7 +337,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success($rejectedSchedule, 'Schedule rejected successfully');
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to reject schedule: ' . $e->getMessage(),
                 null,
                 500
@@ -362,7 +362,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success($cancelledSchedule, 'Schedule cancelled successfully');
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to cancel schedule: ' . $e->getMessage(),
                 null,
                 500
@@ -396,7 +396,7 @@ class ScheduleController extends Controller
                 "Successfully updated {$updatedCount} schedules"
             );
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to bulk update schedules: ' . $e->getMessage(),
                 null,
                 500
@@ -422,7 +422,7 @@ class ScheduleController extends Controller
                 "Successfully deleted {$deletedCount} schedules"
             );
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to bulk delete schedules: ' . $e->getMessage(),
                 null,
                 500
@@ -458,7 +458,7 @@ class ScheduleController extends Controller
                 'Schedules export completed'
             );
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to export schedules: ' . $e->getMessage(),
                 null,
                 500
@@ -483,7 +483,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success($result['data'], $result['message'], $result['meta']);
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to get course schedules: ' . $e->getMessage(),
                 null,
                 500
@@ -508,7 +508,7 @@ class ScheduleController extends Controller
 
             return ResponseService::success($result['data'], $result['message'], $result['meta']);
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to get lecturer schedules: ' . $e->getMessage(),
                 null,
                 500
@@ -533,8 +533,147 @@ class ScheduleController extends Controller
 
             return ResponseService::success($result['data'], $result['message'], $result['meta']);
         } catch (\Exception $e) {
-            return response()->error(
+            return ResponseService::error(
                 'Failed to get room schedules: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get schedule recommendations.
+     */
+    public function getRecommendations(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'course_id' => 'required|exists:courses,id',
+                'class_id' => 'required|exists:classes,id',
+                'semester' => 'required|integer|min:1|max:8',
+                'academic_year' => 'required|string',
+                'preference_time' => 'nullable|array',
+                'preference_day' => 'nullable|array',
+            ]);
+
+            $recommendations = $this->scheduleService->getScheduleRecommendations($validated);
+
+            return ResponseService::success($recommendations, 'Schedule recommendations retrieved successfully');
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to get schedule recommendations: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get schedules by academic year.
+     */
+    public function getByAcademicYear(Request $request, $academicYear): JsonResponse
+    {
+        try {
+            $filters = array_merge($request->all(), ['academic_year' => $academicYear]);
+
+            $result = $this->scheduleService->getSchedules(
+                $filters,
+                $request->input('per_page', 15),
+                $request->input('sort_by', 'date'),
+                $request->input('sort_direction', 'asc')
+            );
+
+            return ResponseService::success($result['data'], $result['message'], $result['meta']);
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to get academic year schedules: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get today's schedules.
+     */
+    public function getTodaySchedules(Request $request): JsonResponse
+    {
+        try {
+            $filters = array_merge($request->all(), [
+                'date_from' => now()->format('Y-m-d'),
+                'date_to' => now()->format('Y-m-d')
+            ]);
+
+            $result = $this->scheduleService->getSchedules(
+                $filters,
+                $request->input('per_page', 50),
+                $request->input('sort_by', 'start_time'),
+                $request->input('sort_direction', 'asc')
+            );
+
+            return ResponseService::success($result['data'], $result['message'], $result['meta']);
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to get today\'s schedules: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Batch create schedules.
+     */
+    public function createBatch(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'schedules' => 'required|array|min:1|max:100',
+                'schedules.*.course_id' => 'required|exists:courses,id',
+                'schedules.*.lecturer_id' => 'required|exists:lecturers,id',
+                'schedules.*.room_id' => 'required|exists:rooms,id',
+                'schedules.*.class_id' => 'nullable|exists:classes,id',
+                'schedules.*.date' => 'required|date|after_or_equal:today',
+                'schedules.*.start_time' => 'required|date_format:H:i',
+                'schedules.*.end_time' => 'required|date_format:H:i|after:schedules.*.start_time',
+                'schedules.*.semester' => 'required|integer|min:1|max:8',
+                'schedules.*.academic_year' => 'required|string',
+            ]);
+
+            $result = $this->scheduleService->batchCreateSchedules($validated['schedules']);
+
+            return ResponseService::success($result, 'Batch schedule creation completed');
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to create batch schedules: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Import schedules.
+     */
+    public function import(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+                'academic_year' => 'required|string',
+                'semester' => 'required|integer|min:1|max:8',
+            ]);
+
+            $result = $this->scheduleService->importSchedules(
+                $validated['file'],
+                $validated['academic_year'],
+                $validated['semester']
+            );
+
+            return ResponseService::success($result, 'Schedules import completed');
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to import schedules: ' . $e->getMessage(),
                 null,
                 500
             );

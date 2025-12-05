@@ -460,8 +460,8 @@ class RoomService
 
         // Calculate utilization rate (handle case where no schedules exist)
         try {
-            $totalScheduledHours = Schedule::whereDate('start_date', '>=', now()->subMonth())
-                ->whereDate('start_date', '<=', now())
+            $totalScheduledHours = Schedule::whereDate('date', '>=', now()->subMonth())
+                ->whereDate('date', '<=', now())
                 ->where('status', 'active')
                 ->count();
 
@@ -557,11 +557,11 @@ class RoomService
         }
 
         $schedules = $room->schedules()
-            ->whereDate('start_date', '<=', $endDate)
-            ->whereDate('end_date', '>=', $startDate)
+            ->whereDate('date', '>=', $startDate)
+            ->whereDate('date', '<=', $endDate)
             ->where('status', 'active')
             ->with(['course', 'lecturer'])
-            ->orderBy('start_date')
+            ->orderBy('date')
             ->orderBy('start_time')
             ->get();
 
@@ -794,8 +794,8 @@ class RoomService
 
         foreach ($rooms as $room) {
             $totalScheduledHours = $room->schedules()
-                ->whereDate('start_date', '<=', $endDate)
-                ->whereDate('end_date', '>=', $startDate)
+                ->whereDate('date', '>=', $startDate)
+                ->whereDate('date', '<=', $endDate)
                 ->where('status', 'active')
                 ->selectRaw('SUM(TIMESTAMPDIFF(HOUR, start_time, end_time)) as total_hours')
                 ->value('total_hours') ?? 0;

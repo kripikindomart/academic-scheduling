@@ -24,7 +24,7 @@ class UpdateClassScheduleRequest extends FormRequest
         return [
             'title' => 'sometimes|string|max:255',
             'program_study_id' => 'sometimes|exists:program_studies,id',
-            'class_id' => 'sometimes|exists:school_classes,id',
+            'class_id' => 'sometimes|exists:classes,id',
             'academic_year_id' => 'sometimes|nullable|exists:academic_years,id',
             'semester' => 'sometimes|string|max:255',
             'online_percentage' => 'sometimes|nullable|numeric|min:0|max:100',
