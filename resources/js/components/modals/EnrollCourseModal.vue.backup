@@ -1,0 +1,1398 @@
+<template>
+  <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <!-- Background overlay -->
+      <div class="fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm transition-opacity" aria-hidden="true" @click="closeModal"></div>
+
+      <!-- Modal panel -->
+      <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
+        <!-- Modal Header with Gradient -->
+        <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 px-8 py-6 relative overflow-hidden">
+          <!-- Decorative Elements -->
+          <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full"></div>
+          <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-white opacity-5 rounded-full"></div>
+
+          <div class="relative flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="p-3 bg-white bg-opacity-20 rounded-xl backdrop-blur-sm">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-white">Enroll Mata Kuliah</h3>
+                <p class="text-blue-100 text-sm mt-1">Tambahkan mata kuliah ke jadwal kelas (Settingan Awal)</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <!-- Minimize Button -->
+              <button
+                @click="toggleMinimize"
+                class="text-white hover:text-blue-200 transition-all duration-200 p-2 hover:bg-white hover:bg-opacity-10 rounded-lg"
+                title="Minimize"
+              >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                </svg>
+              </button>
+              <!-- Close Button -->
+              <button
+                @click="closeModal"
+                class="text-white hover:text-red-300 transition-all duration-200 p-2 hover:bg-white hover:bg-opacity-10 rounded-lg"
+              >
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Minimized State -->
+        <div v-if="isMinimized" class="px-8 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="p-2 bg-blue-100 rounded-lg">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002 2v0a2 2 0 012-2h-2a2 2 0 01-2-2V0z"/>
+                </svg>
+              </div>
+              <span class="text-sm font-medium text-gray-700">
+                Form Enroll Mata Kuliah ({{ selectedCourses.length }} kursus)
+              </span>
+            </div>
+            <button
+              @click="toggleMinimize"
+              class="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div v-else class="px-8 py-6 max-h-[80vh] overflow-y-auto">
+          <!-- Info Section -->
+          <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+            <div class="flex items-start">
+              <svg class="w-5 h-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <div class="text-sm">
+                <p class="font-semibold text-amber-800 mb-1">Informasi Penting:</p>
+                <p class="text-amber-700">Form ini untuk menambahkan mata kuliah ke settingan awal jadwal kelas. Jadwal real akan di-generate otomatis nanti berdasarkan:</p>
+                <ul class="mt-2 space-y-1 text-amber-700">
+                  <li>• Presentase online/offline jadwal kelas</li>
+                  <li>• Ruangan yang sering digunakan (untuk kelas offline)</li>
+                  <li>• Data detail jadwal yang Anda input di sini</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Indicator -->
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-gray-700">Progress Formulir</span>
+              <span class="text-sm text-gray-500">{{ formProgress }}% Lengkap</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div
+                class="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
+                :style="{ width: `${formProgress}%` }"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Common Settings Section -->
+          <div class="mb-8 bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl p-6 border border-gray-200">
+            <div class="flex items-center mb-4">
+              <div class="p-2 bg-gray-600 rounded-lg mr-3">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                </svg>
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold text-gray-900">Pengaturan Umum</h4>
+                <p class="text-sm text-gray-600">Pengaturan yang berlaku untuk semua mata kuliah</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <!-- Common Day -->
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Hari Default</label>
+                <div class="relative">
+                  <select
+                    v-model="commonSettings.day"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent appearance-none bg-white cursor-pointer"
+                  >
+                    <option value="">Pilih Hari</option>
+                    <option value="Senin">Senin</option>
+                    <option value="Selasa">Selasa</option>
+                    <option value="Rabu">Rabu</option>
+                    <option value="Kamis">Kamis</option>
+                    <option value="Jumat">Jumat</option>
+                    <option value="Sabtu">Sabtu</option>
+                    <option value="Minggu">Minggu</option>
+                  </select>
+                  <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Common Time -->
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Waktu Default</label>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="relative">
+                    <label class="text-xs text-gray-500 mb-1 block">Mulai</label>
+                    <input
+                      v-model="commonSettings.start_time"
+                      type="time"
+                      class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+                    >
+                  </div>
+                  <div class="relative">
+                    <label class="text-xs text-gray-500 mb-1 block">Selesai</label>
+                    <input
+                      v-model="commonSettings.end_time"
+                      type="time"
+                      class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Common Rooms -->
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Ruangan Default</label>
+                <div class="space-y-2">
+                  <!-- Search with Reset -->
+                  <div class="relative">
+                    <svg class="absolute left-3 top-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input
+                      v-model="roomSearch"
+                      type="text"
+                      placeholder="Cari ruangan..."
+                      class="w-full pl-10 pr-10 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm"
+                    >
+                    <button
+                      v-if="roomSearch"
+                      @click="roomSearch = ''"
+                      class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Selected Rooms -->
+                  <div v-if="commonSettings.room_ids.length > 0" class="flex flex-wrap gap-2">
+                    <span
+                      v-for="roomId in commonSettings.room_ids"
+                      :key="roomId"
+                      class="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gradient-to-r from-green-500 to-emerald-500 text-white font-medium"
+                    >
+                      {{ getRoomName(roomId) }}
+                      <button
+                        @click="removeCommonRoom(roomId)"
+                        class="ml-1 hover:bg-white hover:bg-opacity-20 rounded-full p-0.5 transition-colors"
+                      >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                      </button>
+                    </span>
+                  </div>
+
+                  <!-- Room List -->
+                  <div class="max-h-40 overflow-y-auto bg-white rounded-xl border-2 border-gray-100">
+                    <div
+                      v-for="room in filteredRooms"
+                      :key="room.id"
+                      @click="toggleCommonRoom(room.id)"
+                      class="flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                    >
+                      <div class="flex items-center flex-1">
+                        <input
+                          type="checkbox"
+                          :checked="commonSettings.room_ids.includes(room.id)"
+                          class="mr-3 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                          @click.stop
+                        >
+                        <div class="flex-1">
+                          <div class="font-medium text-gray-900 text-sm">{{ room.name }} ({{ room.room_code }})</div>
+                          <div class="text-xs text-gray-600">{{ room.building }} - Lantai {{ room.floor }} • Kapasitas {{ room.capacity }}</div>
+                        </div>
+                      </div>
+                      <div class="text-sm text-gray-400">
+                        {{ room.room_type }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Common Dates -->
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Periode Default</label>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="relative">
+                    <label class="text-xs text-gray-500 mb-1 block">Mulai</label>
+                    <input
+                      v-model="commonSettings.start_date"
+                      type="date"
+                      class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+                    >
+                  </div>
+                  <div class="relative">
+                    <label class="text-xs text-gray-500 mb-1 block">Selesai</label>
+                    <input
+                      v-model="commonSettings.end_date"
+                      type="date"
+                      class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Common Lecturers -->
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Dosen Default</label>
+                <div class="space-y-2">
+                  <!-- Search with Reset -->
+                  <div class="relative">
+                    <svg class="absolute left-4 top-3.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input
+                      v-model="lecturerSearch"
+                      type="text"
+                      placeholder="Cari nama atau NIP dosen..."
+                      class="w-full pl-12 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all"
+                    >
+                    <button
+                      v-if="lecturerSearch"
+                      @click="lecturerSearch = ''"
+                      class="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Selected Lecturers -->
+                  <div v-if="commonSettings.lecturer_ids.length > 0" class="flex flex-wrap gap-2">
+                    <span
+                      v-for="lecturerId in commonSettings.lecturer_ids"
+                      :key="lecturerId"
+                      class="inline-flex items-center px-4 py-2 rounded-full text-sm bg-gradient-to-r from-gray-500 to-slate-500 text-white font-medium shadow-md"
+                    >
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                      </svg>
+                      {{ getLecturerName(lecturerId) }}
+                      <button
+                        @click="removeCommonLecturer(lecturerId)"
+                        class="ml-2 hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-colors"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                      </button>
+                    </span>
+                  </div>
+
+                  <!-- Lecturer List -->
+                  <div class="max-h-40 overflow-y-auto bg-white rounded-xl border-2 border-gray-100">
+                    <div
+                      v-for="lecturer in filteredLecturers"
+                      :key="lecturer.id"
+                      @click="toggleCommonLecturer(lecturer.id)"
+                      class="flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                    >
+                      <div class="flex items-center flex-1">
+                        <input
+                          type="checkbox"
+                          :checked="commonSettings.lecturer_ids.includes(lecturer.id)"
+                          class="mr-3 h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
+                          @click.stop
+                        >
+                        <div class="flex-1">
+                          <div class="font-medium text-gray-900 text-sm">{{ lecturer.name }}</div>
+                          <div class="text-xs text-gray-600">{{ lecturer.employee_number || lecturer.code || '-' }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Course Selection Section -->
+          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center">
+                <div class="p-2 bg-blue-500 rounded-lg mr-3">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 class="text-lg font-semibold text-gray-900">Pilih Mata Kuliah</h4>
+                  <p class="text-sm text-gray-600">Pilih satu atau lebih mata kuliah ({{ selectedCourses.length }} dipilih)</p>
+                </div>
+              </div>
+              <button
+                @click="selectAllCourses"
+                class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors"
+              >
+                Pilih Semua
+              </button>
+            </div>
+
+            <!-- Course List -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div
+                v-for="course in availableCourses"
+                :key="course.id"
+                @click="!isCourseEnrolled(course.id) && toggleCourseSelection(course)"
+                class="relative bg-white rounded-xl p-4 border-2 transition-all"
+                :class="[
+                  isCourseSelected(course.id) ? 'border-blue-500 bg-blue-50 shadow-md cursor-pointer' :
+                  isCourseEnrolled(course.id) ? 'border-green-500 bg-green-50 opacity-75 cursor-not-allowed' :
+                  'border-gray-200 hover:border-gray-300 hover:shadow-sm cursor-pointer'
+                ]"
+              >
+                <!-- Selection Indicator -->
+                <div class="absolute top-3 right-3">
+                  <div
+                    v-if="isCourseSelected(course.id)"
+                    class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center"
+                  >
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </div>
+                  <div
+                    v-else-if="isCourseEnrolled(course.id)"
+                    class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
+                    title="Sudah Ditambahkan ke Jadwal"
+                  >
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <div v-else class="w-6 h-6 border-2 border-gray-300 rounded-full"></div>
+                </div>
+
+                <!-- Course Info -->
+                <div class="pr-8">
+                  <h5 class="font-semibold text-gray-900 mb-1">{{ course.course_name }}</h5>
+                  <p class="text-sm text-gray-600 mb-2">{{ course.course_code }}</p>
+                  <div class="flex items-center space-x-2">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      {{ course.credits || 0 }} SKS
+                    </span>
+                    <span v-if="course.course_type" class="text-xs text-gray-500">
+                      {{ course.course_type === 'mandatory' ? 'Wajib' : 'Pilihan' }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Status Badge -->
+                <div v-if="isCourseEnrolled(course.id)" class="absolute top-3 left-3">
+                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Sudah Ditambahkan
+                  </span>
+                </div>
+
+                <!-- Disabled Overlay for Enrolled Courses -->
+                <div v-if="isCourseEnrolled(course.id)" class="absolute inset-0 bg-green-50 bg-opacity-50 rounded-xl flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="w-12 h-12 text-green-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-sm font-medium text-green-700">Sudah ada di jadwal</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected Courses Summary -->
+          <div v-if="selectedCourses.length > 0" class="mt-6 bg-green-50 rounded-2xl p-6 border border-green-100">
+            <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2v0a2 2 0 012-2h-2a2 2 0 01-2-2V0z"/>
+              </svg>
+              Mata Kuliah Dipilih ({{ selectedCourses.length }})
+            </h4>
+            <div class="space-y-2">
+              <div
+                v-for="course in selectedCourses"
+                :key="course.id"
+                class="flex items-center justify-between bg-white p-3 rounded-lg"
+              >
+                <div class="flex-1">
+                  <span class="font-medium">{{ course.course_name }}</span>
+                  <span class="text-sm text-gray-500 ml-2">({{ course.course_code }})</span>
+                </div>
+                <button
+                  @click="removeCourseSelection(course)"
+                  class="text-red-500 hover:text-red-700 ml-2"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Already Enrolled Courses -->
+          <div v-if="enrolledCourses.length > 0" class="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-lg font-semibold text-gray-900 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Mata Kuliah Sudah Ditambahkan ({{ enrolledCourses.length }})
+              </h4>
+              <button
+                @click="checkConflicts"
+                class="px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Cek Konflik
+              </button>
+            </div>
+
+            <!-- Conflict Alert -->
+            <div v-if="conflicts.length > 0" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+              <div class="flex items-start">
+                <svg class="w-5 h-5 text-red-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-sm">
+                  <p class="font-semibold text-red-800">Terdapat {{ conflicts.length }} Konflik Jadwal:</p>
+                  <ul class="mt-1 space-y-1 text-red-700">
+                    <li v-for="(conflict, index) in conflicts" :key="index">
+                      • {{ conflict.course1 }} & {{ conflict.course2 }} bentrok pada {{ conflict.day }}, {{ conflict.time }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div
+                v-for="(course, index) in enrolledCourses"
+                :key="index"
+                class="relative bg-white rounded-xl p-4 shadow-sm border-2 hover:shadow-md transition-all"
+                :class="[
+                  hasConflict(course) ? 'border-red-500 bg-red-50' : 'border-gray-200'
+                ]"
+              >
+                <!-- Conflict Badge -->
+                <div v-if="hasConflict(course)" class="absolute top-3 left-3 z-10">
+                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Konflik
+                  </span>
+                </div>
+
+                <div class="flex items-start justify-between">
+                  <div class="flex-1 pr-8">
+                    <h5 class="font-semibold text-gray-900 text-base mb-2">
+                      {{ course.course?.course_name || 'Unknown Course' }}
+                    </h5>
+                    <div class="space-y-1 text-sm text-gray-600">
+                      <p class="flex items-center">
+                        <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                        </svg>
+                        {{ course.course?.course_code }} • {{ course.course?.credits || 0 }} SKS
+                      </p>
+                      <p class="flex items-center">
+                        <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        {{ course.day_of_week }}, {{ course.start_time }} - {{ course.end_time }}
+                      </p>
+                      <p v-if="course.room?.name" class="flex items-center">
+                        <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        {{ course.room.name }} ({{ course.room.room_code }})
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex items-center space-x-1 ml-2">
+                    <button
+                      @click="editEnrolledCourse(course, index)"
+                      class="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all"
+                      title="Edit"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                      </svg>
+                    </button>
+                    <button
+                      @click="duplicateEnrolledCourse(course)"
+                      class="p-2 text-purple-500 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-all"
+                      title="Duplicate"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                      </svg>
+                    </button>
+                    <button
+                      @click="removeEnrolledCourse(index)"
+                      class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all"
+                      title="Hapus"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="mt-8 flex justify-end space-x-4">
+            <button
+              @click="closeModal"
+              class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 font-medium transition-all"
+            >
+              Batal
+            </button>
+            <button
+              @click="handleSubmit"
+              :disabled="loading || selectedCourses.length === 0"
+              class="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              <span v-if="loading" class="flex items-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Menambahkan {{ selectedCourses.length }} Mata Kuliah...
+              </span>
+              <span v-else class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                Tambahkan {{ selectedCourses.length }} Mata Kuliah ke Jadwal
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div v-if="editModal.show" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 backdrop-blur-sm transition-opacity" aria-hidden="true" @click="editModal.show = false"></div>
+
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+          <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-6 py-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-bold text-white">Edit Mata Kuliah</h3>
+              <button
+                @click="editModal.show = false"
+                class="text-white hover:text-red-300 transition-all duration-200 p-2 hover:bg-white hover:bg-opacity-10 rounded-lg"
+              >
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="px-6 py-4">
+            <form @submit.prevent="updateEnrolledCourse" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Mata Kuliah</label>
+                <input
+                  :value="editModal.course.course?.course_name"
+                  type="text"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  disabled
+                >
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Hari</label>
+                <select
+                  v-model="editModal.course.day_of_week"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="Senin">Senin</option>
+                  <option value="Selasa">Selasa</option>
+                  <option value="Rabu">Rabu</option>
+                  <option value="Kamis">Kamis</option>
+                  <option value="Jumat">Jumat</option>
+                  <option value="Sabtu">Sabtu</option>
+                  <option value="Minggu">Minggu</option>
+                </select>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Waktu Mulai</label>
+                  <input
+                    v-model="editModal.course.start_time"
+                    type="time"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  >
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Waktu Selesai</label>
+                  <input
+                    v-model="editModal.course.end_time"
+                    type="time"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  >
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah Pertemuan</label>
+                  <input
+                    v-model="editModal.course.total_meetings"
+                    type="number"
+                    min="1"
+                    max="30"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder="Contoh: 16"
+                  >
+                  <p class="text-xs text-gray-500 mt-1">Jumlah total pertemuan dalam semester</p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Sesi per Pertemuan</label>
+                  <input
+                    v-model="editModal.course.sessions_per_meeting"
+                    type="number"
+                    min="1"
+                    max="5"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    placeholder="Contoh: 2"
+                  >
+                  <p class="text-xs text-gray-500 mt-1">Jumlah sesi dalam satu pertemuan</p>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Catatan</label>
+                <textarea
+                  v-model="editModal.course.notes"
+                  rows="3"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none"
+                  placeholder="Tambahkan catatan..."
+                ></textarea>
+              </div>
+
+              <div class="flex justify-end space-x-3">
+                <button
+                  @click="editModal.show = false"
+                  type="button"
+                  class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  :disabled="loading"
+                  class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {{ loading ? 'Menyimpan...' : 'Simpan Perubahan' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useToastStore } from '@/stores/toast'
+import courseService from '@/services/courseService'
+import lecturerService from '@/services/lecturerService'
+import roomService from '@/services/roomService'
+import scheduleService from '@/services/scheduleService'
+
+const props = defineProps({
+  show: {
+    type: Boolean,
+    default: false
+  },
+  classSchedule: {
+    type: Object,
+    default: null
+  }
+})
+
+const emit = defineEmits(['close', 'enrolled', 'refresh'])
+
+const toastStore = useToastStore()
+
+// State
+const loading = ref(false)
+const isMinimized = ref(false)
+const availableCourses = ref([])
+const lecturers = ref([])
+const availableRooms = ref([])
+const enrolledCourses = ref([])
+const lecturerSearch = ref('')
+const selectedCourses = ref([])
+
+// Common settings for all courses
+const commonSettings = reactive({
+  day: '',
+  start_date: '',
+  end_date: '',
+  start_time: '',
+  end_time: '',
+  lecturer_ids: [],
+  room_ids: []
+})
+
+// Conflict detection
+const conflicts = ref([])
+
+// Edit modal state
+const editModal = ref({
+  show: false,
+  course: null,
+  index: -1
+})
+
+// Computed
+const filteredLecturers = computed(() => {
+  if (!lecturerSearch.value || !lecturerSearch.value.trim()) return lecturers.value || []
+  const searchTerm = lecturerSearch.value.toLowerCase().trim()
+  return (lecturers.value || []).filter(lecturer => {
+    if (!lecturer) return false
+    const name = lecturer.name || ''
+    const code = lecturer.code || ''
+    const employeeNumber = lecturer.employee_number || ''
+    return name.toLowerCase().includes(searchTerm) ||
+           code.toLowerCase().includes(searchTerm) ||
+           employeeNumber.toLowerCase().includes(searchTerm)
+  })
+})
+
+const formProgress = computed(() => {
+  const fields = [
+    selectedCourses.value.length > 0,
+    commonSettings.day,
+    commonSettings.start_date,
+    commonSettings.end_date,
+    commonSettings.start_time,
+    commonSettings.end_time,
+    commonSettings.lecturer_ids.length > 0
+  ]
+  const completed = fields.filter(field => field).length
+  return Math.round((completed / fields.length) * 100)
+})
+
+const roomSearch = ref('')
+
+const filteredRooms = computed(() => {
+  if (!roomSearch.value || !roomSearch.value.trim()) return availableRooms.value || []
+  const searchTerm = roomSearch.value.toLowerCase().trim()
+  return (availableRooms.value || []).filter(room => {
+    if (!room) return false
+    const name = room.name || ''
+    const code = room.room_code || ''
+    const building = room.building || ''
+    return name.toLowerCase().includes(searchTerm) ||
+           code.toLowerCase().includes(searchTerm) ||
+           building.toLowerCase().includes(searchTerm)
+  })
+})
+
+const getRoomName = (roomId) => {
+  const room = (availableRooms.value || []).find(r => r && r.id === roomId)
+  return room ? (room.name || room.room_code || 'Unknown Room') : 'Unknown'
+}
+
+// Methods
+const fetchEnrolledCourses = async () => {
+  if (!props.classSchedule?.id) return
+
+  try {
+    const response = await fetch(`/api/class-schedules/${props.classSchedule.id}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Accept': 'application/json'
+      }
+    })
+
+    if (!response.ok) throw new Error('Failed to fetch enrolled courses')
+
+    const data = await response.json()
+    enrolledCourses.value = data.data?.details || []
+  } catch (error) {
+    console.error('Error fetching enrolled courses:', error)
+  }
+}
+
+const isCourseEnrolled = (courseId) => {
+  return enrolledCourses.value.some(detail => detail.course_id === courseId)
+}
+
+const isCourseSelected = (courseId) => {
+  return selectedCourses.value.some(course => course.id === courseId)
+}
+
+const toggleCourseSelection = (course) => {
+  if (isCourseEnrolled(course.id)) return // Don't allow selection if already enrolled
+
+  const index = selectedCourses.value.findIndex(c => c.id === course.id)
+  if (index > -1) {
+    selectedCourses.value.splice(index, 1)
+  } else {
+    selectedCourses.value.push(course)
+  }
+}
+
+const removeCourseSelection = (course) => {
+  const index = selectedCourses.value.findIndex(c => c.id === course.id)
+  if (index > -1) {
+    selectedCourses.value.splice(index, 1)
+  }
+}
+
+const selectAllCourses = () => {
+  const unenrolledCourses = availableCourses.value.filter(course => !isCourseEnrolled(course.id))
+  selectedCourses.value = [...new Set([...selectedCourses.value, ...unenrolledCourses])]
+}
+
+const getLecturerName = (lecturerId) => {
+  const lecturer = (lecturers.value || []).find(l => l && l.id === lecturerId)
+  return lecturer ? (lecturer.name || 'Tanpa Nama') : 'Unknown'
+}
+
+const toggleCommonLecturer = (lecturerId) => {
+  const index = commonSettings.lecturer_ids.indexOf(lecturerId)
+  if (index > -1) {
+    commonSettings.lecturer_ids.splice(index, 1)
+  } else {
+    commonSettings.lecturer_ids.push(lecturerId)
+  }
+}
+
+const removeCommonLecturer = (lecturerId) => {
+  const index = commonSettings.lecturer_ids.indexOf(lecturerId)
+  if (index > -1) {
+    commonSettings.lecturer_ids.splice(index, 1)
+  }
+}
+
+const fetchAvailableCourses = async () => {
+  try {
+    // Initialize with empty array
+    availableCourses.value = []
+
+    // Get program study ID from class schedule
+    const programStudyId = props.classSchedule?.program_study?.id || props.classSchedule?.program_study_id
+
+    console.log('Class Schedule Data:', props.classSchedule)
+    console.log('Program Study ID:', programStudyId)
+
+    let response
+    if (programStudyId) {
+      // Filter courses by program study
+      console.log(`Attempting to fetch courses for program study ${programStudyId}`)
+      response = await courseService.getByProgramStudy(programStudyId)
+      console.log(`Response from getByProgramStudy:`, response)
+    } else {
+      // Fallback to all available courses if no program study is specified
+      console.log('No program study ID, fetching all available courses')
+      response = await courseService.getAvailable()
+      console.log('Response from getAvailable:', response)
+    }
+
+    if (response && (response.data || response)) {
+      availableCourses.value = Array.isArray(response.data) ? response.data : Array.isArray(response) ? response : response.data.data || []
+      console.log('Final loaded courses:', availableCourses.value)
+    } else {
+      console.warn('No response data received:', response)
+    }
+  } catch (error) {
+    console.error('Error fetching courses:', error)
+    console.error('Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    })
+    toastStore.error('Error', 'Gagal memuat data matakuliah')
+    availableCourses.value = []
+  }
+}
+
+const fetchLecturers = async () => {
+  try {
+    // Initialize with empty array
+    lecturers.value = []
+
+    const response = await lecturerService.getAll({ per_page: 1000 }) // Get all lecturers
+    if (response && response.data) {
+      lecturers.value = Array.isArray(response.data) ? response.data : response.data.data || []
+      console.log('Loaded lecturers from API:', lecturers.value)
+    }
+  } catch (error) {
+    console.error('Error fetching lecturers from API:', error)
+    lecturers.value = [] // Start with empty array
+    toastStore.error('Error', 'Gagal memuat data dosen')
+  }
+}
+
+const fetchRooms = async () => {
+  try {
+    // Initialize with empty array
+    availableRooms.value = []
+
+    const response = await roomService.getAll({ per_page: 1000 }) // Get all rooms
+    if (response && response.data) {
+      availableRooms.value = Array.isArray(response.data) ? response.data : response.data.data || []
+      console.log('Loaded rooms from API:', availableRooms.value)
+    }
+  } catch (error) {
+    console.error('Error fetching rooms from API:', error)
+    availableRooms.value = [] // Start with empty array
+    toastStore.error('Error', 'Gagal memuat data ruangan')
+  }
+}
+
+const removeEnrolledCourse = async (index) => {
+  const courseDetail = enrolledCourses.value[index]
+  if (!courseDetail) return
+
+  try {
+    const response = await fetch(`/api/class-schedules/${props.classSchedule.id}/remove-course/${courseDetail.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Accept': 'application/json'
+      }
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to remove course')
+    }
+
+    enrolledCourses.value.splice(index, 1)
+    toastStore.addToast({
+      type: 'success',
+      title: 'Berhasil',
+      message: 'Mata kuliah berhasil dihapus'
+    })
+
+    emit('refresh') // Refresh data without closing modal
+    // Don't close modal after delete
+  } catch (error) {
+    console.error('Error removing course:', error)
+    toastStore.addToast({
+      type: 'error',
+      title: 'Error',
+      message: error.message || 'Gagal menghapus mata kuliah'
+    })
+  }
+}
+
+const toggleCommonRoom = (roomId) => {
+  const index = commonSettings.room_ids.indexOf(roomId)
+  if (index > -1) {
+    commonSettings.room_ids.splice(index, 1)
+  } else {
+    commonSettings.room_ids.push(roomId)
+  }
+}
+
+const removeCommonRoom = (roomId) => {
+  const index = commonSettings.room_ids.indexOf(roomId)
+  if (index > -1) {
+    commonSettings.room_ids.splice(index, 1)
+  }
+}
+
+const checkConflicts = () => {
+  conflicts.value = []
+  const courses = enrolledCourses.value
+
+  for (let i = 0; i < courses.length; i++) {
+    for (let j = i + 1; j < courses.length; j++) {
+      const course1 = courses[i]
+      const course2 = courses[j]
+
+      // Check same day and overlapping time
+      if (course1.day_of_week === course2.day_of_week) {
+        const start1 = parseTime(course1.start_time)
+        const end1 = parseTime(course1.end_time)
+        const start2 = parseTime(course2.start_time)
+        const end2 = parseTime(course2.end_time)
+
+        if ((start1 >= start2 && start1 < end2) || (end1 > start2 && end1 <= end2) || (start1 <= start2 && end1 >= end2)) {
+          conflicts.value.push({
+            course1: course1.course?.course_name || course1.course_code,
+            course2: course2.course?.course_name || course2.course_code,
+            day: course1.day_of_week,
+            time: `${course1.start_time}-${course1.end_time}`
+          })
+        }
+      }
+
+      // Check same room
+      if (course1.room?.id && course2.room?.id && course1.room.id === course2.room.id) {
+        if (course1.day_of_week === course2.day_of_week) {
+          const start1 = parseTime(course1.start_time)
+          const end1 = parseTime(course1.end_time)
+          const start2 = parseTime(course2.start_time)
+          const end2 = parseTime(course2.end_time)
+
+          if ((start1 >= start2 && start1 < end2) || (end1 > start2 && end1 <= end2) || (start1 <= start2 && end1 >= end2)) {
+            // Already added to conflicts from time overlap
+          }
+        }
+      }
+    }
+  }
+}
+
+const hasConflict = (course) => {
+  return conflicts.value.some(conflict =>
+    conflict.course1 === (course.course?.course_name || course.course_code) ||
+    conflict.course2 === (course.course?.course_name || course.course_code)
+  )
+}
+
+const parseTime = (timeStr) => {
+  const [hours, minutes] = timeStr.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+const editEnrolledCourse = (course, index) => {
+  editModal.value = {
+    show: true,
+    course: { ...course },
+    index: index
+  }
+}
+
+const duplicateEnrolledCourse = async (course) => {
+  const duplicatedData = {
+    course_id: course.course_id,
+    lecturer_ids: course.lecturer_ids || [],
+    day: course.day_of_week,
+    start_date: course.start_date,
+    end_date: course.end_date,
+    start_time: course.start_time,
+    end_time: course.end_time,
+    room_ids: course.room_id ? [course.room_id] : [],
+    total_meetings: course.total_meetings || 16,
+    sessions_per_meeting: course.sessions_per_meeting || 1,
+    notes: `${course.notes || ''} (Copy)`
+  }
+
+  try {
+    const response = await fetch(`/api/class-schedules/${props.classSchedule.id}/add-course`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(duplicatedData)
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to duplicate course')
+    }
+
+    toastStore.addToast({
+      type: 'success',
+      title: 'Berhasil',
+      message: 'Mata kuliah berhasil diduplikat'
+    })
+
+    await fetchEnrolledCourses()
+    emit('refresh') // Refresh data without closing modal
+  } catch (error) {
+    console.error('Error duplicating course:', error)
+    toastStore.addToast({
+      type: 'error',
+      title: 'Error',
+      message: error.message || 'Gagal menduplikat mata kuliah'
+    })
+  }
+}
+
+const updateEnrolledCourse = async () => {
+  if (!editModal.value.course || editModal.value.index === -1) return
+
+  try {
+    const response = await fetch(`/api/class-schedules/${props.classSchedule.id}/update-course/${editModal.value.course.id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(editModal.value.course)
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to update course')
+    }
+
+    enrolledCourses.value[editModal.value.index] = editModal.value.course
+
+    toastStore.addToast({
+      type: 'success',
+      title: 'Berhasil',
+      message: 'Mata kuliah berhasil diupdate'
+    })
+
+    editModal.value = { show: false, course: null, index: -1 }
+    await fetchEnrolledCourses()
+    emit('refresh') // Refresh data without closing modal
+  } catch (error) {
+    console.error('Error updating course:', error)
+    toastStore.addToast({
+      type: 'error',
+      title: 'Error',
+      message: error.message || 'Gagal update mata kuliah'
+    })
+  }
+}
+
+const handleSubmit = async () => {
+  // Validation
+  const errors = []
+
+  if (selectedCourses.value.length === 0) {
+    errors.push('Setidaknya satu mata kuliah harus dipilih')
+  }
+  if (commonSettings.lecturer_ids.length === 0) {
+    errors.push('Setidaknya satu dosen harus dipilih')
+  }
+  if (!commonSettings.day) {
+    errors.push('Hari wajib dipilih')
+  }
+  if (!commonSettings.start_date) {
+    errors.push('Tanggal mulai wajib diisi')
+  }
+  if (!commonSettings.end_date) {
+    errors.push('Tanggal selesai wajib diisi')
+  }
+  if (!commonSettings.start_time) {
+    errors.push('Jam mulai wajib diisi')
+  }
+  if (!commonSettings.end_time) {
+    errors.push('Jam selesai wajib diisi')
+  }
+
+  if (commonSettings.start_date && commonSettings.end_date && commonSettings.start_date > commonSettings.end_date) {
+    errors.push('Tanggal selesai harus setelah tanggal mulai')
+  }
+
+  if (commonSettings.start_time && commonSettings.end_time && commonSettings.start_time >= commonSettings.end_time) {
+    errors.push('Jam selesai harus setelah jam mulai')
+  }
+
+  if (errors.length > 0) {
+    errors.forEach(error => {
+      toastStore.addToast({
+        type: 'error',
+        title: 'Error',
+        message: error
+      })
+    })
+    return
+  }
+
+  loading.value = true
+
+  try {
+    // Enroll all selected courses with common settings
+    const promises = selectedCourses.value.map(course => {
+      const enrollData = {
+        course_id: course.id,
+        lecturer_ids: commonSettings.lecturer_ids,
+        day: commonSettings.day,
+        start_date: commonSettings.start_date,
+        end_date: commonSettings.end_date,
+        start_time: commonSettings.start_time,
+        end_time: commonSettings.end_time,
+        room_ids: commonSettings.room_ids,
+        total_meetings: 16, // Default will be calculated based on academic calendar
+        sessions_per_meeting: 1, // Default
+        notes: 'Settingan awal - akan di-generate ulang'
+      }
+
+      return fetch(`/api/class-schedules/${props.classSchedule.id}/add-course`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(enrollData)
+      })
+    })
+
+    const results = await Promise.allSettled(promises)
+    const successful = results.filter(r => r.status === 'fulfilled').length
+    const failed = results.length - successful
+
+    if (successful > 0) {
+      toastStore.addToast({
+        type: 'success',
+        title: 'Berhasil',
+        message: `${successful} mata kuliah berhasil ditambahkan ke jadwal kelas`
+      })
+    }
+
+    if (failed > 0) {
+      toastStore.addToast({
+        type: 'warning',
+        title: 'Peringatan',
+        message: `${failed} mata kuliah gagal ditambahkan`
+      })
+    }
+
+    // Refresh enrolled courses and keep modal open
+    await fetchEnrolledCourses()
+
+    // Auto-check for conflicts after enrollment
+    checkConflicts()
+
+    emit('enrolled')
+  } catch (error) {
+    console.error('Error enrolling courses:', error)
+    toastStore.addToast({
+      type: 'error',
+      title: 'Error',
+      message: error.message || 'Gagal menambahkan mata kuliah'
+    })
+  } finally {
+    loading.value = false
+  }
+}
+
+const toggleMinimize = () => {
+  isMinimized.value = !isMinimized.value
+}
+
+const closeModal = () => {
+  selectedCourses.value = []
+  isMinimized.value = false
+  emit('close')
+}
+
+// Watchers
+watch(() => props.show, (newShow) => {
+  if (newShow) {
+    fetchAvailableCourses()
+    fetchLecturers()
+    fetchRooms()
+    fetchEnrolledCourses()
+
+    // Set default dates
+    const today = new Date()
+    const endSemester = new Date(today.getTime() + 16 * 7 * 24 * 60 * 60 * 1000) // 16 weeks
+    commonSettings.start_date = today.toISOString().split('T')[0]
+    commonSettings.end_date = endSemester.toISOString().split('T')[0]
+
+    // Default time
+    commonSettings.start_time = '00:00'
+    commonSettings.end_time = '00:00'
+  }
+})
+
+// Lifecycle
+onMounted(() => {
+  if (props.show) {
+    fetchAvailableCourses()
+    fetchLecturers()
+    fetchRooms()
+    fetchEnrolledCourses()
+  }
+})
+</script>
+
+<style scoped>
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Custom scrollbar for modal content */
+.max-h-\[80vh\]::-webkit-scrollbar {
+  width: 6px;
+}
+
+.max-h-\[80vh\]::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.max-h-\[80vh\]::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.max-h-\[80vh\]::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+</style>

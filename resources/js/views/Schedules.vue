@@ -55,13 +55,13 @@
                   </div>
                 </div>
                 <div class="ml-5 w-0 flex-1">
-                  <dt class="text-sm font-medium text-blue-100">Total Dosen</dt>
+                  <dt class="text-sm font-medium text-blue-100">Total Jadwal</dt>
                   <dd class="text-3xl font-bold text-white">{{ scheduleStats.total_schedules || 0 }}</dd>
                   <div class="flex items-center mt-1">
                     <svg class="w-4 h-4 text-blue-200 mr-1" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                     </svg>
-                    <span class="text-xs text-blue-100">Semua dosen</span>
+                    <span class="text-xs text-blue-100">Semua Jadwal</span>
                   </div>
                 </div>
               </div>
@@ -85,13 +85,13 @@
                   </div>
                 </div>
                 <div class="ml-5 w-0 flex-1">
-                  <dt class="text-sm font-medium text-green-100">Dosen Aktif</dt>
+                  <dt class="text-sm font-medium text-green-100">Jadwal Aktif</dt>
                   <dd class="text-3xl font-bold text-white">{{ scheduleStats.by_status?.Aktif || 0 }}</dd>
                   <div class="flex items-center mt-1">
                     <svg class="w-4 h-4 text-green-200 mr-1" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                     </svg>
-                    <span class="text-xs text-green-100">Sedang mengajar</span>
+                    <span class="text-xs text-green-100">Sedang berjalan</span>
                   </div>
                 </div>
               </div>
@@ -115,13 +115,13 @@
                   </div>
                 </div>
                 <div class="ml-5 w-0 flex-1">
-                  <dt class="text-sm font-medium text-amber-100">Sedang Cuti</dt>
-                  <dd class="text-3xl font-bold text-white">{{ scheduleStats.by_status?.Cuti || 0 }}</dd>
+                  <dt class="text-sm font-medium text-amber-100">Jadwal Draft</dt>
+                  <dd class="text-3xl font-bold text-white">{{ scheduleStats.by_status?.draft || 0 }}</dd>
                   <div class="flex items-center mt-1">
                     <svg class="w-4 h-4 text-amber-200 mr-1" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
                     </svg>
-                    <span class="text-xs text-amber-100">Sedang tidak aktif</span>
+                    <span class="text-xs text-amber-100">Menunggu persetujuan</span>
                   </div>
                 </div>
               </div>
@@ -145,13 +145,13 @@
                   </div>
                 </div>
                 <div class="ml-5 w-0 flex-1">
-                  <dt class="text-sm font-medium text-red-100">Tidak Aktif</dt>
-                  <dd class="text-3xl font-bold text-white">{{ scheduleStats.by_status?.Tidak || 0 }}</dd>
+                  <dt class="text-sm font-medium text-red-100">Jadwal Selesai</dt>
+                  <dd class="text-3xl font-bold text-white">{{ scheduleStats.by_status?.completed || 0 }}</dd>
                   <div class="flex items-center mt-1">
                     <svg class="w-4 h-4 text-red-200 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/>
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
-                    <span class="text-xs text-red-100">Tidak tersedia</span>
+                    <span class="text-xs text-red-100">Selesai diproses</span>
                   </div>
                 </div>
               </div>
@@ -178,7 +178,7 @@
                   <input
                     v-model="searchQuery"
                     type="text"
-                    placeholder="Cari nama, email, NIP, atau jurusan..."
+                    placeholder="Cari judul, kode, kelas, atau program studi..."
                     class="block w-full pl-12 pr-12 py-2.5 border-2 border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 hover:border-gray-300"
                   />
                   <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -222,9 +222,10 @@
                       class="appearance-none w-full px-3 py-2.5 pr-8 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white hover:border-gray-300 transition-all duration-200"
                     >
                       <option value="">Semua Status</option>
-                      <option value="Aktif">Aktif</option>
-                      <option value="Tidak">Tidak Aktif</option>
-                      <option value="Cuti">Cuti</option>
+                      <option value="draft">Draft</option>
+                      <option value="active">Aktif</option>
+                      <option value="completed">Selesai</option>
+                      <option value="cancelled">Dibatalkan</option>
                     </select>
                     <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                       <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -264,6 +265,28 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                   </svg>
                   Tambah Jadwal Kelas
+                </button>
+
+                <button
+                  @click="enrollCourse(null)"
+                  :disabled="schedules.length === 0"
+                  class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-medium rounded-lg hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                  </svg>
+                  Enroll Matakuliah
+                </button>
+
+                <button
+                  @click="autoSchedule(null)"
+                  :disabled="schedules.length === 0"
+                  class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-medium rounded-lg hover:from-indigo-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                  </svg>
+                  Generate Data
                 </button>
 
                 <button
@@ -366,10 +389,10 @@
                 </div>
                 <div>
                   <h2 class="text-xl font-bold text-gray-900">
-                    {{ activeTab === 'active' ? 'Data Dosen' : 'Sampah Dosen' }}
+                    {{ activeTab === 'active' ? 'Data Jadwal Kelas' : 'Sampah Jadwal' }}
                   </h2>
                   <p class="text-sm text-gray-500">
-                    {{ activeTab === 'active' ? 'Kelola informasi dosen dan data akademik' : 'Data dosen yang telah dihapus' }}
+                    {{ activeTab === 'active' ? 'Kelola jadwal kelas dan konfigurasi' : 'Data jadwal yang telah dihapus' }}
                   </p>
                 </div>
               </div>
@@ -377,7 +400,7 @@
               <!-- Selected Items Counter -->
               <div v-if="selectedItems.length > 0" class="flex items-center space-x-3">
                 <span class="text-sm font-medium text-gray-700">
-                  {{ selectedItems.length }} dosen dipilih
+                  {{ selectedItems.length }} jadwal dipilih
                 </span>
                 <div class="h-6 w-px bg-gray-300"></div>
                 <div class="flex items-center space-x-2">
@@ -439,7 +462,7 @@
               </svg>
               <div class="absolute inset-0 rounded-full bg-blue-100 opacity-20 animate-ping"></div>
             </div>
-            <span class="mt-4 text-gray-600 font-medium">Memuat data dosen...</span>
+            <span class="mt-4 text-gray-600 font-medium">Memuat data jadwal...</span>
             <div class="text-xs text-gray-500 mt-2">Debug: {{ schedules.length }} items loaded</div>
           </div>
 
@@ -451,10 +474,10 @@
               </svg>
             </div>
             <h3 class="text-lg font-medium text-gray-900 mb-2">
-              {{ activeTab === 'active' ? 'Belum ada data dosen' : 'Tidak ada data sampah' }}
+              {{ activeTab === 'active' ? 'Belum ada data jadwal' : 'Tidak ada data sampah' }}
             </h3>
             <p class="text-gray-500 mb-6 max-w-sm mx-auto">
-              {{ activeTab === 'active' ? 'Mulai dengan menambahkan dosen baru untuk mengelola data akademik' : 'Tidak ada dosen yang telah dihapus' }}
+              {{ activeTab === 'active' ? 'Mulai dengan menambahkan jadwal kelas baru' : 'Tidak ada jadwal yang telah dihapus' }}
             </p>
             <button
               v-if="activeTab === 'active'"
@@ -464,7 +487,7 @@
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
               </svg>
-              Tambah Dosen
+              Tambah Jadwal
             </button>
           </div>
 
@@ -512,10 +535,10 @@
                       />
                     </th>
                     <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Informasi Dosen
+                      Informasi Jadwal
                     </th>
                     <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Jurusan
+                      Program Studi
                     </th>
                     <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Status
@@ -543,66 +566,44 @@
                       />
                     </td>
 
-                    <!-- Combined Schedule Info: Photo + Name + Position + NIDN -->
+                    <!-- Schedule Info -->
                     <td class="px-6 py-4">
-                      <div class="flex items-start space-x-4">
-                        <!-- Photo -->
-                        <div class="flex-shrink-0">
-                          <div class="relative group">
-                            <img
-                              v-if="schedule.photo"
-                              :src="`/storage/${schedule.photo}`"
-                              :alt="schedule.name"
-                              class="h-14 w-14 rounded-xl object-cover border-2 border-white shadow-md group-hover:shadow-lg transition-all duration-200"
-                              @error="$event.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(schedule.name || '?')}&background=3B82F6&color=fff&size=56`"
-                            />
-                            <div
-                              v-else
-                              class="h-14 w-14 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-base shadow-md group-hover:shadow-lg transition-all duration-200"
-                            >
-                              {{ schedule.name ? schedule.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '??' }}
-                            </div>
-                            <!-- Status Indicator -->
-                            <div
-                              :class="[
-                                'absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white',
-                                schedule.is_active ? 'bg-green-500' : 'bg-gray-400'
-                              ]"
-                            ></div>
-                          </div>
+                      <div class="space-y-3">
+                        <!-- Title and Code -->
+                        <div>
+                          <h3 class="text-base font-semibold text-gray-900 truncate hover:text-blue-600 transition-colors">
+                            {{ schedule.title || 'Jadwal Tanpa Judul' }}
+                          </h3>
+                          <p class="text-sm text-gray-500 mt-1">
+                            Kode: {{ schedule.schedule_code }}
+                          </p>
                         </div>
 
-                        <!-- Schedule Details -->
-                        <div class="flex-1 min-w-0">
-                          <!-- Name -->
-                          <h3 class="text-base font-semibold text-gray-900 truncate hover:text-blue-600 transition-colors">
-                            {{ schedule.name }}
-                          </h3>
+                        <!-- Class Info -->
+                        <div class="flex items-center space-x-2">
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            {{ schedule.school_class?.name || 'Kelas' }}
+                          </span>
+                          <span v-if="schedule.school_class?.batch_year" class="text-xs text-gray-500">
+                                • {{ schedule.school_class.batch_year }}
+                              </span>
+                        </div>
 
-                          <!-- Position and Rank -->
-                          <div class="flex items-center space-x-2 mt-1">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              {{ schedule.rank || schedule.position || 'Schedule' }}
-                            </span>
-                            <span v-if="schedule.employment_type" class="text-xs text-gray-500">
-                              • {{ getEmploymentTypeLabel(schedule.employment_type) }}
-                            </span>
-                          </div>
-
-                          <!-- NIDN -->
-                          <div class="flex items-center mt-2 text-sm text-gray-600">
-                            <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/>
+                        <!-- Percentages -->
+                        <div class="flex items-center space-x-3 text-xs text-gray-600">
+                          <span class="flex items-center">
+                            <svg class="w-3 h-3 mr-1 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
+                              <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
                             </svg>
-                            NIDN: {{ schedule.employee_number }}
-                          </div>
-
-                          <!-- Specialization (if available) -->
-                          <div v-if="schedule.specialization" class="mt-2">
-                            <p class="text-xs text-gray-500 line-clamp-1">
-                              {{ schedule.specialization }}
-                            </p>
-                          </div>
+                            Online: {{ schedule.online_percentage || 0 }}%
+                          </span>
+                          <span class="flex items-center">
+                            <svg class="w-3 h-3 mr-1 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/>
+                            </svg>
+                            Offline: {{ schedule.offline_percentage || 100 }}%
+                          </span>
                         </div>
                       </div>
                     </td>
@@ -615,11 +616,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                           </svg>
                           <div>
-                            <div class="text-sm font-medium text-gray-900 truncate" :title="schedule.department">
-                              {{ schedule.department || schedule.program_study?.name || 'Belum ditugaskan' }}
+                            <div class="text-sm font-medium text-gray-900 truncate" :title="schedule.program_study?.name">
+                              {{ schedule.program_study?.name || 'Belum ditugaskan' }}
                             </div>
-                            <div v-if="schedule.faculty" class="text-xs text-gray-500 truncate" :title="schedule.faculty">
-                              {{ schedule.faculty }}
+                            <div v-if="schedule.academic_year" class="text-xs text-gray-500 truncate" :title="schedule.academic_year?.academic_calendar_year">
+                              {{ schedule.academic_year?.academic_calendar_year }} - {{ schedule.academic_year?.admission_period }}
                             </div>
                           </div>
                         </div>
@@ -629,34 +630,37 @@
                     <!-- Status -->
                     <td class="px-6 py-4">
                       <div class="space-y-2">
-                        <!-- Employment Status -->
+                        <!-- Schedule Status -->
                         <span
                           :class="[
                             'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium',
-                            schedule.status === 'Aktif' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
-                            schedule.status === 'Tidak' ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300' :
-                            schedule.status === 'Cuti' ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300' :
+                            schedule.status === 'active' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
+                            schedule.status === 'completed' ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300' :
+                            schedule.status === 'cancelled' ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300' :
+                            schedule.status === 'draft' ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300' :
                             'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300'
                           ]"
                         >
                           <span class="w-2 h-2 mr-1.5 rounded-full"
                                 :class="[
                                   'inline-block',
-                                  schedule.status === 'Aktif' ? 'bg-green-500' :
-                                  schedule.status === 'Tidak' ? 'bg-red-500' :
-                                  schedule.status === 'Cuti' ? 'bg-yellow-500' :
+                                  schedule.status === 'active' ? 'bg-green-500' :
+                                  schedule.status === 'completed' ? 'bg-blue-500' :
+                                  schedule.status === 'cancelled' ? 'bg-red-500' :
+                                  schedule.status === 'draft' ? 'bg-yellow-500' :
                                   'bg-gray-500'
                                 ]">
                           </span>
-                          {{ schedule.status === 'Aktif' ? 'Aktif' :
-                             schedule.status === 'Tidak' ? 'Tidak Aktif' :
-                             schedule.status === 'Cuti' ? 'Cuti' :
+                          {{ schedule.status === 'active' ? 'Aktif' :
+                             schedule.status === 'completed' ? 'Selesai' :
+                             schedule.status === 'cancelled' ? 'Dibatalkan' :
+                             schedule.status === 'draft' ? 'Draft' :
                              schedule.status || 'Unknown' }}
                         </span>
 
-                        <!-- Academic Load (if active) -->
-                        <div v-if="schedule.status === 'Aktif' && schedule.academic_load" class="text-xs text-gray-600">
-                          Beban: {{ schedule.academic_load }} SKS
+                        <!-- Description (if available) -->
+                        <div v-if="schedule.description" class="text-xs text-gray-600 mt-1 line-clamp-2">
+                          {{ schedule.description }}
                         </div>
                       </div>
                     </td>
@@ -681,10 +685,21 @@
                           <button
                             @click="editSchedule(schedule)"
                             class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200 group"
-                            title="Edit dosen"
+                            title="Edit jadwal"
                           >
                             <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                          </button>
+
+                          <!-- Enroll Course Button -->
+                          <button
+                            @click="enrollCourse(schedule)"
+                            class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-200 group"
+                            title="Enroll matakuliah"
+                          >
+                            <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                             </svg>
                           </button>
 
@@ -692,41 +707,29 @@
                           <button
                             @click="duplicateSchedule(schedule)"
                             class="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors duration-200 group"
-                            title="Duplikat dosen"
+                            title="Duplikat jadwal"
                           >
                             <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                             </svg>
                           </button>
 
-                          <!-- Create User Account Button -->
+                          <!-- Generate Data Button -->
                           <button
-                            v-if="!schedule.user_id && !schedule.user"
-                            @click="createUserAccount(schedule)"
-                            class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-200 group"
-                            title="Buat akun pengguna"
+                            @click="autoSchedule(schedule)"
+                            class="p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors duration-200 group"
+                            title="Generate Data: Buat jadwal berdasarkan persentase online/offline dan rotasi ruangan"
                           >
                             <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
                             </svg>
                           </button>
-
-                          <!-- User Account Status Indicator -->
-                          <div
-                            v-if="schedule.user_id || schedule.user"
-                            class="p-2 text-gray-400 rounded-lg"
-                            :title="`Akun pengguna sudah ada: ${schedule.user?.email || schedule.email}`"
-                          >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                          </div>
 
                           <!-- Delete Button -->
                           <button
                             @click="confirmDelete(schedule)"
                             class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200 group"
-                            title="Hapus dosen"
+                            title="Hapus jadwal"
                           >
                             <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -739,7 +742,7 @@
                           <button
                             @click="restoreSchedule(schedule.id)"
                             class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-200 group"
-                            title="Pulihkan dosen"
+                            title="Pulihkan jadwal"
                           >
                             <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
@@ -866,8 +869,8 @@
       <ConfirmModal
         v-if="showDeleteConfirm"
         :show="showDeleteConfirm"
-        title="Hapus Dosen"
-        :message="`Apakah Anda yakin ingin menghapus dosen ${currentSchedule?.name}?`"
+        title="Hapus Jadwal"
+        :message="`Apakah Anda yakin ingin menghapus jadwal ${currentSchedule?.title}?`"
         @confirm="deleteSchedule"
         @cancel="showDeleteConfirm = false"
       />
@@ -875,8 +878,8 @@
       <ConfirmModal
         v-if="showBulkDeleteConfirm"
         :show="showBulkDeleteConfirm"
-        title="Hapus Dosen Terpilih"
-        :message="`Apakah Anda yakin ingin menghapus ${selectedItems.length} dosen yang dipilih?`"
+        title="Hapus Jadwal Terpilih"
+        :message="`Apakah Anda yakin ingin menghapus ${selectedItems.length} jadwal yang dipilih?`"
         @confirm="bulkDelete"
         @cancel="showBulkDeleteConfirm = false"
       />
@@ -884,8 +887,8 @@
       <ConfirmModal
         v-if="showBulkRestoreConfirm"
         :show="showBulkRestoreConfirm"
-        title="Pulihkan Dosen Terpilih"
-        :message="`Apakah Anda yakin ingin memulihkan ${selectedItems.length} dosen yang dipilih?`"
+        title="Pulihkan Jadwal Terpilih"
+        :message="`Apakah Anda yakin ingin memulihkan ${selectedItems.length} jadwal yang dipilih?`"
         @confirm="bulkRestore"
         @cancel="showBulkRestoreConfirm = false"
       />
@@ -893,8 +896,8 @@
       <ConfirmModal
         v-if="showBulkForceDeleteConfirm"
         :show="showBulkForceDeleteConfirm"
-        title="Hapus Permanen Dosen Terpilih"
-        :message="`Apakah Anda yakin ingin menghapus permanen ${selectedItems.length} dosen yang dipilih? Tindakan ini tidak dapat dibatalkan.`"
+        title="Hapus Permanen Jadwal Terpilih"
+        :message="`Apakah Anda yakin ingin menghapus permanen ${selectedItems.length} jadwal yang dipilih? Tindakan ini tidak dapat dibatalkan.`"
         confirm-text="Hapus Permanen"
         cancel-text="Batal"
         @confirm="bulkForceDelete"
@@ -904,12 +907,29 @@
       <ConfirmModal
         v-if="showForceDeleteConfirm"
         :show="showForceDeleteConfirm"
-        title="Hapus Permanen Dosen"
-        :message="`Apakah Anda yakin ingin menghapus permanen dosen ${forceDeleteTarget?.name}? Tindakan ini tidak dapat dibatalkan.`"
+        title="Hapus Permanen Jadwal"
+        :message="`Apakah Anda yakin ingin menghapus permanen jadwal ${forceDeleteTarget?.title}? Tindakan ini tidak dapat dibatalkan.`"
         confirm-text="Hapus Permanen"
         cancel-text="Batal"
         @confirm="forceDeleteSchedule"
         @cancel="showForceDeleteConfirm = false"
+      />
+
+      <EnrollCourseModal
+        v-if="showEnrollModal"
+        :show="showEnrollModal"
+        :class-schedule="selectedScheduleForEnroll"
+        @close="showEnrollModal = false"
+        @enrolled="onCourseEnrolled"
+        @refresh="onCoursesRefresh"
+      />
+
+      <AutoScheduleModal
+        v-if="showAutoScheduleModal"
+        :show="showAutoScheduleModal"
+        :class-schedule="selectedScheduleForAuto"
+        @close="showAutoScheduleModal = false"
+        @generated="onAutoScheduleGenerated"
       />
     </div>
   </Layout>
@@ -923,7 +943,10 @@ import scheduleService from '@/services/scheduleService'
 import programStudyService from '@/services/programStudyService'
 import Layout from '@/components/Layout.vue'
 import CreateClassScheduleModal from '@/components/modals/CreateClassScheduleModal.vue'
-import ImportModal from '@/components/modals/ImportModal.vue'
+import ScheduleDetailModal from '@/components/modals/ScheduleDetailModal.vue'
+import ScheduleImportModal from '@/components/modals/ImportModal.vue'
+import EnrollCourseModal from '@/components/modals/EnrollCourseModal.vue'
+import AutoScheduleModal from '@/components/modals/AutoScheduleModal.vue'
 import ConfirmModal from '@/components/modals/ConfirmModal.vue'
 import Toast from '@/components/Toast.vue'
 
@@ -968,6 +991,8 @@ const showAddModal = ref(false)
 const showEditModal = ref(false)
 const showDetailModal = ref(false)
 const showImportModal = ref(false)
+const showEnrollModal = ref(false)
+const showAutoScheduleModal = ref(false)
 const showDeleteConfirm = ref(false)
 const showForceDeleteConfirm = ref(false)
 const forceDeleteTarget = ref(null)
@@ -977,6 +1002,8 @@ const showBulkRestoreConfirm = ref(false)
 const showBulkForceDeleteConfirm = ref(false)
 const currentSchedule = ref(null)
 const selectedScheduleForDetail = ref(null)
+const selectedScheduleForEnroll = ref(null)
+const selectedScheduleForAuto = ref(null)
 
 // Computed
 const allItemsSelected = computed(() => {
@@ -1034,37 +1061,55 @@ const fetchSchedules = async (showLoading = true) => {
     }
 
       const response = await scheduleService.getAll(params)
-  
-    // Ensure we have proper data structure
-    if (response && response.data) {
-      // API returns nested structure: data.data contains schedules array
-      const responseData = response.data;
+    console.log('Schedule Service Response:', response)
 
-      // Handle both possible response structures
-      if (responseData.data && Array.isArray(responseData.data)) {
-        // New API format: { data: { data: [...], total: ..., current_page: ... }, meta: {...} }
-        schedules.value = responseData.data;
-        pagination.current_page = responseData.current_page || 1;
-        pagination.last_page = responseData.last_page || 1;
-        pagination.per_page = responseData.per_page || 10;
-        pagination.total = responseData.total || 0;
-        pagination.from = responseData.from || 0;
-        pagination.to = responseData.to || 0;
-      } else if (Array.isArray(responseData)) {
-        // Simple array format
+    // Ensure we have proper data structure
+    console.log('Full Response:', response)
+
+    if (response && response.data) {
+      // API returns: { success: true, data: [...], meta: {...} }
+      const responseData = response.data;
+      console.log('Response Data:', responseData)
+      console.log('Response Data is array:', Array.isArray(responseData))
+
+      // Handle ResponseService format
+      if (Array.isArray(responseData)) {
+        // Direct array format
         schedules.value = responseData;
-        pagination.current_page = 1;
-        pagination.last_page = 1;
-        pagination.per_page = schedules.value.length;
-        pagination.total = schedules.value.length;
-        pagination.from = 1;
-        pagination.to = schedules.value.length;
-      } else {
+        console.log('Parsed schedules from direct array:', responseData)
+      } else if (responseData.data && Array.isArray(responseData.data)) {
+        // Nested data format
+        schedules.value = responseData.data;
+        console.log('Parsed schedules from nested data:', responseData.data)
+      } else if (responseData.success !== undefined) {
+        // ResponseService format with data property
+        if (Array.isArray(responseData.data)) {
+          schedules.value = responseData.data;
+          console.log('Parsed schedules from ResponseService:', responseData.data)
+        } else {
           schedules.value = [];
+          console.log('No array data found in ResponseService')
+        }
+      } else {
+        schedules.value = [];
+        console.log('Unknown response format, setting empty array')
+      }
+
+      // Handle pagination from meta if available
+      if (response.data && response.data.meta) {
+        const meta = response.data.meta;
+        pagination.current_page = meta.current_page || 1;
+        pagination.last_page = meta.last_page || 1;
+        pagination.per_page = meta.per_page || 10;
+        pagination.total = meta.total || 0;
+        pagination.from = meta.from || 0;
+        pagination.to = meta.to || 0;
+        console.log('Pagination set from meta:', meta)
       }
 
     } else {
-      schedules.value = []
+      schedules.value = [];
+      console.log('No response data, setting empty array')
     }
   } catch (error) {
   
@@ -1170,7 +1215,7 @@ const changePerPage = (value) => {
 const restoreSchedule = async (id) => {
   try {
     const response = await scheduleService.restore(id)
-    toastStore.success('Berhasil', 'Data dosen berhasil dipulihkan')
+    toastStore.success('Berhasil', 'Data jadwal berhasil dipulihkan')
     // Remove from local array for immediate UI update (item moved from trash to active)
     const index = schedules.value.findIndex(l => l.id === id)
     if (index > -1) {
@@ -1191,7 +1236,7 @@ const forceDeleteSchedule = async () => {
 
   try {
     await scheduleService.forceDelete(forceDeleteTarget.value.id)
-    toastStore.success('Berhasil', 'Data dosen berhasil dihapus secara permanen')
+    toastStore.success('Berhasil', 'Data jadwal berhasil dihapus secara permanen')
     showForceDeleteConfirm.value = false
     forceDeleteTarget.value = null
     // Refresh table data after successful deletion (no loading animation)
@@ -1207,12 +1252,101 @@ const duplicateSchedule = async (schedule) => {
   try {
     await scheduleService.duplicate(schedule.id)
 
-    toastStore.success('Berhasil', `Data dosen "${schedule.name}" berhasil diduplikasi`)
+    toastStore.success('Berhasil', `Data jadwal "${schedule.title}" berhasil diduplikasi`)
 
     fetchSchedules(false) // No loading animation for duplicate
   } catch (error) {
-    toastStore.error('Error', error.response?.data?.message || 'Gagal menduplikasi data dosen')
+    toastStore.error('Error', error.response?.data?.message || 'Gagal menduplikasi data jadwal')
   }
+}
+
+const enrollCourse = async (schedule) => {
+  // If schedule is null (from toolbar button), use the first schedule or show a message
+  if (!schedule) {
+    if (schedules.value.length === 0) {
+      toastStore.warning('Perhatian', 'Tidak ada jadwal kelas yang tersedia. Silakan buat jadwal terlebih dahulu.')
+      return
+    }
+    schedule = schedules.value[0]
+  }
+  selectedScheduleForEnroll.value = schedule
+  showEnrollModal.value = true
+}
+
+const onCourseEnrolled = (data) => {
+  showEnrollModal.value = false
+  selectedScheduleForEnroll.value = null
+  fetchSchedules(false) // Refresh to show enrolled courses
+}
+
+const onCoursesRefresh = () => {
+  fetchSchedules(false) // Refresh schedules without closing modal
+}
+
+const autoSchedule = async (schedule) => {
+  // If schedule is null (from toolbar button), use the first schedule or show a message
+  if (!schedule) {
+    if (schedules.value.length === 0) {
+      toastStore.warning('Perhatian', 'Tidak ada jadwal kelas yang tersedia. Silakan buat jadwal terlebih dahulu.')
+      return
+    }
+    schedule = schedules.value[0]
+  }
+  
+  try {
+    loading.value = true
+    
+    // Fetch full schedule data with details
+    const fullScheduleResponse = await scheduleService.getById(schedule.id)
+    const fullSchedule = fullScheduleResponse.data || fullScheduleResponse
+    
+    // Check if schedule has enrolled courses
+    if (!fullSchedule.details || fullSchedule.details.length === 0) {
+      toastStore.warning('Perhatian', 'Tidak ada matakuliah yang di-enroll. Silakan enroll matakuliah terlebih dahulu.')
+      loading.value = false
+      return
+    }
+    
+    loading.value = false
+    
+    // Show confirmation dialog
+    const confirmed = confirm(
+      `Generate Data Jadwal untuk "${fullSchedule.title}"?\n\n` +
+      `• Online: ${fullSchedule.online_percentage || 0}%\n` +
+      `• Offline: ${fullSchedule.offline_percentage || 100}%\n` +
+      `• Total Matakuliah: ${fullSchedule.details?.length || 0}\n\n` +
+      `Data akan di-generate berdasarkan persentase online/offline dengan rotasi ruangan.`
+    )
+    
+    if (!confirmed) return
+    
+    loading.value = true
+    toastStore.info('Proses', 'Sedang men-generate jadwal...')
+    
+    const response = await scheduleService.autoGenerate(schedule.id)
+    
+    if (response.success) {
+      const data = response.data || {}
+      toastStore.success(
+        'Berhasil', 
+        `Generated ${data.total_generated || 0} jadwal ` +
+        `(Online: ${data.online_count || 0}, Offline: ${data.offline_count || 0})`
+      )
+      fetchSchedules(false) // Refresh to show generated schedules
+    } else {
+      toastStore.error('Error', response.message || 'Gagal men-generate jadwal')
+    }
+  } catch (error) {
+    toastStore.error('Error', error.response?.data?.message || error.message || 'Gagal men-generate jadwal')
+  } finally {
+    loading.value = false
+  }
+}
+
+const onAutoScheduleGenerated = (data) => {
+  showAutoScheduleModal.value = false
+  selectedScheduleForAuto.value = null
+  fetchSchedules(false) // Refresh to show generated schedules
 }
 
 const createUserAccount = async (schedule) => {
@@ -1267,7 +1401,7 @@ const bulkCreateUserAccounts = async () => {
 
   // Check if we have any valid IDs after filtering
   if (scheduleIds.length === 0) {
-    toastStore.warning('Perhatian', 'Tidak ada dosen valid yang dipilih. Silakan pilih kembali.')
+    toastStore.warning('Perhatian', 'Tidak ada jadwal valid yang dipilih. Silakan pilih kembali.')
     return
   }
 
@@ -1351,20 +1485,28 @@ const fetchStats = async () => {
 const fetchProgramStudies = async () => {
   try {
     const response = await programStudyService.getAll({
-      is_active: true,
-      per_page: 100 // Get all active program studies
+      per_page: 100 // Get all program studies
     })
 
     if (response && response.data) {
       const responseData = response.data
+      console.log('Program Studies Response:', responseData)
 
       if (responseData.data && Array.isArray(responseData.data)) {
         programStudies.value = responseData.data
         // Update departments array for compatibility with existing filter
         departments.value = responseData.data.map(ps => ps.name)
+        console.log('Program Studies parsed from data.data:', responseData.data)
       } else if (Array.isArray(responseData)) {
         programStudies.value = responseData
         departments.value = responseData.map(ps => ps.name)
+        console.log('Program Studies parsed from array:', responseData)
+      } else if (responseData && typeof responseData === 'object') {
+        // Handle object with nested data
+        const programStudiesArray = Object.values(responseData)
+        programStudies.value = programStudiesArray
+        departments.value = programStudiesArray.map(ps => ps.name)
+        console.log('Program Studies parsed from object:', programStudiesArray)
       }
 
     }
@@ -1439,7 +1581,7 @@ const deleteSchedule = async () => {
     // Refresh data from server to ensure consistency and update pagination info
     fetchSchedules(false) // No loading animation for delete operations
   } catch (error) {
-    toastStore.error('Error', 'Gagal menghapus dosen')
+    toastStore.error('Error', 'Gagal menghapus jadwal')
   }
 }
 
@@ -1462,11 +1604,11 @@ const bulkDelete = async () => {
     if (activeTab.value === 'trash') {
       // For trash tab, permanently delete
       await scheduleService.bulkForceDelete({ ids: selectedItems.value })
-      toastStore.success('Berhasil', `${selectedItems.value.length} dosen berhasil dihapus permanen`)
+      toastStore.success('Berhasil', `${selectedItems.value.length} jadwal berhasil dihapus permanen`)
     } else {
       // For active tab, soft delete
-      await scheduleService.bulkDelete({ ids: selectedItems.value })
-      toastStore.success('Berhasil', `${selectedItems.value.length} dosen berhasil dihapus`)
+      await scheduleService.bulkDelete({ class_schedule_ids: selectedItems.value })
+      toastStore.success('Berhasil', `${selectedItems.value.length} jadwal berhasil dihapus`)
     }
 
     showBulkDeleteConfirm.value = false
@@ -1475,18 +1617,18 @@ const bulkDelete = async () => {
     // Refresh data from server to ensure consistency and update pagination info
     fetchSchedules(false) // No loading animation for bulk delete operations
   } catch (error) {
-    toastStore.error('Error', 'Gagal menghapus dosen terpilih')
+    toastStore.error('Error', 'Gagal menghapus jadwal terpilih')
   }
 }
 
 const bulkToggleStatus = async () => {
   try {
     await scheduleService.bulkToggleStatus({ ids: selectedItems.value })
-    toastStore.success('Berhasil', 'Status dosen berhasil diperbarui')
+    toastStore.success('Berhasil', 'Status jadwal berhasil diperbarui')
     selectedItems.value = []
     // Remove fetchSchedules() to prevent loading state on bulk operations
   } catch (error) {
-    toastStore.error('Error', 'Gagal memperbarui status dosen')
+    toastStore.error('Error', 'Gagal memperbarui status jadwal')
   }
 }
 
@@ -1519,7 +1661,7 @@ const exportData = async () => {
 const bulkRestore = async () => {
   try {
     const restoredCount = await scheduleService.bulkRestore(selectedItems.value)
-    toastStore.success('Berhasil', `${selectedItems.value.length} dosen berhasil dipulihkan`)
+    toastStore.success('Berhasil', `${selectedItems.value.length} jadwal berhasil dipulihkan`)
 
     showBulkRestoreConfirm.value = false
     selectedItems.value = []
@@ -1527,14 +1669,14 @@ const bulkRestore = async () => {
     // Refresh data from server to ensure consistency and update pagination info
     fetchSchedules(false) // No loading animation for bulk restore operations
   } catch (error) {
-    toastStore.error('Error', 'Gagal memulihkan dosen terpilih')
+    toastStore.error('Error', 'Gagal memulihkan jadwal terpilih')
   }
 }
 
 const bulkForceDelete = async () => {
   try {
     await scheduleService.bulkForceDelete({ ids: selectedItems.value })
-    toastStore.success('Berhasil', `${selectedItems.value.length} dosen berhasil dihapus permanen`)
+    toastStore.success('Berhasil', `${selectedItems.value.length} jadwal berhasil dihapus permanen`)
 
     showBulkForceDeleteConfirm.value = false
     selectedItems.value = []
@@ -1542,7 +1684,7 @@ const bulkForceDelete = async () => {
     // Refresh data from server to ensure consistency and update pagination info
     fetchSchedules(false) // No loading animation for bulk force delete operations
   } catch (error) {
-    toastStore.error('Error', 'Gagal menghapus permanen dosen terpilih')
+    toastStore.error('Error', 'Gagal menghapus permanen jadwal terpilih')
   }
 }
 

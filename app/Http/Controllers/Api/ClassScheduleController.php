@@ -7,6 +7,7 @@ use App\Http\Requests\ClassSchedule\StoreClassScheduleRequest;
 use App\Http\Requests\ClassSchedule\UpdateClassScheduleRequest;
 use App\Http\Requests\ClassSchedule\AddCourseToClassScheduleRequest;
 use App\Services\ClassScheduleService;
+use App\Services\AutoScheduleService;
 use App\Services\ResponseService;
 use App\Models\ClassSchedule;
 use Illuminate\Http\Request;
@@ -15,10 +16,12 @@ use Illuminate\Http\JsonResponse;
 class ClassScheduleController extends Controller
 {
     protected ClassScheduleService $classScheduleService;
+    protected AutoScheduleService $autoScheduleService;
 
-    public function __construct(ClassScheduleService $classScheduleService)
+    public function __construct(ClassScheduleService $classScheduleService, AutoScheduleService $autoScheduleService)
     {
         $this->classScheduleService = $classScheduleService;
+        $this->autoScheduleService = $autoScheduleService;
     }
 
     /**
@@ -85,10 +88,10 @@ class ClassScheduleController extends Controller
     {
         $classSchedule->load([
             'programStudy:id,name,faculty',
-            'schoolClass:id,name,code,batch_year,academic_year',
-            'academicYear:id,year,semester',
-            'details.course:id,course_code,course_name',
-            'details.lecturer:id,name,email',
+            'schoolClass:id,name,code,batch_year,academic_year,semester',
+            'academicYear:id,code,name,admission_period',
+            'details.course:id,course_code,course_name,credits,description,course_type,level',
+            'details.lecturer:id,name,email,employee_number,rank,position',
             'details.room:id,room_code,name',
             'schedules',
             'creator:id,name,email',
@@ -314,5 +317,143 @@ class ClassScheduleController extends Controller
                 500
             );
         }
+    }
+
+    /**
+     * Auto-generate schedule details for a class schedule.
+     */
+    public function autoGenerateSchedule(Request $request, ClassSchedule $classSchedule): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after:start_date',
+                'study_days' => 'required|array|min:1',
+                'study_days.*' => 'required|string|in:senin,selasa,rabu,kamis,jumat,sabtu',
+                'courses' => 'required|array|min:1',
+                'courses.*.course_id' => 'required|exists:courses,id',
+                'courses.*.credits' => 'required|integer|min:1|max:6',
+                'courses.*.meetings_per_week' => 'sometimes|integer|min:1',
+            ]);
+
+            $result = $this->autoScheduleService->generateAutoSchedule($classSchedule, $validated);
+
+            return ResponseService::success($result, 'Auto-schedule generated successfully');
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to auto-generate schedule: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get available courses for auto-scheduling.
+     */
+    public function getAvailableCourses(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'program_study_id' => 'required|exists:program_studies,id',
+            ]);
+
+            $courses = $this->autoScheduleService->getAvailableCourses($validated['program_study_id']);
+
+            return ResponseService::success($courses, 'Available courses retrieved successfully');
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to retrieve available courses: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Get room usage statistics for a class schedule.
+     */
+    public function getRoomUsageStatistics(ClassSchedule $classSchedule): JsonResponse
+    {
+        try {
+            $statistics = $this->autoScheduleService->getRoomUsageStatistics($classSchedule);
+
+            return ResponseService::success($statistics, 'Room usage statistics retrieved successfully');
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to retrieve room usage statistics: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Duplicate a class schedule.
+     *
+     * @param  \App\Models\ClassSchedule  $classSchedule
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function duplicate(ClassSchedule $classSchedule): JsonResponse
+    {
+        try {
+            return DB::transaction(function () use ($classSchedule) {
+                // Create a new class schedule based on the existing one
+                $newSchedule = $classSchedule->replicate();
+                $newSchedule->schedule_code = $this->generateUniqueScheduleCode($classSchedule->schedule_code);
+                $newSchedule->title = $classSchedule->title . ' (Copy)';
+                $newSchedule->status = 'draft';
+                $newSchedule->created_by = auth('sanctum')->id();
+                $newSchedule->updated_by = auth('sanctum')->id();
+                $newSchedule->created_at = now();
+                $newSchedule->updated_at = now();
+                $newSchedule->save();
+
+                // Note: We do NOT copy the schedule details (courses) as requested
+                // This ensures that when duplicating, course assignments are cleared
+
+                Log::info('Class schedule duplicated', [
+                    'original_id' => $classSchedule->id,
+                    'new_id' => $newSchedule->id,
+                    'user_id' => auth('sanctum')->id(),
+                ]);
+
+                return ResponseService::success(
+                    $newSchedule->load(['programStudy', 'schoolClass', 'academicYear']),
+                    'Class schedule duplicated successfully'
+                );
+            });
+        } catch (\Exception $e) {
+            Log::error('Error duplicating class schedule: ' . $e->getMessage(), [
+                'class_schedule_id' => $classSchedule->id,
+                'exception' => $e->getTraceAsString()
+            ]);
+
+            return ResponseService::error(
+                'Failed to duplicate class schedule',
+                null,
+                500
+            );
+        }
+    }
+
+    /**
+     * Generate a unique schedule code by adding a suffix.
+     *
+     * @param  string  $originalCode
+     * @return string
+     */
+    private function generateUniqueScheduleCode(string $originalCode): string
+    {
+        $counter = 1;
+        $newCode = $originalCode . '_COPY_' . $counter;
+
+        // Keep incrementing counter until we find a unique code
+        while (ClassSchedule::where('schedule_code', $newCode)->exists()) {
+            $counter++;
+            $newCode = $originalCode . '_COPY_' . $counter;
+        }
+
+        return $newCode;
     }
 }

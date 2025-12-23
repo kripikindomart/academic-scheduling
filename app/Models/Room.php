@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Carbon\Carbon;
 
 class Room extends Model
@@ -81,24 +82,29 @@ class Room extends Model
         return $this->is_active ? 'active' : 'inactive';
     }
 
-    public function schedules()
+    public function schedules(): BelongsToMany
     {
-        return $this->hasMany(Schedule::class);
+        return $this->belongsToMany(Schedule::class, 'schedule_room')
+                    ->withPivot('is_primary')
+                    ->withTimestamps();
     }
 
-    public function activeSchedules()
+    public function activeSchedules(): BelongsToMany
     {
-        return $this->hasMany(Schedule::class)
-            ->where('status', 'active')
-            ->whereDate('end_time', '>=', now());
+        return $this->belongsToMany(Schedule::class, 'schedule_room')
+                    ->where('status', 'active')
+                    ->whereDate('end_time', '>=', now())
+                    ->withPivot('is_primary')
+                    ->withTimestamps();
     }
 
-    public function todaySchedules()
+    public function todaySchedules(): BelongsToMany
     {
-        return $this->hasMany(Schedule::class)
-            ->whereDate('start_time', '<=', now())
-            ->whereDate('end_time', '>=', now())
-            ->orderBy('start_time');
+        return $this->belongsToMany(Schedule::class, 'schedule_room')
+                    ->whereDate('date', now()->toDateString())
+                    ->orderBy('start_time')
+                    ->withPivot('is_primary')
+                    ->withTimestamps();
     }
 
     public function scopeActive($query)

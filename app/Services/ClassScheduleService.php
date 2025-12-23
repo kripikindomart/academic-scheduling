@@ -189,28 +189,65 @@ class ClassScheduleService
     public function addCourseToClassSchedule(ClassSchedule $classSchedule, array $data): ClassScheduleDetail
     {
         return DB::transaction(function () use ($classSchedule, $data) {
-            // Calculate total meetings based on date range and day of week
+            // Convert day name to lowercase for consistency
+            $dayOfWeek = strtolower($data['day']);
+
+            // Use frontend's total_meetings if provided, otherwise calculate from date range
             $startDate = Carbon::parse($data['start_date']);
             $endDate = Carbon::parse($data['end_date']);
-            $totalMeetings = $this->calculateTotalMeetings($startDate, $endDate, $data['day_of_week']);
+            $totalMeetings = isset($data['total_meetings']) && $data['total_meetings'] > 0 
+                ? (int) $data['total_meetings'] 
+                : $this->calculateTotalMeetings($startDate, $endDate, $dayOfWeek);
 
-            $classScheduleDetail = ClassScheduleDetail::create(array_merge($data, [
+            // Prepare data for creation
+            $createData = [
                 'class_schedule_id' => $classSchedule->id,
+                'course_id' => $data['course_id'],
+                'day_of_week' => $dayOfWeek,
+                'start_date' => $data['start_date'],
+                'end_date' => $data['end_date'],
+                'start_time' => $data['start_time'],
+                'end_time' => $data['end_time'],
                 'total_meetings' => $totalMeetings,
+                'sessions_per_meeting' => $data['sessions_per_meeting'] ?? 1,
+                'is_online' => $data['is_online'] ?? false,
+                'meeting_type' => $data['meeting_type'] ?? 'lecture',
+                'notes' => $data['notes'] ?? null,
                 'created_by' => auth('sanctum')->id(),
                 'updated_by' => auth('sanctum')->id(),
-            ]));
+            ];
+
+            $classScheduleDetail = ClassScheduleDetail::create($createData);
+
+            // Sync all lecturers to pivot table (many-to-many)
+            if (isset($data['lecturer_ids']) && is_array($data['lecturer_ids'])) {
+                $lecturersSync = [];
+                foreach ($data['lecturer_ids'] as $index => $lecturerId) {
+                    $lecturersSync[$lecturerId] = ['is_primary' => $index === 0];
+                }
+                $classScheduleDetail->lecturers()->sync($lecturersSync);
+            }
+
+            // Sync all rooms to pivot table (many-to-many)
+            if (isset($data['room_ids']) && is_array($data['room_ids'])) {
+                $roomsSync = [];
+                foreach ($data['room_ids'] as $index => $roomId) {
+                    $roomsSync[$roomId] = ['is_primary' => $index === 0];
+                }
+                $classScheduleDetail->rooms()->sync($roomsSync);
+            }
 
             // Log activity
             Log::channel('activity')->info('Course added to class schedule', [
                 'class_schedule_id' => $classSchedule->id,
                 'class_schedule_detail_id' => $classScheduleDetail->id,
                 'course_id' => $data['course_id'],
-                'lecturer_id' => $data['lecturer_id'],
+                'lecturer_ids' => $data['lecturer_ids'] ?? [],
+                'room_ids' => $data['room_ids'] ?? [],
                 'user_id' => auth('sanctum')->id(),
             ]);
 
-            return $classScheduleDetail->load(['course', 'lecturer', 'room']);
+            return $classScheduleDetail->load(['course', 'lecturer', 'room', 'lecturers', 'rooms']);
         });
     }
 
@@ -244,6 +281,8 @@ class ClassScheduleService
 
     /**
      * Generate schedules from class schedule.
+     * Uses online_percentage and offline_percentage to determine session types.
+     * Rotates rooms for offline sessions from the available rooms in detail.
      *
      * @param ClassSchedule $classSchedule
      * @return array
@@ -254,17 +293,46 @@ class ClassScheduleService
             $generatedSchedules = [];
             $conflicts = [];
 
+            // Get online/offline percentages from class schedule
+            $onlinePercentage = $classSchedule->online_percentage ?? 0;
+            $offlinePercentage = $classSchedule->offline_percentage ?? 100;
+
             foreach ($classSchedule->details as $detail) {
                 $scheduleDates = $this->generateScheduleDates($detail);
+                $totalMeetings = count($scheduleDates);
+                
+                // Calculate how many sessions should be online vs offline
+                $onlineMeetings = (int) round($totalMeetings * ($onlinePercentage / 100));
+                $offlineMeetings = $totalMeetings - $onlineMeetings;
+                
+                // Get rooms for this detail (for offline sessions)
+                $rooms = $detail->rooms->pluck('id')->toArray();
+                $roomCount = count($rooms);
+                
+                // Get lecturers for this detail
+                $lecturerIds = $detail->lecturers->pluck('id')->toArray();
 
                 foreach ($scheduleDates as $index => $date) {
                     try {
+                        // Determine if this session is online or offline
+                        // First X sessions are offline, rest are online (or vice versa based on percentage)
+                        $isOnline = $index >= $offlineMeetings;
+                        
+                        // For offline sessions, rotate rooms
+                        $currentRoomId = null;
+                        if (!$isOnline && $roomCount > 0) {
+                            // Rotate through available rooms
+                            $roomIndex = $index % $roomCount;
+                            $currentRoomId = $rooms[$roomIndex];
+                        }
+                        
                         $schedule = Schedule::create([
                             'class_schedule_id' => $classSchedule->id,
                             'class_schedule_detail_id' => $detail->id,
                             'schedule_code' => $this->generateScheduleCode($classSchedule, $detail, $index + 1),
                             'title' => $detail->course->course_name,
-                            'description' => "Generated from class schedule: {$classSchedule->title}",
+                            'description' => "Generated from class schedule: {$classSchedule->title}" . 
+                                           ($isOnline ? " (Online)" : " (Offline)"),
                             'date' => $date->format('Y-m-d'),
                             'start_time' => $detail->start_time,
                             'end_time' => $detail->end_time,
@@ -273,18 +341,15 @@ class ClassScheduleService
                             'schedule_type' => $detail->meeting_type,
                             'is_recurring' => false,
                             'course_id' => $detail->course_id,
-                            'lecturer_id' => $detail->lecturer_id,
-                            'room_id' => $detail->room_id,
                             'program_study_id' => $classSchedule->program_study_id,
                             'class_id' => $classSchedule->class_id,
-                            'semester' => $classSchedule->semester,
                             'academic_year' => $classSchedule->academicYear->academic_calendar_year ?? '',
                             'status' => 'approved',
                             'conflict_status' => 'none',
-                            'session_type' => $detail->is_online ? 'online' : 'regular',
+                            'session_type' => $isOnline ? 'online' : 'regular',
                             'is_mandatory' => true,
-                            'is_online' => $detail->is_online,
-                            'meeting_link' => $detail->is_online ? null : '',
+                            'is_online' => $isOnline,
+                            'meeting_link' => $isOnline ? '' : null,
                             'is_published' => true,
                             'is_locked' => false,
                             'created_by' => auth('sanctum')->id(),
@@ -292,6 +357,22 @@ class ClassScheduleService
                             'created_from_ip' => request()->ip(),
                             'user_agent' => request()->userAgent(),
                         ]);
+
+                        // Sync lecturers from detail to schedule pivot table
+                        if (!empty($lecturerIds)) {
+                            $lecturersSync = [];
+                            foreach ($lecturerIds as $idx => $lecturerId) {
+                                $lecturersSync[$lecturerId] = ['is_primary' => $idx === 0];
+                            }
+                            $schedule->lecturers()->sync($lecturersSync);
+                        }
+
+                        // Sync room to schedule pivot table (only for offline sessions)
+                        if (!$isOnline && $currentRoomId) {
+                            $schedule->rooms()->sync([
+                                $currentRoomId => ['is_primary' => true]
+                            ]);
+                        }
 
                         $generatedSchedules[] = $schedule;
 
@@ -317,6 +398,8 @@ class ClassScheduleService
                 'class_schedule_id' => $classSchedule->id,
                 'total_generated' => count($generatedSchedules),
                 'total_conflicts' => count($conflicts),
+                'online_percentage' => $onlinePercentage,
+                'offline_percentage' => $offlinePercentage,
                 'user_id' => auth('sanctum')->id(),
             ]);
 
@@ -325,6 +408,8 @@ class ClassScheduleService
                 'conflicts' => $conflicts,
                 'total_generated' => count($generatedSchedules),
                 'total_conflicts' => count($conflicts),
+                'online_count' => collect($generatedSchedules)->where('is_online', true)->count(),
+                'offline_count' => collect($generatedSchedules)->where('is_online', false)->count(),
             ];
         });
     }
@@ -577,18 +662,55 @@ class ClassScheduleService
     private function generateScheduleDates(ClassScheduleDetail $detail): array
     {
         $dates = [];
+        
+        // Handle null dates
+        if (!$detail->start_date || !$detail->end_date) {
+            Log::warning('generateScheduleDates: Missing start_date or end_date', [
+                'detail_id' => $detail->id,
+                'start_date' => $detail->start_date,
+                'end_date' => $detail->end_date,
+            ]);
+            return $dates;
+        }
+        
         $startDate = Carbon::parse($detail->start_date);
         $endDate = Carbon::parse($detail->end_date);
         $meetingCount = 0;
+        
+        // Map Indonesian day names to English (Carbon uses English)
+        $dayMapping = [
+            'senin' => 'monday',
+            'selasa' => 'tuesday',
+            'rabu' => 'wednesday',
+            'kamis' => 'thursday',
+            'jumat' => 'friday',
+            'sabtu' => 'saturday',
+            'minggu' => 'sunday',
+        ];
+        
+        // Convert Indonesian day to English for comparison
+        $targetDay = strtolower($detail->day_of_week);
+        $englishDay = $dayMapping[$targetDay] ?? $targetDay;
 
         $current = $startDate->copy();
         while ($current <= $endDate && $meetingCount < $detail->total_meetings) {
-            if (strtolower($current->dayName) === $detail->day_of_week) {
+            if (strtolower($current->dayName) === $englishDay) {
                 $dates[] = $current->copy();
                 $meetingCount++;
             }
             $current->addDay();
         }
+        
+        Log::info('generateScheduleDates result', [
+            'detail_id' => $detail->id,
+            'day_of_week' => $detail->day_of_week,
+            'target_day' => $targetDay,
+            'english_day' => $englishDay,
+            'start_date' => $startDate->toDateString(),
+            'end_date' => $endDate->toDateString(),
+            'total_meetings' => $detail->total_meetings,
+            'dates_generated' => count($dates),
+        ]);
 
         return $dates;
     }

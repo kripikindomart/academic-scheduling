@@ -11,7 +11,10 @@
       "Bash(php:*)",
       "Bash(curl:*)",
       "Bash(node:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(npm run dev)",
+      "Bash(mysql:*)",
+      "Bash(cp:*)"
     ],
     "deny": [],
     "ask": []

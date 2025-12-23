@@ -17,7 +17,6 @@ class ClassSchedule extends Model
         'program_study_id',
         'class_id',
         'academic_year_id',
-        'semester',
         'online_percentage',
         'offline_percentage',
         'description',

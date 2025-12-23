@@ -5,7 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+
 
 class ClassScheduleDetail extends Model
 {
@@ -14,8 +16,6 @@ class ClassScheduleDetail extends Model
     protected $fillable = [
         'class_schedule_id',
         'course_id',
-        'lecturer_id',
-        'room_id',
         'day_of_week',
         'start_time',
         'end_time',
@@ -57,14 +57,50 @@ class ClassScheduleDetail extends Model
         return $this->belongsTo(Course::class);
     }
 
-    public function lecturer(): BelongsTo
+    // Multiple lecturers (many-to-many)
+    public function lecturers(): BelongsToMany
     {
-        return $this->belongsTo(Lecturer::class);
+        return $this->belongsToMany(Lecturer::class, 'class_schedule_detail_lecturer')
+                    ->withPivot('is_primary')
+                    ->withTimestamps();
     }
 
-    public function room(): BelongsTo
+    // Primary lecturer relationship (for eager loading - returns relation)
+    public function lecturer(): BelongsToMany
     {
-        return $this->belongsTo(Room::class);
+        return $this->belongsToMany(Lecturer::class, 'class_schedule_detail_lecturer')
+                    ->wherePivot('is_primary', true)
+                    ->withPivot('is_primary')
+                    ->withTimestamps();
+    }
+
+    // Helper to get primary lecturer model
+    public function getPrimaryLecturer()
+    {
+        return $this->lecturers()->wherePivot('is_primary', true)->first();
+    }
+
+    // Multiple rooms (many-to-many)
+    public function rooms(): BelongsToMany
+    {
+        return $this->belongsToMany(Room::class, 'class_schedule_detail_room')
+                    ->withPivot('is_primary')
+                    ->withTimestamps();
+    }
+
+    // Primary room relationship (for eager loading - returns relation)
+    public function room(): BelongsToMany
+    {
+        return $this->belongsToMany(Room::class, 'class_schedule_detail_room')
+                    ->wherePivot('is_primary', true)
+                    ->withPivot('is_primary')
+                    ->withTimestamps();
+    }
+
+    // Helper to get primary room model
+    public function getPrimaryRoom()
+    {
+        return $this->rooms()->wherePivot('is_primary', true)->first();
     }
 
     public function creator(): BelongsTo

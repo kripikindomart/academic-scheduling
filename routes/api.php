@@ -356,12 +356,15 @@ Route::prefix('class-schedules')->group(function () {
     Route::get('/', [ClassScheduleController::class, 'index']);
     Route::post('/', [ClassScheduleController::class, 'store']);
     Route::get('/statistics', [ClassScheduleController::class, 'statistics']);
+    Route::get('/available-courses', [ClassScheduleController::class, 'getAvailableCourses']);
 
     // Specific class schedule operations
     Route::post('/{classSchedule}/add-course', [ClassScheduleController::class, 'addCourse']);
     Route::delete('/{classSchedule}/remove-course/{detailId}', [ClassScheduleController::class, 'removeCourse']);
     Route::post('/{classSchedule}/generate-schedules', [ClassScheduleController::class, 'generateSchedules']);
+    Route::post('/{classSchedule}/auto-generate', [ClassScheduleController::class, 'autoGenerateSchedule']);
     Route::get('/{classSchedule}/schedules', [ClassScheduleController::class, 'getSchedules']);
+    Route::get('/{classSchedule}/room-usage', [ClassScheduleController::class, 'getRoomUsageStatistics']);
     Route::patch('/{classSchedule}/status', [ClassScheduleController::class, 'updateStatus']);
 
     // Bulk operations
@@ -372,6 +375,7 @@ Route::prefix('class-schedules')->group(function () {
     Route::get('/{classSchedule}', [ClassScheduleController::class, 'show']);
     Route::put('/{classSchedule}', [ClassScheduleController::class, 'update']);
     Route::delete('/{classSchedule}', [ClassScheduleController::class, 'destroy']);
+    Route::post('/{classSchedule}/duplicate', [ClassScheduleController::class, 'duplicate']);
 });
 
 // Schedule management routes

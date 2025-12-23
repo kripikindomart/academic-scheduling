@@ -1,5 +1,33 @@
 import axios from 'axios'
 
+// Add auth token to requests
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// Add response interceptor for error handling
+axios.interceptors.response.use(
+  (response) => {
+    console.log('Course Service Response:', response.config.url, response.status, response.data)
+    return response
+  },
+  (error) => {
+    console.error('Course Service Error:', error.config?.url, error.response?.status, error.response?.data)
+    if (error.response?.status === 401) {
+      // Unauthorized - token expired or invalid
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
+      return Promise.reject(error)
+    }
+    return Promise.reject(error)
+  }
+)
+
 const courseService = {
   // Get all courses with filtering and pagination
   async getAll(params = {}) {
@@ -46,6 +74,17 @@ const courseService = {
   // Get available courses for enrollment
   async getAvailable(params = {}) {
     const response = await axios.get('/api/courses/available', { params })
+    return response.data
+  },
+
+  // Get courses by program study
+  async getByProgramStudy(programStudyId, params = {}) {
+    const response = await axios.get('/api/courses/available', {
+      params: {
+        program_study_id: programStudyId,
+        ...params
+      }
+    })
     return response.data
   },
 
