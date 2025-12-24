@@ -357,6 +357,7 @@ Route::prefix('class-schedules')->group(function () {
     Route::post('/', [ClassScheduleController::class, 'store']);
     Route::get('/statistics', [ClassScheduleController::class, 'statistics']);
     Route::get('/available-courses', [ClassScheduleController::class, 'getAvailableCourses']);
+    Route::post('/quick-check-conflicts', [ScheduleController::class, 'quickCheckConflicts']);
 
     // Specific class schedule operations
     Route::post('/{classSchedule}/add-course', [ClassScheduleController::class, 'addCourse']);
@@ -379,11 +380,12 @@ Route::prefix('class-schedules')->group(function () {
 });
 
 // Schedule management routes
-Route::middleware(['api.auth'])->prefix('schedules')->group(function () {
+Route::middleware(['auth:sanctum'])->prefix('schedules')->group(function () {
     Route::get('/', [ScheduleController::class, 'index'])->middleware('api.permission');
     Route::post('/', [ScheduleController::class, 'store'])->middleware('api.permission');
     Route::get('/statistics', [ScheduleController::class, 'statistics'])->middleware('api.permission');
     Route::get('/check-conflicts', [ScheduleController::class, 'checkConflicts'])->middleware('permission:schedules.view');
+    Route::post('/quick-check-conflicts', [ScheduleController::class, 'quickCheckConflicts'])->middleware('permission:schedules.view');
     Route::get('/available-rooms', [ScheduleController::class, 'getAvailableRooms'])->middleware('permission:schedules.view');
     Route::get('/available-lecturers', [ScheduleController::class, 'getAvailableLecturers'])->middleware('permission:schedules.view');
     Route::get('/date-range', [ScheduleController::class, 'getByDateRange'])->middleware('permission:schedules.view');

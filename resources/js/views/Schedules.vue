@@ -165,9 +165,9 @@
         <!-- Modern Search and Filters -->
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 mb-6 overflow-hidden">
           <div class="p-6">
-            <div class="flex flex-col xl:flex-row gap-6">
+            <div class="flex flex-col gap-6">
               <!-- Enhanced Search -->
-              <div class="flex-1">
+              <div class="w-full">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Pencarian Jadwal</label>
                 <div class="relative group">
                   <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -198,40 +198,46 @@
               </div>
 
               <!-- Enhanced Filters -->
-              <div class="xl:w-96">
+              <div class="w-full">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Filter</label>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   <div class="relative">
-                    <select
-                      v-model="selectedDepartment"
-                      class="appearance-none w-full px-3 py-2.5 pr-8 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white hover:border-gray-300 transition-all duration-200"
-                    >
-                      <option value="">Semua Jurusan</option>
-                      <option v-for="dept in departments" :key="dept" :value="dept">{{ dept }}</option>
-                    </select>
-                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                      </svg>
-                    </div>
+                     <select v-model="selectedDepartment" class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">Semua Jurusan</option>
+                        <option v-for="dept in departments" :key="dept" :value="dept">{{ dept }}</option>
+                     </select>
                   </div>
 
                   <div class="relative">
-                    <select
-                      v-model="selectedStatus"
-                      class="appearance-none w-full px-3 py-2.5 pr-8 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white hover:border-gray-300 transition-all duration-200"
-                    >
-                      <option value="">Semua Status</option>
-                      <option value="draft">Draft</option>
-                      <option value="active">Aktif</option>
-                      <option value="completed">Selesai</option>
-                      <option value="cancelled">Dibatalkan</option>
-                    </select>
-                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                      </svg>
-                    </div>
+                     <select v-model="selectedStatus" class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">Semua Status</option>
+                        <option value="draft">Draft</option>
+                        <option value="active">Aktif</option>
+                        <option value="completed">Selesai</option>
+                        <option value="cancelled">Dibatalkan</option>
+                     </select>
+                  </div>
+
+                  <div class="relative">
+                     <select v-model="selectedCourse" class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">Semua Mata Kuliah</option>
+                        <option v-for="course in courses" :key="course.id" :value="course.id">{{ course.course_name }}</option>
+                     </select>
+                  </div>
+
+                  <div class="relative">
+                     <select v-model="selectedClass" class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">Semua Kelas</option>
+                        <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+                     </select>
+                  </div>
+
+                  <div class="relative">
+                     <input type="date" v-model="dateFrom" class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Dari Tanggal">
+                  </div>
+
+                  <div class="relative">
+                     <input type="date" v-model="dateTo" class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Sampai Tanggal">
                   </div>
 
                   <button
@@ -331,7 +337,7 @@
           <div class="border-b border-gray-200">
             <nav class="flex -mb-px">
               <button
-                @click="activeTab = 'active'"
+                @click="switchTab('active')"
                 :class="[
                   'py-3 px-6 text-sm font-medium border-b-2 transition-all duration-200',
                   activeTab === 'active'
@@ -343,15 +349,35 @@
                   <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                   </svg>
-                  Data Aktif
-                  <span class="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 rounded-full">
+                  Jadwal Kelas
+                  <span v-if="activeTab === 'active'" class="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-600 rounded-full">
                     {{ pagination.total }}
                   </span>
                 </div>
               </button>
 
               <button
-                @click="activeTab = 'trash'"
+                @click="switchTab('meetings')"
+                :class="[
+                  'py-3 px-6 text-sm font-medium border-b-2 transition-all duration-200',
+                  activeTab === 'meetings'
+                    ? 'border-purple-500 text-purple-600 bg-purple-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ]"
+              >
+                <div class="flex items-center">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  Jadwal Perkuliahan
+                  <span v-if="activeTab === 'meetings'" class="ml-2 px-2 py-0.5 text-xs bg-purple-100 text-purple-600 rounded-full">
+                    {{ pagination.total }}
+                  </span>
+                </div>
+              </button>
+
+              <button
+                @click="switchTab('trash')"
                 :class="[
                   'py-3 px-6 text-sm font-medium border-b-2 transition-all duration-200',
                   activeTab === 'trash'
@@ -389,10 +415,10 @@
                 </div>
                 <div>
                   <h2 class="text-xl font-bold text-gray-900">
-                    {{ activeTab === 'active' ? 'Data Jadwal Kelas' : 'Sampah Jadwal' }}
+                    {{ activeTab === 'active' ? 'Data Jadwal Kelas' : (activeTab === 'meetings' ? 'Jadwal Perkuliahan' : 'Sampah Jadwal') }}
                   </h2>
                   <p class="text-sm text-gray-500">
-                    {{ activeTab === 'active' ? 'Kelola jadwal kelas dan konfigurasi' : 'Data jadwal yang telah dihapus' }}
+                    {{ activeTab === 'active' ? 'Kelola jadwal kelas dan konfigurasi' : (activeTab === 'meetings' ? 'Kelola pertemuan kuliah dan ruang kelas' : 'Data jadwal yang telah dihapus') }}
                   </p>
                 </div>
               </div>
@@ -423,6 +449,16 @@
                       class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
                     >
                       Toggle Status
+                    </button>
+                  </template>
+
+                  <!-- Actions for Meetings Tab -->
+                  <template v-else-if="activeTab === 'meetings'">
+                    <button
+                      @click="confirmBulkDeleteMeetings"
+                      class="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+                    >
+                      Hapus Pertemuan
                     </button>
                   </template>
 
@@ -525,7 +561,35 @@
             <div class="overflow-x-auto">
               <table class="w-full">
                 <thead class="bg-gray-50 border-b border-gray-200">
-                  <tr>
+                  <!-- Header for Meetings Tab -->
+                  <tr v-if="activeTab === 'meetings'">
+                    <th scope="col" class="px-6 py-4 text-left">
+                      <input
+                        type="checkbox"
+                        @change="toggleSelectAll"
+                        :checked="allItemsSelected"
+                        class="h-5 w-5 text-blue-600 border-gray-300 rounded-lg focus:ring-blue-500 focus:ring-2"
+                      />
+                    </th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Waktu
+                    </th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Mata Kuliah
+                    </th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Dosen & Ruang
+                    </th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Tipe
+                    </th>
+                    <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Aksi
+                    </th>
+                  </tr>
+
+                  <!-- Header for Class Schedule Tab -->
+                  <tr v-else>
                     <th scope="col" class="px-6 py-4 text-left">
                       <input
                         type="checkbox"
@@ -541,7 +605,7 @@
                       Program Studi
                     </th>
                     <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Status
+                      Tipe
                     </th>
                     <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       {{ activeTab === 'active' ? 'Aksi' : 'Aksi Sampah' }}
@@ -549,220 +613,358 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                  <tr
-                    v-for="(schedule, index) in schedules.filter(l => l && l.id)"
-                    :key="schedule.id"
-                    :class="[
-                      'hover:bg-blue-50 transition-colors duration-150',
-                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                    ]"
-                  >
-                    <td class="px-6 py-4">
-                      <input
-                        type="checkbox"
-                        v-model="selectedItems"
-                        :value="schedule.id"
-                        class="h-5 w-5 text-blue-600 border-gray-300 rounded-lg focus:ring-blue-500 focus:ring-2"
-                      />
-                    </td>
-
-                    <!-- Schedule Info -->
-                    <td class="px-6 py-4">
-                      <div class="space-y-3">
-                        <!-- Title and Code -->
-                        <div>
-                          <h3 class="text-base font-semibold text-gray-900 truncate hover:text-blue-600 transition-colors">
-                            {{ schedule.title || 'Jadwal Tanpa Judul' }}
-                          </h3>
-                          <p class="text-sm text-gray-500 mt-1">
-                            Kode: {{ schedule.schedule_code }}
-                          </p>
+                  <!-- Meetings Rows -->
+                  <template v-if="activeTab === 'meetings'">
+                    <tr
+                      v-for="(meeting, index) in schedules"
+                      :key="meeting.id"
+                      :class="[
+                        'hover:bg-purple-50 transition-colors duration-150',
+                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
+                      ]"
+                    >
+                      <td class="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          v-model="selectedItems"
+                          :value="meeting.id"
+                          class="h-5 w-5 text-purple-600 border-gray-300 rounded-lg focus:ring-purple-500 focus:ring-2"
+                        />
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900">
+                          {{ new Date(meeting.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }) }}
                         </div>
-
-                        <!-- Class Info -->
-                        <div class="flex items-center space-x-2">
-                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                            {{ schedule.school_class?.name || 'Kelas' }}
-                          </span>
-                          <span v-if="schedule.school_class?.batch_year" class="text-xs text-gray-500">
-                                • {{ schedule.school_class.batch_year }}
-                              </span>
+                        <div class="text-xs text-gray-500 mt-1">
+                          {{ meeting.start_time }} - {{ meeting.end_time }}
                         </div>
-
-                        <!-- Percentages -->
-                        <div class="flex items-center space-x-3 text-xs text-gray-600">
-                          <span class="flex items-center">
-                            <svg class="w-3 h-3 mr-1 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
-                              <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
+                      </td>
+                      <td class="px-6 py-4">
+                         <div class="flex items-center">
+                           <span v-if="meeting.meeting_number" class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-purple-100 text-purple-700 text-xs font-bold mr-2">
+                             {{ meeting.meeting_number }}
+                           </span>
+                           <div>
+                             <div class="text-sm font-medium text-gray-900">{{ meeting.title }}</div>
+                             <div class="text-xs text-gray-500">{{ meeting.schedule_code }}</div>
+                           </div>
+                         </div>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="space-y-2">
+                          <!-- Lecturers -->
+                          <div class="flex items-start">
+                             <svg class="w-4 h-4 mr-1.5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
-                            Online: {{ schedule.online_percentage || 0 }}%
-                          </span>
-                          <span class="flex items-center">
-                            <svg class="w-3 h-3 mr-1 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/>
-                            </svg>
-                            Offline: {{ schedule.offline_percentage || 100 }}%
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-
-                    <!-- Department -->
-                    <td class="px-6 py-4">
-                      <div class="space-y-1">
-                        <div class="flex items-center">
-                          <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                          </svg>
-                          <div>
-                            <div class="text-sm font-medium text-gray-900 truncate" :title="schedule.program_study?.name">
-                              {{ schedule.program_study?.name || 'Belum ditugaskan' }}
+                            <div class="text-sm text-gray-900">
+                              <div v-if="meeting.lecturers && meeting.lecturers.length > 0">
+                                <div v-for="lecturer in meeting.lecturers" :key="lecturer.id">
+                                  {{ lecturer.name }} <span v-if="lecturer.pivot?.is_primary" class="text-xs text-blue-600">(Utama)</span>
+                                </div>
+                              </div>
+                              <span v-else class="text-gray-400 italic">Belum ada dosen</span>
                             </div>
-                            <div v-if="schedule.academic_year" class="text-xs text-gray-500 truncate" :title="schedule.academic_year?.academic_calendar_year">
-                              {{ schedule.academic_year?.academic_calendar_year }} - {{ schedule.academic_year?.admission_period }}
+                          </div>
+
+                          <!-- Room -->
+                          <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                            <span class="text-sm text-gray-900">
+                              <template v-if="meeting.is_online">Online</template>
+                              <template v-else>
+                                {{ meeting.rooms && meeting.rooms.length > 0 ? meeting.rooms.map(r => r.name).join(', ') : '-' }}
+                              </template>
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4">
+                        <div class="space-y-2">
+                          <!-- Session Type (Clickable) -->
+                          <button
+                            @click="openQuickSessionType(meeting)"
+                            :class="[
+                              'px-2 py-1 text-xs rounded-full font-medium cursor-pointer transition-colors',
+                              meeting.session_type === 'uts' ? 'bg-orange-100 text-orange-800 hover:bg-orange-200' :
+                              meeting.session_type === 'uas' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                              'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                            ]"
+                            title="Klik untuk ubah tipe"
+                          >
+                            {{ meeting.session_type === 'uts' ? 'UTS' : meeting.session_type === 'uas' ? 'UAS' : 'Kuliah' }}
+                          </button>
+                          <!-- Status Jadwal (Clickable) -->
+                          <div class="flex items-center space-x-2">
+                            <button
+                              v-if="!meeting.rescheduled_from"
+                              @click="openQuickReschedule(meeting)"
+                              class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors cursor-pointer"
+                              title="Klik untuk reschedule"
+                            >
+                              <span class="w-1.5 h-1.5 mr-1 rounded-full bg-green-500"></span>
+                              Terjadwal
+                            </button>
+                            <button
+                              v-else
+                              @click="openQuickReschedule(meeting)"
+                              class="inline-flex items-center px-2 py-1 text-xs rounded-full font-medium bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors cursor-pointer"
+                              title="Klik untuk edit reschedule"
+                            >
+                              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              Reschedule
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-6 py-4 text-right text-sm font-medium">
+                        <div class="flex items-center justify-end space-x-2">
+                             <!-- Detail -->
+                           <button
+                              @click="openMeetingDetail(meeting)"
+                              class="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-50"
+                              title="Lihat Detail"
+                            >
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </button>
+                            <!-- Edit -->
+                            <button
+                              @click="openEditMeeting(meeting)"
+                              class="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50"
+                              title="Edit"
+                            >
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                             <button
+                              @click="deleteMeeting(meeting)"
+                              class="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50"
+                              title="Hapus"
+                            >
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
+
+                  <!-- Class Schedule Rows (Active & Trash) -->
+                  <template v-else>
+                    <tr
+                      v-for="(schedule, index) in schedules.filter(l => l && l.id)"
+                      :key="schedule.id"
+                      :class="[
+                        'hover:bg-blue-50 transition-colors duration-150',
+                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
+                      ]"
+                    >
+                      <td class="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          v-model="selectedItems"
+                          :value="schedule.id"
+                          class="h-5 w-5 text-blue-600 border-gray-300 rounded-lg focus:ring-blue-500 focus:ring-2"
+                        />
+                      </td>
+  
+                      <!-- Schedule Info -->
+                      <td class="px-6 py-4">
+                        <div class="space-y-3">
+                          <!-- Title and Code -->
+                          <div>
+                            <h3 class="text-base font-semibold text-gray-900 truncate hover:text-blue-600 transition-colors">
+                              {{ schedule.title || 'Jadwal Tanpa Judul' }}
+                            </h3>
+                            <p class="text-sm text-gray-500 mt-1">
+                              Kode: {{ schedule.schedule_code }}
+                            </p>
+                          </div>
+  
+                          <!-- Class Info -->
+                          <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                              {{ schedule.school_class?.name || 'Kelas' }}
+                            </span>
+                            <span v-if="schedule.school_class?.batch_year" class="text-xs text-gray-500">
+                                  • {{ schedule.school_class.batch_year }}
+                                </span>
+                          </div>
+  
+                          <!-- Percentages -->
+                          <div class="flex items-center space-x-3 text-xs text-gray-600">
+                            <span class="flex items-center">
+                              <svg class="w-3 h-3 mr-1 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
+                                <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
+                              </svg>
+                              Online: {{ schedule.online_percentage || 0 }}%
+                            </span>
+                            <span class="flex items-center">
+                              <svg class="w-3 h-3 mr-1 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/>
+                              </svg>
+                              Offline: {{ schedule.offline_percentage || 100 }}%
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+  
+                      <!-- Department -->
+                      <td class="px-6 py-4">
+                        <div class="space-y-1">
+                          <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                            <div>
+                              <div class="text-sm font-medium text-gray-900 truncate" :title="schedule.program_study?.name">
+                                {{ schedule.program_study?.name || 'Belum ditugaskan' }}
+                              </div>
+                              <div v-if="schedule.academic_year" class="text-xs text-gray-500 truncate" :title="schedule.academic_year?.academic_calendar_year">
+                                {{ schedule.academic_year?.academic_calendar_year }} - {{ schedule.academic_year?.admission_period }}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-
-                    <!-- Status -->
-                    <td class="px-6 py-4">
-                      <div class="space-y-2">
-                        <!-- Schedule Status -->
-                        <span
-                          :class="[
-                            'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium',
-                            schedule.status === 'active' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300' :
-                            schedule.status === 'completed' ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300' :
-                            schedule.status === 'cancelled' ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300' :
-                            schedule.status === 'draft' ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300' :
-                            'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300'
-                          ]"
-                        >
-                          <span class="w-2 h-2 mr-1.5 rounded-full"
-                                :class="[
-                                  'inline-block',
-                                  schedule.status === 'active' ? 'bg-green-500' :
-                                  schedule.status === 'completed' ? 'bg-blue-500' :
-                                  schedule.status === 'cancelled' ? 'bg-red-500' :
-                                  schedule.status === 'draft' ? 'bg-yellow-500' :
-                                  'bg-gray-500'
-                                ]">
+                      </td>
+  
+                      <!-- Tipe -->
+                      <td class="px-6 py-4">
+                        <div class="space-y-1">
+                          <!-- Session Type -->
+                          <span
+                            :class="[
+                              'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium',
+                              schedule.session_type === 'uts' ? 'bg-orange-100 text-orange-800 border border-orange-300' :
+                              schedule.session_type === 'uas' ? 'bg-red-100 text-red-800 border border-red-300' :
+                              'bg-blue-100 text-blue-800 border border-blue-300'
+                            ]"
+                          >
+                            {{ schedule.session_type === 'uts' ? 'UTS' : schedule.session_type === 'uas' ? 'UAS' : 'Kuliah' }}
                           </span>
-                          {{ schedule.status === 'active' ? 'Aktif' :
-                             schedule.status === 'completed' ? 'Selesai' :
-                             schedule.status === 'cancelled' ? 'Dibatalkan' :
-                             schedule.status === 'draft' ? 'Draft' :
-                             schedule.status || 'Unknown' }}
-                        </span>
-
-                        <!-- Description (if available) -->
-                        <div v-if="schedule.description" class="text-xs text-gray-600 mt-1 line-clamp-2">
-                          {{ schedule.description }}
+                          <!-- Reschedule Indicator -->
+                          <div v-if="schedule.rescheduled_from" class="flex items-center text-xs text-orange-600 mt-1">
+                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Reschedule
+                          </div>
+                          <!-- Description (if available) -->
+                          <div v-if="schedule.description" class="text-xs text-gray-600 mt-1 line-clamp-2">
+                            {{ schedule.description }}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-
-                    <!-- Actions -->
-                    <td class="px-6 py-4">
-                      <div class="flex justify-end space-x-1">
-                        <template v-if="activeTab === 'active'">
-                          <!-- Detail Button -->
-                          <button
-                            @click="viewScheduleDetail(schedule)"
-                            class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-200 group"
-                            title="Lihat detail dosen"
-                          >
-                            <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                          </button>
-
-                          <!-- Edit Button -->
-                          <button
-                            @click="editSchedule(schedule)"
-                            class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200 group"
-                            title="Edit jadwal"
-                          >
-                            <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            </svg>
-                          </button>
-
-                          <!-- Enroll Course Button -->
-                          <button
-                            @click="enrollCourse(schedule)"
-                            class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-200 group"
-                            title="Enroll matakuliah"
-                          >
-                            <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                            </svg>
-                          </button>
-
-                          <!-- Duplicate Button -->
-                          <button
-                            @click="duplicateSchedule(schedule)"
-                            class="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors duration-200 group"
-                            title="Duplikat jadwal"
-                          >
-                            <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                            </svg>
-                          </button>
-
-                          <!-- Generate Data Button -->
-                          <button
-                            @click="autoSchedule(schedule)"
-                            class="p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors duration-200 group"
-                            title="Generate Data: Buat jadwal berdasarkan persentase online/offline dan rotasi ruangan"
-                          >
-                            <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                            </svg>
-                          </button>
-
-                          <!-- Delete Button -->
-                          <button
-                            @click="confirmDelete(schedule)"
-                            class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200 group"
-                            title="Hapus jadwal"
-                          >
-                            <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                          </button>
-                        </template>
-
-                        <template v-else-if="activeTab === 'trash'">
-                          <!-- Restore Button -->
-                          <button
-                            @click="restoreSchedule(schedule.id)"
-                            class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-200 group"
-                            title="Pulihkan jadwal"
-                          >
-                            <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                            </svg>
-                          </button>
-
-                          <!-- Force Delete Button -->
-                          <button
-                            @click="confirmForceDeleteSchedule(schedule)"
-                            class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200 group"
-                            title="Hapus permanen"
-                          >
-                            <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                          </button>
-                        </template>
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+  
+                      <!-- Actions -->
+                      <td class="px-6 py-4">
+                        <div class="flex justify-end space-x-1">
+                          <template v-if="activeTab === 'active'">
+                            <!-- Detail Button -->
+                            <button
+                              @click="viewScheduleDetail(schedule)"
+                              class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-200 group"
+                              title="Lihat detail dosen"
+                            >
+                              <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                              </svg>
+                            </button>
+  
+                            <!-- Edit Button -->
+                            <button
+                              @click="editSchedule(schedule)"
+                              class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200 group"
+                              title="Edit jadwal"
+                            >
+                              <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                              </svg>
+                            </button>
+  
+                            <!-- Enroll Course Button -->
+                            <button
+                              @click="enrollCourse(schedule)"
+                              class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-200 group"
+                              title="Enroll matakuliah"
+                            >
+                              <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                              </svg>
+                            </button>
+  
+                            <!-- Duplicate Button -->
+                            <button
+                              @click="duplicateSchedule(schedule)"
+                              class="p-2 text-purple-600 hover:bg-purple-100 rounded-lg transition-colors duration-200 group"
+                              title="Duplikat jadwal"
+                            >
+                              <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                              </svg>
+                            </button>
+  
+                            <!-- Generate Data Button -->
+                            <button
+                              @click="autoSchedule(schedule)"
+                              class="p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors duration-200 group"
+                              title="Generate Data: Buat jadwal berdasarkan persentase online/offline dan rotasi ruangan"
+                            >
+                              <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                              </svg>
+                            </button>
+  
+                            <!-- Delete Button -->
+                            <button
+                              @click="confirmDelete(schedule)"
+                              class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200 group"
+                              title="Hapus jadwal"
+                            >
+                              <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                              </svg>
+                            </button>
+                          </template>
+  
+                          <template v-else-if="activeTab === 'trash'">
+                            <!-- Restore Button -->
+                            <button
+                              @click="restoreSchedule(schedule.id)"
+                              class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors duration-200 group"
+                              title="Pulihkan jadwal"
+                            >
+                              <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                              </svg>
+                            </button>
+  
+                            <!-- Force Delete Button -->
+                            <button
+                              @click="confirmForceDeleteSchedule(schedule)"
+                              class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200 group"
+                              title="Hapus permanen"
+                            >
+                              <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                              </svg>
+                            </button>
+                          </template>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
                 </tbody>
               </table>
             </div>
@@ -866,11 +1068,15 @@
         @import-success="onImported"
       />
 
+
       <ConfirmModal
         v-if="showDeleteConfirm"
         :show="showDeleteConfirm"
         title="Hapus Jadwal"
         :message="`Apakah Anda yakin ingin menghapus jadwal ${currentSchedule?.title}?`"
+        type="danger"
+        :loading="loading"
+        confirm-text="Ya, Hapus"
         @confirm="deleteSchedule"
         @cancel="showDeleteConfirm = false"
       />
@@ -880,6 +1086,9 @@
         :show="showBulkDeleteConfirm"
         title="Hapus Jadwal Terpilih"
         :message="`Apakah Anda yakin ingin menghapus ${selectedItems.length} jadwal yang dipilih?`"
+        type="danger"
+        :loading="loading"
+        confirm-text="Ya, Hapus Semua"
         @confirm="bulkDelete"
         @cancel="showBulkDeleteConfirm = false"
       />
@@ -889,6 +1098,9 @@
         :show="showBulkRestoreConfirm"
         title="Pulihkan Jadwal Terpilih"
         :message="`Apakah Anda yakin ingin memulihkan ${selectedItems.length} jadwal yang dipilih?`"
+        type="success"
+        :loading="loading"
+        confirm-text="Ya, Pulihkan"
         @confirm="bulkRestore"
         @cancel="showBulkRestoreConfirm = false"
       />
@@ -898,6 +1110,8 @@
         :show="showBulkForceDeleteConfirm"
         title="Hapus Permanen Jadwal Terpilih"
         :message="`Apakah Anda yakin ingin menghapus permanen ${selectedItems.length} jadwal yang dipilih? Tindakan ini tidak dapat dibatalkan.`"
+        type="danger"
+        :loading="loading"
         confirm-text="Hapus Permanen"
         cancel-text="Batal"
         @confirm="bulkForceDelete"
@@ -909,11 +1123,247 @@
         :show="showForceDeleteConfirm"
         title="Hapus Permanen Jadwal"
         :message="`Apakah Anda yakin ingin menghapus permanen jadwal ${forceDeleteTarget?.title}? Tindakan ini tidak dapat dibatalkan.`"
+        type="danger"
+        :loading="loading"
         confirm-text="Hapus Permanen"
         cancel-text="Batal"
         @confirm="forceDeleteSchedule"
         @cancel="showForceDeleteConfirm = false"
       />
+
+      <!-- Auto Schedule Confirmation Modal -->
+      <ConfirmModal
+        v-if="showAutoScheduleConfirm"
+        :show="showAutoScheduleConfirm"
+        title="Generate Jadwal Otomatis"
+        :message="autoScheduleMessage"
+        type="info"
+        :loading="loading"
+        confirm-text="Ya, Generate"
+        cancel-text="Batal"
+        @confirm="executeAutoSchedule"
+        @cancel="showAutoScheduleConfirm = false"
+      />
+
+      <!-- Delete Meeting Confirmation Modal -->
+      <ConfirmModal
+        v-if="showDeleteMeetingConfirm"
+        :show="showDeleteMeetingConfirm"
+        title="Hapus Pertemuan"
+        :message="`Apakah Anda yakin ingin menghapus pertemuan ${meetingToDelete?.title || ''}?`"
+        type="danger"
+        :loading="loading"
+        confirm-text="Ya, Hapus"
+        @confirm="executeDeleteMeeting"
+        @cancel="showDeleteMeetingConfirm = false"
+      />
+
+      <!-- Bulk Delete Meetings Confirmation Modal -->
+      <ConfirmModal
+        v-if="showBulkDeleteMeetingsConfirm"
+        :show="showBulkDeleteMeetingsConfirm"
+        title="Hapus Pertemuan Terpilih"
+        :message="`Apakah Anda yakin ingin menghapus ${selectedItems.length} pertemuan yang dipilih?`"
+        type="danger"
+        :loading="loading"
+        confirm-text="Ya, Hapus Semua"
+        @confirm="executeBulkDeleteMeetings"
+        @cancel="showBulkDeleteMeetingsConfirm = false"
+      />
+
+      <!-- Edit Meeting Modal -->
+      <EditScheduleModal
+        v-if="showEditMeetingModal"
+        v-model="showEditMeetingModal"
+        :schedule="selectedMeetingForEdit"
+        :readonly="isMeetingReadonly"
+        :lecturers="lecturers"
+        :rooms="rooms"
+        @save="saveMeeting"
+      />
+
+      <!-- Quick Reschedule Modal -->
+      <div v-if="showQuickRescheduleModal" class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+          <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="showQuickRescheduleModal = false"></div>
+          <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+              {{ quickRescheduleForm.is_rescheduled ? 'Edit Reschedule' : 'Atur Jadwal' }}
+            </h3>
+            
+            <!-- Status Toggle -->
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Status Jadwal</label>
+              <div class="flex items-center space-x-4">
+                <label class="inline-flex items-center cursor-pointer">
+                  <input type="radio" v-model="quickRescheduleForm.is_rescheduled" :value="false" class="form-radio text-green-600">
+                  <span class="ml-2 text-sm text-gray-700">Terjadwal</span>
+                </label>
+                <label class="inline-flex items-center cursor-pointer">
+                  <input type="radio" v-model="quickRescheduleForm.is_rescheduled" :value="true" class="form-radio text-orange-600">
+                  <span class="ml-2 text-sm text-orange-700">Reschedule</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Date (if reschedule) -->
+            <div v-if="quickRescheduleForm.is_rescheduled" class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-md">
+              <label class="block text-sm font-medium text-orange-700 mb-1">Tanggal Baru</label>
+              <input type="date" v-model="quickRescheduleForm.date" class="w-full border-orange-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+            </div>
+
+            <!-- Mode Perkuliahan -->
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Mode Perkuliahan</label>
+              <div class="flex items-center space-x-4">
+                <label class="inline-flex items-center cursor-pointer">
+                  <input type="radio" v-model="quickRescheduleForm.is_online" :value="false" class="form-radio text-blue-600">
+                  <span class="ml-2 text-sm text-gray-700">Offline</span>
+                </label>
+                <label class="inline-flex items-center cursor-pointer">
+                  <input type="radio" v-model="quickRescheduleForm.is_online" :value="true" class="form-radio text-blue-600">
+                  <span class="ml-2 text-sm text-gray-700">Online</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Room Selection (Offline only) -->
+            <div v-if="!quickRescheduleForm.is_online" class="mb-4">
+              <SearchableSelect
+                label="Ruangan"
+                v-model="quickRescheduleForm.room_id"
+                :options="formattedRoomsForQuickModal"
+                placeholder="Cari ruangan..."
+                empty-message="Ruangan tidak ditemukan"
+              />
+            </div>
+
+            <!-- Lecturer Selection (Team Teaching) -->
+            <div v-if="conflictWarnings.team_teaching_lecturers?.length > 0" class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Ganti Dosen (Team Teaching)</label>
+              <select v-model="quickRescheduleForm.lecturer_id" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option v-for="l in conflictWarnings.team_teaching_lecturers" :key="l.id" :value="l.id">
+                  {{ l.name }}
+                </option>
+              </select>
+              <p class="mt-1 text-xs text-gray-500">Pilih dosen lain dari team teaching jika diperlukan.</p>
+            </div>
+
+            <!-- Conflict Check Loading -->
+            <div v-if="conflictCheckLoading" class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-md">
+              <div class="flex items-center text-sm text-gray-600">
+                <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Mengecek konflik jadwal...
+              </div>
+            </div>
+
+            <!-- Conflict Warnings -->
+            <div v-if="conflictWarnings.has_conflicts && !conflictCheckLoading" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <div class="flex items-start">
+                <svg class="w-5 h-5 text-red-500 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div class="flex-1">
+                  <h4 class="text-sm font-semibold text-red-800 mb-2">⚠️ Peringatan Konflik!</h4>
+                  
+                  <!-- Same Course Schedules -->
+                  <div v-if="conflictWarnings.same_course_schedules?.length" class="text-sm text-red-700 mb-2 p-2 bg-red-100 rounded">
+                    <strong>Jadwal mata kuliah yang sama di tanggal ini:</strong>
+                    <ul class="list-disc list-inside mt-1">
+                      <li v-for="c in conflictWarnings.same_course_schedules" :key="c.id">
+                        {{ c.title || c.schedule_code }} ({{ c.start_time }} - {{ c.end_time }})
+                        <span class="text-xs text-red-600">- {{ c.lecturer }}, {{ c.room }}</span>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <!-- Room Conflicts -->
+                  <div v-if="conflictWarnings.room_conflicts?.length" class="text-sm text-red-700 mb-2">
+                    <strong>Ruangan bentrok:</strong>
+                    <ul class="list-disc list-inside mt-1">
+                      <li v-for="c in conflictWarnings.room_conflicts" :key="c.id">
+                        {{ c.title || c.schedule_code }} ({{ c.start_time }} - {{ c.end_time }})
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <!-- Lecturer Conflicts -->
+                  <div v-if="conflictWarnings.lecturer_conflicts?.length" class="text-sm text-red-700">
+                    <strong>Dosen bentrok:</strong>
+                    <ul class="list-disc list-inside mt-1">
+                      <li v-for="c in conflictWarnings.lecturer_conflicts" :key="c.id">
+                        {{ c.title || c.schedule_code }} ({{ c.start_time }} - {{ c.end_time }})
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- No Conflict Message -->
+            <div v-if="!conflictWarnings.has_conflicts && !conflictCheckLoading && quickRescheduleForm.is_rescheduled" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+              <div class="flex items-center text-sm text-green-700">
+                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                ✓ Tidak ada konflik jadwal ditemukan
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end space-x-3 mt-6">
+              <button @click="showQuickRescheduleModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                Batal
+              </button>
+              <button @click="saveQuickReschedule" :disabled="quickRescheduleSaving" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
+                {{ quickRescheduleSaving ? 'Menyimpan...' : 'Simpan' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Session Type Modal -->
+      <div v-if="showQuickSessionTypeModal" class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+          <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="showQuickSessionTypeModal = false"></div>
+          <div class="relative bg-white rounded-lg shadow-xl max-w-sm w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+              Ubah Tipe Perkuliahan
+            </h3>
+            
+            <div class="space-y-3">
+              <label class="flex items-center p-3 rounded-lg border cursor-pointer transition-colors"
+                     :class="quickSessionTypeForm.session_type === 'kuliah' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'">
+                <input type="radio" v-model="quickSessionTypeForm.session_type" value="kuliah" class="form-radio text-blue-600">
+                <span class="ml-3 text-sm font-medium text-gray-700">Kuliah</span>
+              </label>
+              <label class="flex items-center p-3 rounded-lg border cursor-pointer transition-colors"
+                     :class="quickSessionTypeForm.session_type === 'uts' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:bg-gray-50'">
+                <input type="radio" v-model="quickSessionTypeForm.session_type" value="uts" class="form-radio text-orange-600">
+                <span class="ml-3 text-sm font-medium text-orange-700">UTS (Ujian Tengah Semester)</span>
+              </label>
+              <label class="flex items-center p-3 rounded-lg border cursor-pointer transition-colors"
+                     :class="quickSessionTypeForm.session_type === 'uas' ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:bg-gray-50'">
+                <input type="radio" v-model="quickSessionTypeForm.session_type" value="uas" class="form-radio text-red-600">
+                <span class="ml-3 text-sm font-medium text-red-700">UAS (Ujian Akhir Semester)</span>
+              </label>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+              <button @click="showQuickSessionTypeModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                Batal
+              </button>
+              <button @click="saveQuickSessionType" :disabled="quickSessionTypeSaving" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
+                {{ quickSessionTypeSaving ? 'Menyimpan...' : 'Simpan' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <EnrollCourseModal
         v-if="showEnrollModal"
@@ -931,6 +1381,16 @@
         @close="showAutoScheduleModal = false"
         @generated="onAutoScheduleGenerated"
       />
+
+      <ScheduleDetailModal
+        v-if="showDetailModal"
+        :show="showDetailModal"
+        :schedule="selectedScheduleForDetail"
+        @close="closeModal"
+        @generate="handleGenerateFromDetail"
+      />
+
+
     </div>
   </Layout>
 </template>
@@ -940,7 +1400,12 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToastStore } from '@/stores/toast'
 import scheduleService from '@/services/scheduleService'
+import meetingService from '@/services/meetingService'
 import programStudyService from '@/services/programStudyService'
+import classService from '@/services/classService'
+import courseService from '@/services/courseService'
+import lecturerService from '@/services/lecturerService'
+import roomService from '@/services/roomService'
 import Layout from '@/components/Layout.vue'
 import CreateClassScheduleModal from '@/components/modals/CreateClassScheduleModal.vue'
 import ScheduleDetailModal from '@/components/modals/ScheduleDetailModal.vue'
@@ -948,10 +1413,17 @@ import ScheduleImportModal from '@/components/modals/ImportModal.vue'
 import EnrollCourseModal from '@/components/modals/EnrollCourseModal.vue'
 import AutoScheduleModal from '@/components/modals/AutoScheduleModal.vue'
 import ConfirmModal from '@/components/modals/ConfirmModal.vue'
+import EditScheduleModal from '@/components/modals/EditScheduleModal.vue'
+import SearchableSelect from '@/components/SearchableSelect.vue'
 import Toast from '@/components/Toast.vue'
 
 const router = useRouter()
 const toastStore = useToastStore()
+
+// Modal State for Edit Meeting
+const showEditMeetingModal = ref(false)
+const selectedMeetingForEdit = ref(null)
+const isMeetingReadonly = ref(false)
 
 // Auth state
 const isAuthenticated = computed(() => {
@@ -971,6 +1443,14 @@ const selectedDepartment = ref('')
 const selectedStatus = ref('')
 const departments = ref([])
 const programStudies = ref([])
+const courses = ref([])
+const classes = ref([])
+const lecturers = ref([])
+const rooms = ref([])
+const selectedCourse = ref('')
+const selectedClass = ref('')
+const dateFrom = ref('')
+const dateTo = ref('')
 
 // Tab Management
 const activeTab = ref('active')
@@ -997,6 +1477,17 @@ const showDeleteConfirm = ref(false)
 const showForceDeleteConfirm = ref(false)
 const forceDeleteTarget = ref(null)
 const showBulkDeleteConfirm = ref(false)
+
+// Meeting delete confirmations
+const showDeleteMeetingConfirm = ref(false)
+const showBulkDeleteMeetingsConfirm = ref(false)
+const meetingToDelete = ref(null)
+
+// Auto Schedule Confirm
+const showAutoScheduleConfirm = ref(false)
+const autoScheduleData = ref(null)
+const autoScheduleMessage = ref('')
+
 const perPageOptions = [5, 10, 20, 50, 100]
 const showBulkRestoreConfirm = ref(false)
 const showBulkForceDeleteConfirm = ref(false)
@@ -1005,7 +1496,44 @@ const selectedScheduleForDetail = ref(null)
 const selectedScheduleForEnroll = ref(null)
 const selectedScheduleForAuto = ref(null)
 
+// Quick Reschedule Modal
+const showQuickRescheduleModal = ref(false)
+const quickRescheduleSaving = ref(false)
+const quickRescheduleTarget = ref(null)
+const quickRescheduleForm = reactive({
+  is_rescheduled: false,
+  date: '',
+  is_online: false,
+  room_id: '',
+  lecturer_id: '',
+  session_type: 'kuliah'
+})
+const conflictCheckLoading = ref(false)
+const conflictWarnings = reactive({
+  has_conflicts: false,
+  room_conflicts: [],
+  lecturer_conflicts: [],
+  same_course_schedules: [],
+  team_teaching_lecturers: [],
+  current_lecturer_id: null
+})
+
+// Quick Session Type Modal
+const showQuickSessionTypeModal = ref(false)
+const quickSessionTypeSaving = ref(false)
+const quickSessionTypeTarget = ref(null)
+const quickSessionTypeForm = reactive({
+  session_type: 'kuliah'
+})
+
 // Computed
+const formattedRoomsForQuickModal = computed(() => {
+  return rooms.value.map(r => ({
+    id: r.id,
+    name: `${r.name} (${r.building || 'Gedung'})`
+  }))
+})
+
 const allItemsSelected = computed(() => {
   return schedules.value.length > 0 && selectedItems.value.length === schedules.value.length
 })
@@ -1057,59 +1585,56 @@ const fetchSchedules = async (showLoading = true) => {
       search: searchQuery.value,
       department: selectedDepartment.value,
       status: selectedStatus.value,
-      is_active: true
+      course_id: selectedCourse.value,
+      class_id: selectedClass.value,
+      date_from: dateFrom.value,
+      date_to: dateTo.value
     }
 
-      const response = await scheduleService.getAll(params)
-    console.log('Schedule Service Response:', response)
-
-    // Ensure we have proper data structure
-    console.log('Full Response:', response)
+    let response;
+    if (activeTab.value === 'meetings') {
+         response = await meetingService.getAll(params)
+    } else {
+         params.is_active = true
+         response = await scheduleService.getAll(params)
+    }
 
     if (response && response.data) {
       // API returns: { success: true, data: [...], meta: {...} }
       const responseData = response.data;
-      console.log('Response Data:', responseData)
-      console.log('Response Data is array:', Array.isArray(responseData))
 
       // Handle ResponseService format
       if (Array.isArray(responseData)) {
         // Direct array format
         schedules.value = responseData;
-        console.log('Parsed schedules from direct array:', responseData)
       } else if (responseData.data && Array.isArray(responseData.data)) {
         // Nested data format
         schedules.value = responseData.data;
-        console.log('Parsed schedules from nested data:', responseData.data)
       } else if (responseData.success !== undefined) {
         // ResponseService format with data property
         if (Array.isArray(responseData.data)) {
           schedules.value = responseData.data;
-          console.log('Parsed schedules from ResponseService:', responseData.data)
         } else {
           schedules.value = [];
-          console.log('No array data found in ResponseService')
         }
       } else {
         schedules.value = [];
-        console.log('Unknown response format, setting empty array')
       }
 
       // Handle pagination from meta if available
-      if (response.data && response.data.meta) {
-        const meta = response.data.meta;
+      const meta = response.meta || (response.data && response.data.meta);
+      
+      if (meta) {
         pagination.current_page = meta.current_page || 1;
         pagination.last_page = meta.last_page || 1;
         pagination.per_page = meta.per_page || 10;
         pagination.total = meta.total || 0;
         pagination.from = meta.from || 0;
         pagination.to = meta.to || 0;
-        console.log('Pagination set from meta:', meta)
       }
 
     } else {
       schedules.value = [];
-      console.log('No response data, setting empty array')
     }
   } catch (error) {
   
@@ -1235,16 +1760,19 @@ const forceDeleteSchedule = async () => {
   if (!forceDeleteTarget.value) return
 
   try {
+    loading.value = true
     await scheduleService.forceDelete(forceDeleteTarget.value.id)
     toastStore.success('Berhasil', 'Data jadwal berhasil dihapus secara permanen')
     showForceDeleteConfirm.value = false
     forceDeleteTarget.value = null
-    // Refresh table data after successful deletion (no loading animation)
+    // Refresh table data after successful deletion
     fetchSchedules(false)
   } catch (error) {
     toastStore.error('Error', error.response?.data?.message || 'Gagal menghapus data dosen')
     showForceDeleteConfirm.value = false
     forceDeleteTarget.value = null
+  } finally {
+    loading.value = false
   }
 }
 
@@ -1309,38 +1837,49 @@ const autoSchedule = async (schedule) => {
     
     loading.value = false
     
-    // Show confirmation dialog
-    const confirmed = confirm(
-      `Generate Data Jadwal untuk "${fullSchedule.title}"?\n\n` +
+    // Prepare data for confirmation
+    autoScheduleData.value = fullSchedule
+    autoScheduleMessage.value = `Generate Data Jadwal untuk "${fullSchedule.title}"?\n\n` +
       `• Online: ${fullSchedule.online_percentage || 0}%\n` +
       `• Offline: ${fullSchedule.offline_percentage || 100}%\n` +
       `• Total Matakuliah: ${fullSchedule.details?.length || 0}\n\n` +
       `Data akan di-generate berdasarkan persentase online/offline dengan rotasi ruangan.`
-    )
     
-    if (!confirmed) return
+    showAutoScheduleConfirm.value = true
     
+  } catch (error) {
+    toastStore.error('Error', error.response?.data?.message || error.message || 'Gagal menyiapkan data jadwal')
+    loading.value = false
+  }
+}
+
+const executeAutoSchedule = async () => {
+    if (!autoScheduleData.value) return
+    
+    showAutoScheduleConfirm.value = false
     loading.value = true
     toastStore.info('Proses', 'Sedang men-generate jadwal...')
     
-    const response = await scheduleService.autoGenerate(schedule.id)
-    
-    if (response.success) {
-      const data = response.data || {}
-      toastStore.success(
-        'Berhasil', 
-        `Generated ${data.total_generated || 0} jadwal ` +
-        `(Online: ${data.online_count || 0}, Offline: ${data.offline_count || 0})`
-      )
-      fetchSchedules(false) // Refresh to show generated schedules
-    } else {
-      toastStore.error('Error', response.message || 'Gagal men-generate jadwal')
+    try {
+        const response = await scheduleService.autoGenerate(autoScheduleData.value.id)
+        
+        if (response.success) {
+          const data = response.data || {}
+          toastStore.success(
+            'Berhasil', 
+            `Generated ${data.total_generated || 0} jadwal ` +
+            `(Online: ${data.online_count || 0}, Offline: ${data.offline_count || 0})`
+          )
+          fetchSchedules(false) // Refresh to show generated schedules
+        } else {
+          toastStore.error('Error', response.message || 'Gagal men-generate jadwal')
+        }
+    } catch (error) {
+        toastStore.error('Error', error.response?.data?.message || error.message || 'Gagal men-generate jadwal')
+    } finally {
+        loading.value = false
+        autoScheduleData.value = null
     }
-  } catch (error) {
-    toastStore.error('Error', error.response?.data?.message || error.message || 'Gagal men-generate jadwal')
-  } finally {
-    loading.value = false
-  }
 }
 
 const onAutoScheduleGenerated = (data) => {
@@ -1490,23 +2029,19 @@ const fetchProgramStudies = async () => {
 
     if (response && response.data) {
       const responseData = response.data
-      console.log('Program Studies Response:', responseData)
 
       if (responseData.data && Array.isArray(responseData.data)) {
         programStudies.value = responseData.data
         // Update departments array for compatibility with existing filter
         departments.value = responseData.data.map(ps => ps.name)
-        console.log('Program Studies parsed from data.data:', responseData.data)
       } else if (Array.isArray(responseData)) {
         programStudies.value = responseData
         departments.value = responseData.map(ps => ps.name)
-        console.log('Program Studies parsed from array:', responseData)
       } else if (responseData && typeof responseData === 'object') {
         // Handle object with nested data
         const programStudiesArray = Object.values(responseData)
         programStudies.value = programStudiesArray
         departments.value = programStudiesArray.map(ps => ps.name)
-        console.log('Program Studies parsed from object:', programStudiesArray)
       }
 
     }
@@ -1521,10 +2056,49 @@ const fetchProgramStudies = async () => {
   }
 }
 
+const fetchClasses = async (department = null) => {
+  try {
+      const params = { per_page: 200, status: 'Active' }
+      if (department) {
+          params.department = department
+      }
+      const response = await classService.getAll(params)
+      if (response.data) {
+          classes.value = Array.isArray(response.data) ? response.data : (response.data.data || [])
+      }
+  } catch (error) {
+      console.error('Failed to fetch classes', error)
+      classes.value = []
+  }
+}
+
+const fetchFiltersData = async () => {
+  try {
+     const coursesRes = await courseService.getAll({ per_page: 200, status: 'active' })
+     
+     if (coursesRes.data) courses.value = Array.isArray(coursesRes.data) ? coursesRes.data : (coursesRes.data.data || []);
+     
+     // Fetch Lecturers and Rooms for Filter/Edit
+     const [lecRes, roomRes] = await Promise.all([
+         lecturerService.getAll({ per_page: 500, status: 'active' }),
+         roomService.getAll({ per_page: 500 }) // Assuming no status filter needed or 'available'
+     ])
+     if (lecRes.data) lecturers.value = Array.isArray(lecRes.data) ? lecRes.data : (lecRes.data.data || [])
+     if (roomRes.data) rooms.value = Array.isArray(roomRes.data) ? roomRes.data : (roomRes.data.data || [])
+
+     // Initial fetch classes (all or based on default selection)
+     await fetchClasses(selectedDepartment.value)
+
+  } catch (error) {
+     console.error('Failed to fetch filter options', error)
+  }
+}
+
 const refreshData = () => {
   fetchSchedules()
   fetchStats()
   fetchProgramStudies()
+  fetchFiltersData()
 }
 
 const toggleSelectAll = () => {
@@ -1564,6 +2138,7 @@ const confirmDelete = (schedule) => {
 
 const deleteSchedule = async () => {
   try {
+    loading.value = true
     // Use different methods based on active tab
     if (activeTab.value === 'trash') {
       // For trash tab, permanently delete
@@ -1579,9 +2154,11 @@ const deleteSchedule = async () => {
     currentSchedule.value = null
 
     // Refresh data from server to ensure consistency and update pagination info
-    fetchSchedules(false) // No loading animation for delete operations
+    fetchSchedules(false)
   } catch (error) {
     toastStore.error('Error', 'Gagal menghapus jadwal')
+  } finally {
+    loading.value = false
   }
 }
 
@@ -1600,6 +2177,7 @@ const confirmBulkForceDelete = () => {
 
 const bulkDelete = async () => {
   try {
+    loading.value = true
     // Use different methods based on active tab
     if (activeTab.value === 'trash') {
       // For trash tab, permanently delete
@@ -1615,9 +2193,11 @@ const bulkDelete = async () => {
     selectedItems.value = []
 
     // Refresh data from server to ensure consistency and update pagination info
-    fetchSchedules(false) // No loading animation for bulk delete operations
+    fetchSchedules(false)
   } catch (error) {
     toastStore.error('Error', 'Gagal menghapus jadwal terpilih')
+  } finally {
+    loading.value = false
   }
 }
 
@@ -1660,6 +2240,7 @@ const exportData = async () => {
 
 const bulkRestore = async () => {
   try {
+    loading.value = true
     const restoredCount = await scheduleService.bulkRestore(selectedItems.value)
     toastStore.success('Berhasil', `${selectedItems.value.length} jadwal berhasil dipulihkan`)
 
@@ -1667,14 +2248,17 @@ const bulkRestore = async () => {
     selectedItems.value = []
 
     // Refresh data from server to ensure consistency and update pagination info
-    fetchSchedules(false) // No loading animation for bulk restore operations
+    fetchSchedules(false)
   } catch (error) {
     toastStore.error('Error', 'Gagal memulihkan jadwal terpilih')
+  } finally {
+    loading.value = false
   }
 }
 
 const bulkForceDelete = async () => {
   try {
+    loading.value = true
     await scheduleService.bulkForceDelete({ ids: selectedItems.value })
     toastStore.success('Berhasil', `${selectedItems.value.length} jadwal berhasil dihapus permanen`)
 
@@ -1682,9 +2266,11 @@ const bulkForceDelete = async () => {
     selectedItems.value = []
 
     // Refresh data from server to ensure consistency and update pagination info
-    fetchSchedules(false) // No loading animation for bulk force delete operations
+    fetchSchedules(false)
   } catch (error) {
     toastStore.error('Error', 'Gagal menghapus permanen jadwal terpilih')
+  } finally {
+    loading.value = false
   }
 }
 
@@ -1699,9 +2285,245 @@ const getEmploymentTypeLabel = (type) => {
   return labels[type] || type
 }
 
-const viewScheduleDetail = (schedule) => {
-  selectedScheduleForDetail.value = schedule
-  showDetailModal.value = true
+const viewScheduleDetail = async (schedule) => {
+  try {
+    loading.value = true
+    // Fetch complete data including generated schedules
+    const response = await scheduleService.getById(schedule.id)
+    if (response) { // Response service might return data directly or wrapped
+        const data = response.data || response // Try to get data property
+        selectedScheduleForDetail.value = data
+        showDetailModal.value = true
+    } else {
+      toastStore.error("Error", "Gagal mengambil detail jadwal")
+    }
+  } catch (error) {
+    console.error(error)
+    toastStore.error("Error", "Terjadi kesalahan sistem")
+  } finally {
+    loading.value = false
+  }
+}
+
+const deleteMeeting = (meeting) => {
+    meetingToDelete.value = meeting
+    showDeleteMeetingConfirm.value = true
+}
+
+const executeDeleteMeeting = async () => {
+    if (!meetingToDelete.value) return
+    try {
+        await meetingService.delete(meetingToDelete.value.id)
+        toastStore.success('Berhasil', 'Pertemuan berhasil dihapus')
+        showDeleteMeetingConfirm.value = false
+        meetingToDelete.value = null
+        fetchSchedules(false)
+    } catch (error) {
+        toastStore.error('Gagal', 'Gagal menghapus pertemuan')
+    }
+}
+
+const confirmBulkDeleteMeetings = () => {
+    if (selectedItems.value.length === 0) {
+        toastStore.error('Error', 'Pilih minimal satu pertemuan untuk dihapus')
+        return
+    }
+    showBulkDeleteMeetingsConfirm.value = true
+}
+
+const executeBulkDeleteMeetings = async () => {
+    try {
+        loading.value = true
+        for (const id of selectedItems.value) {
+            await meetingService.delete(id)
+        }
+        toastStore.success('Berhasil', `${selectedItems.value.length} pertemuan berhasil dihapus`)
+        showBulkDeleteMeetingsConfirm.value = false
+        selectedItems.value = []
+        fetchSchedules(false)
+    } catch (error) {
+        toastStore.error('Gagal', 'Gagal menghapus pertemuan')
+    } finally {
+        loading.value = false
+    }
+}
+
+const handleGenerateFromDetail = (schedule) => {
+    // Close detail modal
+    showDetailModal.value = false
+    // Trigger auto schedule logic
+    autoSchedule(schedule)
+}
+
+const openEditMeeting = (meeting) => {
+  isMeetingReadonly.value = false
+  selectedMeetingForEdit.value = meeting
+  showEditMeetingModal.value = true
+}
+
+const openMeetingDetail = (meeting) => {
+  isMeetingReadonly.value = true
+  selectedMeetingForEdit.value = meeting
+  showEditMeetingModal.value = true
+}
+
+const saveMeeting = async (data) => {
+  try {
+    // Call update API
+    await meetingService.update(data.id, data)
+    
+    toastStore.success('Berhasil', 'Jadwal berhasil diperbarui')
+    showEditMeetingModal.value = false
+    
+    // Refresh list
+    fetchSchedules(false)
+  } catch (error) {
+    console.error('Update failed:', error)
+    toastStore.error('Gagal', 'Gagal memperbarui jadwal')
+  }
+}
+
+// Quick Reschedule Functions
+const openQuickReschedule = (meeting) => {
+  quickRescheduleTarget.value = meeting
+  
+  // Parse date
+  let parsedDate = meeting.date
+  if (parsedDate && parsedDate.includes('T')) {
+    parsedDate = parsedDate.split('T')[0]
+  } else if (parsedDate && parsedDate.length > 10) {
+    parsedDate = parsedDate.substring(0, 10)
+  }
+  
+  quickRescheduleForm.is_rescheduled = !!meeting.rescheduled_from
+  quickRescheduleForm.date = parsedDate
+  quickRescheduleForm.is_online = !!meeting.is_online
+  quickRescheduleForm.room_id = meeting.room_id || (meeting.rooms && meeting.rooms.length > 0 ? meeting.rooms[0].id : '')
+  quickRescheduleForm.lecturer_id = meeting.lecturer_id || (meeting.lecturers && meeting.lecturers.length > 0 ? meeting.lecturers[0].id : '')
+  quickRescheduleForm.session_type = meeting.session_type || 'kuliah'
+  
+  // Reset conflict warnings
+  conflictWarnings.has_conflicts = false
+  conflictWarnings.room_conflicts = []
+  conflictWarnings.lecturer_conflicts = []
+  conflictWarnings.same_course_schedules = []
+  conflictWarnings.team_teaching_lecturers = []
+  conflictWarnings.current_lecturer_id = null
+  
+  showQuickRescheduleModal.value = true
+  
+  // Always check conflicts to get team teaching lecturers
+  checkQuickRescheduleConflicts()
+}
+
+// Check conflicts for quick reschedule
+const checkQuickRescheduleConflicts = async () => {
+  if (!quickRescheduleTarget.value || !quickRescheduleForm.date) return
+  
+  conflictCheckLoading.value = true
+  
+  try {
+    const response = await scheduleService.quickCheckConflicts({
+      schedule_id: quickRescheduleTarget.value.id,
+      date: quickRescheduleForm.date,
+      room_id: quickRescheduleForm.is_online ? null : quickRescheduleForm.room_id,
+      lecturer_id: quickRescheduleForm.lecturer_id || null
+    })
+    
+    if (response.data) {
+      conflictWarnings.has_conflicts = response.data.has_conflicts || false
+      conflictWarnings.room_conflicts = response.data.room_conflicts || []
+      conflictWarnings.lecturer_conflicts = response.data.lecturer_conflicts || []
+      conflictWarnings.same_course_schedules = response.data.same_course_schedules || []
+      conflictWarnings.team_teaching_lecturers = response.data.team_teaching_lecturers || []
+      conflictWarnings.current_lecturer_id = response.data.current_lecturer_id
+      
+      // Set lecturer_id from response if not already set
+      if (!quickRescheduleForm.lecturer_id && response.data.current_lecturer_id) {
+        quickRescheduleForm.lecturer_id = response.data.current_lecturer_id
+      }
+    }
+  } catch (error) {
+    console.error('Conflict check failed:', error)
+  } finally {
+    conflictCheckLoading.value = false
+  }
+}
+
+const saveQuickReschedule = async () => {
+  if (!quickRescheduleTarget.value) return
+  
+  quickRescheduleSaving.value = true
+  
+  try {
+    const updateData = {
+      is_online: quickRescheduleForm.is_online
+    }
+    
+    // If reschedule, set the new date and mark as rescheduled
+    if (quickRescheduleForm.is_rescheduled) {
+      updateData.date = quickRescheduleForm.date
+      updateData.rescheduled_from = quickRescheduleTarget.value.id
+    } else {
+      // If reverting to normal, clear rescheduled_from
+      updateData.rescheduled_from = null
+    }
+    
+    // Handle room based on online/offline mode
+    if (quickRescheduleForm.is_online) {
+      updateData.room_id = null
+    } else {
+      updateData.room_id = quickRescheduleForm.room_id || null
+    }
+    
+    // Include lecturer_id if changed
+    if (quickRescheduleForm.lecturer_id) {
+      updateData.lecturer_id = quickRescheduleForm.lecturer_id
+    }
+    
+    await meetingService.update(quickRescheduleTarget.value.id, updateData)
+    
+    toastStore.success('Berhasil', 'Status jadwal berhasil diperbarui')
+    showQuickRescheduleModal.value = false
+    
+    // Refresh list
+    fetchSchedules(false)
+  } catch (error) {
+    console.error('Quick reschedule failed:', error)
+    toastStore.error('Gagal', 'Gagal memperbarui status jadwal')
+  } finally {
+    quickRescheduleSaving.value = false
+  }
+}
+
+// Quick Session Type Functions
+const openQuickSessionType = (meeting) => {
+  quickSessionTypeTarget.value = meeting
+  quickSessionTypeForm.session_type = meeting.session_type || 'kuliah'
+  showQuickSessionTypeModal.value = true
+}
+
+const saveQuickSessionType = async () => {
+  if (!quickSessionTypeTarget.value) return
+  
+  quickSessionTypeSaving.value = true
+  
+  try {
+    await meetingService.update(quickSessionTypeTarget.value.id, {
+      session_type: quickSessionTypeForm.session_type
+    })
+    
+    toastStore.success('Berhasil', 'Tipe perkuliahan berhasil diubah')
+    showQuickSessionTypeModal.value = false
+    
+    // Refresh list
+    fetchSchedules(false)
+  } catch (error) {
+    console.error('Quick session type update failed:', error)
+    toastStore.error('Gagal', 'Gagal mengubah tipe perkuliahan')
+  } finally {
+    quickSessionTypeSaving.value = false
+  }
 }
 
 const editScheduleFromDetail = async (schedule) => {
@@ -1774,10 +2596,32 @@ const goToPage = (page) => {
 }
 
 // Watchers
-watch([searchQuery, selectedDepartment, selectedStatus, activeTab], () => {
+// Watchers
+watch(searchQuery, () => {
   pagination.current_page = 1
-  fetchSchedules(true) // Show loading for search/filter operations
+  fetchSchedules(true)
 }, { debounce: 300 })
+
+// Watch department to update classes
+watch(selectedDepartment, (newVal) => {
+    selectedClass.value = '' // Reset selected class
+    fetchClasses(newVal)
+})
+
+watch([selectedStatus, selectedCourse, selectedClass, dateFrom, dateTo, activeTab], () => {
+  pagination.current_page = 1
+  fetchSchedules(true)
+})
+
+// Watch quick reschedule form for conflict checking
+watch(
+  () => [quickRescheduleForm.date, quickRescheduleForm.room_id, quickRescheduleForm.lecturer_id, quickRescheduleForm.is_online],
+  () => {
+    if (showQuickRescheduleModal.value && quickRescheduleForm.date) {
+      checkQuickRescheduleConflicts()
+    }
+  }
+)
 
 // For development - set token if not exists
 const setDevToken = () => {
@@ -1793,18 +2637,15 @@ const setDevToken = () => {
 
 // Lifecycle
 onMounted(() => {
-
-  // For development: set token if not exists
-  const token = setDevToken();
-
-  if (!token) {
-    window.location.href = '/login'
-    return
-  }
-
-  fetchProgramStudies() // Fetch program studies first
-  fetchSchedules()
-  fetchStats()
+    // Check local storage for token first
+    const token = localStorage.getItem('token');
+    if (!token) {
+        // Try to set dev token
+        setDevToken();
+    }
+    
+    // Initial fetch
+    refreshData()
 })
 </script>
 

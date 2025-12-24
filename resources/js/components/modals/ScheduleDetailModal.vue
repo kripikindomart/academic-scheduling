@@ -369,7 +369,9 @@
                       <td class="px-4 py-2 text-sm text-gray-900">
                         {{ schedule.title || '-' }}
                       </td>
-                      <td class="px-4 py-2 text-sm text-gray-900">{{ schedule.room?.name || '-' }}</td>
+                      <td class="px-4 py-2 text-sm text-gray-900">
+                        {{ schedule.rooms && schedule.rooms.length > 0 ? schedule.rooms.map(r => r.name).join(', ') : (schedule.is_online ? 'Online' : '-') }}
+                      </td>
                       <td class="px-4 py-2 text-sm">
                         <span
                           :class="[

@@ -30,7 +30,7 @@ class UpdateScheduleRequest extends FormRequest
             'description' => 'sometimes|nullable|string|max:1000',
 
             // Schedule details
-            'date' => 'sometimes|date|after_or_equal:today',
+            'date' => 'sometimes|date',
             'start_time' => 'sometimes|date_format:H:i',
             'end_time' => 'sometimes|date_format:H:i|after:start_time',
             'schedule_type' => 'sometimes|in:single,recurring,exam,extra',
@@ -45,7 +45,7 @@ class UpdateScheduleRequest extends FormRequest
             // Related entities
             'course_id' => 'sometimes|exists:courses,id',
             'lecturer_id' => 'sometimes|exists:lecturers,id',
-            'room_id' => 'sometimes|exists:rooms,id',
+            'room_id' => 'sometimes|nullable|exists:rooms,id',
             'program_study_id' => 'sometimes|exists:program_studies,id',
             'class_id' => 'sometimes|nullable|exists:classes,id',
 
@@ -55,10 +55,10 @@ class UpdateScheduleRequest extends FormRequest
             'week_number' => 'sometimes|nullable|integer|min:1|max:30',
 
             // Session details
-            'session_type' => 'sometimes|in:lecture,lab,seminar,tutorial,exam,meeting',
+            'session_type' => 'sometimes|in:lecture,lab,seminar,tutorial,exam,meeting,kuliah,uts,uas',
             'is_mandatory' => 'sometimes|boolean',
             'is_online' => 'sometimes|boolean',
-            'meeting_link' => 'required_if:is_online,true|url|max:500',
+            'meeting_link' => 'sometimes|nullable|url|max:500',
             'expected_attendees' => 'sometimes|integer|min:1|max:1000',
             'actual_attendees' => 'sometimes|integer|min:0',
 

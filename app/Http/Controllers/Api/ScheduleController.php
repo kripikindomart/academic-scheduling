@@ -148,6 +148,85 @@ class ScheduleController extends Controller
     }
 
     /**
+     * Quick check for reschedule conflicts.
+     * Checks room conflicts, lecturer conflicts, and same course schedules.
+     */
+    public function quickCheckConflicts(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'schedule_id' => 'required|exists:schedules,id',
+                'date' => 'required|date',
+                'room_id' => 'nullable|exists:rooms,id',
+                'lecturer_id' => 'nullable|exists:lecturers,id',
+            ]);
+
+            // Get the original schedule
+            $schedule = Schedule::with(['lecturers', 'course', 'classScheduleDetail'])->find($validated['schedule_id']);
+            
+            if (!$schedule) {
+                return ResponseService::error('Schedule not found', null, 404);
+            }
+
+            // Use provided lecturer_id or fall back to original
+            $lecturerId = $validated['lecturer_id'] ?? $schedule->lecturers->first()?->id;
+
+            $checkData = [
+                'date' => $validated['date'],
+                'start_time' => substr($schedule->start_time, 0, 5),
+                'end_time' => substr($schedule->end_time, 0, 5),
+                'room_id' => $validated['room_id'] ?? null,
+                'lecturer_id' => $lecturerId,
+            ];
+
+            // Get basic conflicts (room and lecturer)
+            $conflicts = $this->scheduleService->checkScheduleConflicts($checkData, $schedule->id);
+
+            // Check for same course schedules on the same date (excluding current)
+            $sameCourseSchedules = Schedule::where('date', $validated['date'])
+                ->where('id', '!=', $schedule->id)
+                ->where('class_schedule_detail_id', $schedule->class_schedule_detail_id)
+                ->where('status', '!=', 'cancelled')
+                ->with(['lecturers:id,name', 'rooms:id,name,building'])
+                ->get(['id', 'schedule_code', 'title', 'start_time', 'end_time', 'is_online']);
+
+            if ($sameCourseSchedules->count() > 0) {
+                $conflicts['has_conflicts'] = true;
+                $conflicts['same_course_schedules'] = $sameCourseSchedules->map(function ($s) {
+                    return [
+                        'id' => $s->id,
+                        'schedule_code' => $s->schedule_code,
+                        'title' => $s->title,
+                        'start_time' => $s->start_time,
+                        'end_time' => $s->end_time,
+                        'is_online' => $s->is_online,
+                        'lecturer' => $s->lecturers->first()?->name ?? '-',
+                        'room' => $s->rooms->first()?->name ?? ($s->is_online ? 'Online' : '-'),
+                    ];
+                })->toArray();
+            }
+
+            // Get team teaching lecturers for the modal
+            $teamTeachingLecturers = [];
+            if ($schedule->classScheduleDetail && $schedule->classScheduleDetail->lecturers) {
+                $teamTeachingLecturers = $schedule->classScheduleDetail->lecturers->map(function ($l) {
+                    return ['id' => $l->id, 'name' => $l->name];
+                })->toArray();
+            }
+            $conflicts['team_teaching_lecturers'] = $teamTeachingLecturers;
+            $conflicts['current_lecturer_id'] = $lecturerId;
+
+            return ResponseService::success($conflicts, 'Quick conflict check completed');
+        } catch (\Exception $e) {
+            return ResponseService::error(
+                'Failed to check conflicts: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    /**
      * Check schedule conflicts.
      */
     public function checkConflicts(Request $request): JsonResponse

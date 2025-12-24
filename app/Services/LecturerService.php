@@ -43,7 +43,13 @@ class LecturerService
         }
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $status = $filters['status'];
+            if (strtolower($status) === 'active') {
+                $status = 'Aktif';
+            } elseif (strtolower($status) === 'inactive') {
+                $status = 'Tidak';
+            }
+            $query->where('status', $status);
         }
 
         if (!empty($filters['employment_type'])) {

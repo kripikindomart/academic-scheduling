@@ -15,6 +15,8 @@ class Schedule extends Model
 
     protected $fillable = [
         'schedule_code',
+        'class_schedule_id',
+        'class_schedule_detail_id',
         'title',
         'description',
         'date',
@@ -29,9 +31,14 @@ class Schedule extends Model
         'course_id',
         'program_study_id',
         'class_id',
+        'lecturer_id',
+        'room_id',
 
         'academic_year',
         'week_number',
+        'meeting_number',
+        'session_number',
+        'total_sessions',
         'status',
         'conflict_status',
         'conflict_details',
@@ -163,6 +170,16 @@ class Schedule extends Model
     public function programStudy(): BelongsTo
     {
         return $this->belongsTo(ProgramStudy::class);
+    }
+
+    public function classSchedule(): BelongsTo
+    {
+        return $this->belongsTo(ClassSchedule::class);
+    }
+
+    public function classScheduleDetail(): BelongsTo
+    {
+        return $this->belongsTo(ClassScheduleDetail::class, 'class_schedule_detail_id');
     }
 
     public function kelas(): BelongsTo

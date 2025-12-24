@@ -125,6 +125,12 @@ class ScheduleService {
     return response.data;
   }
 
+  // Quick check conflicts for reschedule
+  async quickCheckConflicts(data) {
+    const response = await this.api.post('/quick-check-conflicts', data);
+    return response.data;
+  }
+
   // Bulk operations
   async bulkDelete(data) {
     const response = await this.api.delete('/bulk-delete', { data });

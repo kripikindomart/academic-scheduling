@@ -93,7 +93,8 @@ class ClassScheduleController extends Controller
             'details.course:id,course_code,course_name,credits,description,course_type,level',
             'details.lecturer:id,name,email,employee_number,rank,position',
             'details.room:id,room_code,name',
-            'schedules',
+            'schedules.rooms',
+            'schedules.lecturers',
             'creator:id,name,email',
             'updater:id,name,email',
         ]);

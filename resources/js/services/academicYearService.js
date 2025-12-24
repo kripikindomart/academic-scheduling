@@ -80,18 +80,13 @@ class AcademicYearService {
    */
   async getStatistics() {
     try {
-      console.log('📊 Fetching academic year statistics from:', this.api.defaults.baseURL + '/statistics');
       const response = await this.api.get('/statistics');
-      console.log('✅ Statistics response:', response.data);
       return {
         success: true,
         data: response.data.data,
         message: response.data.message
       };
     } catch (error) {
-      console.error('❌ Statistics error:', error);
-      console.error('❌ Error response:', error.response?.data);
-      console.error('❌ Error status:', error.response?.status);
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to fetch academic year statistics',

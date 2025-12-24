@@ -12,11 +12,9 @@ axios.interceptors.request.use((config) => {
 // Add response interceptor for error handling
 axios.interceptors.response.use(
   (response) => {
-    console.log('Course Service Response:', response.config.url, response.status, response.data)
     return response
   },
   (error) => {
-    console.error('Course Service Error:', error.config?.url, error.response?.status, error.response?.data)
     if (error.response?.status === 401) {
       // Unauthorized - token expired or invalid
       localStorage.removeItem('token')
@@ -238,7 +236,7 @@ const courseService = {
       // If we get HTML error, try to parse it
       if (error.response && error.response.data) {
         const reader = new FileReader()
-        reader.onload = function() {
+        reader.onload = function () {
           console.error('Received HTML instead of Excel:', reader.result)
         }
         reader.readAsText(error.response.data)

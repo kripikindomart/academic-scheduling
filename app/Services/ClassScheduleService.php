@@ -297,9 +297,29 @@ class ClassScheduleService
             $onlinePercentage = $classSchedule->online_percentage ?? 0;
             $offlinePercentage = $classSchedule->offline_percentage ?? 100;
 
+            // 1. Identification of Locked Schedules
+            // We map locked schedules by detail_id and meeting_number to avoid regenerating them
+            $lockedSchedules = Schedule::where('class_schedule_id', $classSchedule->id)
+                ->where('is_locked', true)
+                ->get()
+                ->groupBy('class_schedule_detail_id')
+                ->map(function ($items) {
+                    return $items->keyBy('meeting_number');
+                });
+
+            // 2. Clean up existing non-locked schedules
+            // We force delete to avoid unique constraint violations on schedule_code
+            Schedule::where('class_schedule_id', $classSchedule->id)
+                ->where('is_locked', false)
+                ->forceDelete();
+
             foreach ($classSchedule->details as $detail) {
                 $scheduleDates = $this->generateScheduleDates($detail);
                 $totalMeetings = count($scheduleDates);
+                
+                // Determine total sessions per meeting based on total meetings count
+                // 8 pertemuan = 2 sesi per pertemuan, 16 pertemuan = 1 sesi per pertemuan
+                $sessionsPerMeeting = $this->getSessionsPerMeeting($totalMeetings);
                 
                 // Calculate how many sessions should be online vs offline
                 $onlineMeetings = (int) round($totalMeetings * ($onlinePercentage / 100));
@@ -310,26 +330,56 @@ class ClassScheduleService
                 $roomCount = count($rooms);
                 
                 // Get lecturers for this detail
-                $lecturerIds = $detail->lecturers->pluck('id')->toArray();
+                // Sort by 'is_primary' (descending) so the first input lecturer (Primary) gets the first block of meetings
+                $lecturerIds = $detail->lecturers->sortByDesc('pivot.is_primary')->pluck('id')->values()->toArray();
 
                 foreach ($scheduleDates as $index => $date) {
                     try {
+                        // Meeting number is the index + 1 (1-indexed)
+                        $meetingNumber = $index + 1;
+
+                        // Skip if schedule is locked
+                        if (isset($lockedSchedules[$detail->id][$meetingNumber])) {
+                             $generatedSchedules[] = $lockedSchedules[$detail->id][$meetingNumber];
+                             continue;
+                        }
+
+                        $sessionNumber = 1; // Always session 1 when generating
+                        
                         // Determine if this session is online or offline
-                        // First X sessions are offline, rest are online (or vice versa based on percentage)
                         $isOnline = $index >= $offlineMeetings;
                         
                         // For offline sessions, rotate rooms
                         $currentRoomId = null;
                         if (!$isOnline && $roomCount > 0) {
-                            // Rotate through available rooms
                             $roomIndex = $index % $roomCount;
                             $currentRoomId = $rooms[$roomIndex];
+                        }
+
+                        // Determine primary lecturer using Sequential Block Distribution
+                        $lecturerCount = count($lecturerIds);
+                        $primaryLecturerId = null;
+
+                        if ($lecturerCount > 0) {
+                            $baseAllocation = floor($totalMeetings / $lecturerCount);
+                            $remainder = $totalMeetings % $lecturerCount;
+                            
+                            $accumulated = 0;
+                            foreach($lecturerIds as $idx => $lid) {
+                                $allocation = $baseAllocation + ($idx < $remainder ? 1 : 0);
+                                
+                                if ($index < ($accumulated + $allocation)) {
+                                    $primaryLecturerId = $lid;
+                                    break;
+                                }
+                                $accumulated += $allocation;
+                            }
                         }
                         
                         $schedule = Schedule::create([
                             'class_schedule_id' => $classSchedule->id,
                             'class_schedule_detail_id' => $detail->id,
-                            'schedule_code' => $this->generateScheduleCode($classSchedule, $detail, $index + 1),
+                            'schedule_code' => $this->generateScheduleCode($classSchedule, $detail, $meetingNumber),
                             'title' => $detail->course->course_name,
                             'description' => "Generated from class schedule: {$classSchedule->title}" . 
                                            ($isOnline ? " (Online)" : " (Offline)"),
@@ -343,10 +393,15 @@ class ClassScheduleService
                             'course_id' => $detail->course_id,
                             'program_study_id' => $classSchedule->program_study_id,
                             'class_id' => $classSchedule->class_id,
+                            'lecturer_id' => $primaryLecturerId,
+                            'room_id' => $currentRoomId,
                             'academic_year' => $classSchedule->academicYear->academic_calendar_year ?? '',
+                            'meeting_number' => $meetingNumber,
+                            'session_number' => $sessionNumber,
+                            'total_sessions' => $sessionsPerMeeting, // 2 for 8 meetings, 1 for 16+
                             'status' => 'approved',
                             'conflict_status' => 'none',
-                            'session_type' => $isOnline ? 'online' : 'regular',
+                            'session_type' => $this->determineSessionType($meetingNumber, $totalMeetings),
                             'is_mandatory' => true,
                             'is_online' => $isOnline,
                             'meeting_link' => $isOnline ? '' : null,
@@ -358,16 +413,14 @@ class ClassScheduleService
                             'user_agent' => request()->userAgent(),
                         ]);
 
-                        // Sync lecturers from detail to schedule pivot table
-                        if (!empty($lecturerIds)) {
-                            $lecturersSync = [];
-                            foreach ($lecturerIds as $idx => $lecturerId) {
-                                $lecturersSync[$lecturerId] = ['is_primary' => $idx === 0];
-                            }
-                            $schedule->lecturers()->sync($lecturersSync);
+                        // Sync lecturer
+                        if ($primaryLecturerId) {
+                            $schedule->lecturers()->sync([
+                                $primaryLecturerId => ['is_primary' => true]
+                            ]);
                         }
 
-                        // Sync room to schedule pivot table (only for offline sessions)
+                        // Sync room
                         if (!$isOnline && $currentRoomId) {
                             $schedule->rooms()->sync([
                                 $currentRoomId => ['is_primary' => true]
@@ -744,5 +797,77 @@ class ClassScheduleService
                 'user_id' => auth('sanctum')->id(),
             ]);
         }
+    }
+
+    /**
+     * Determine session type based on meeting number.
+     * Schema:
+     * - For 8 meetings: Meeting 4 = UTS, Meeting 8 = UAS, rest = Kuliah
+     * - For 4 meetings: Meeting 4 = UTS (acts as final), rest = Kuliah
+     * - For 1 meeting: Kuliah
+     * - For other counts: UTS at midpoint, UAS at last meeting
+     *
+     * @param int $meetingNumber 1-indexed meeting number
+     * @param int $totalMeetings Total meetings for this course
+     * @return string 'kuliah', 'uts', or 'uas'
+     */
+    private function determineSessionType(int $meetingNumber, int $totalMeetings): string
+    {
+        // For single meeting, always kuliah
+        if ($totalMeetings <= 1) {
+            return 'kuliah';
+        }
+
+        // For 4 meetings: Meeting 4 = UTS (no UAS)
+        if ($totalMeetings == 4) {
+            if ($meetingNumber == 4) {
+                return 'uts';
+            }
+            return 'kuliah';
+        }
+
+        // For 8 meetings (standard): Meeting 4 = UTS, Meeting 8 = UAS
+        if ($totalMeetings == 8) {
+            if ($meetingNumber == 4) {
+                return 'uts';
+            }
+            if ($meetingNumber == 8) {
+                return 'uas';
+            }
+            return 'kuliah';
+        }
+
+        // For other meeting counts:
+        // UTS at midpoint (or closest to middle for odd counts)
+        // UAS at last meeting
+        $midpoint = (int) ceil($totalMeetings / 2);
+        
+        if ($meetingNumber == $midpoint) {
+            return 'uts';
+        }
+        if ($meetingNumber == $totalMeetings) {
+            return 'uas';
+        }
+        
+        return 'kuliah';
+    }
+
+    /**
+     * Determine sessions per meeting based on total meetings count.
+     * - 8 pertemuan = 2 sesi per pertemuan
+     * - 16 pertemuan = 1 sesi per pertemuan
+     *
+     * @param int $totalMeetings Total meetings
+     * @return int Number of sessions per meeting
+     */
+    private function getSessionsPerMeeting(int $totalMeetings): int
+    {
+        // 8 pertemuan or less: 2 sessions per meeting
+        if ($totalMeetings <= 8) {
+            return 2;
+        }
+        
+        // 16+ pertemuan: 1 session per meeting
+        return 1;
     }
 }
