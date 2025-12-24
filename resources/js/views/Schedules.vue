@@ -209,6 +209,13 @@
                   </div>
 
                   <div class="relative">
+                     <select v-model="selectedAcademicYear" class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">Semua Tahun Akademik</option>
+                        <option v-for="year in academicYears" :key="year.id" :value="year.id">{{ year.name }}</option>
+                     </select>
+                  </div>
+
+                  <div class="relative">
                      <select v-model="selectedStatus" class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         <option value="">Semua Status</option>
                         <option value="draft">Draft</option>
@@ -1452,6 +1459,8 @@ const selectedCourse = ref('')
 const selectedClass = ref('')
 const dateFrom = ref('')
 const dateTo = ref('')
+const selectedAcademicYear = ref('')
+const academicYears = ref([])
 
 // Tab Management
 const activeTab = ref('active')
@@ -1589,7 +1598,8 @@ const fetchSchedules = async (showLoading = true) => {
       course_id: selectedCourse.value,
       class_id: selectedClass.value,
       date_from: dateFrom.value,
-      date_to: dateTo.value
+      date_to: dateTo.value,
+      academic_year_id: selectedAcademicYear.value
     }
 
     let response;
@@ -2084,15 +2094,16 @@ const fetchFiltersData = async () => {
        academicYearService.getActive()
      ])
  
-     filterOptions.courses = coursesRes.data || coursesRes
-     filterOptions.lecturers = lecturersRes.data || lecturersRes
-     filterOptions.rooms = roomsRes.data || roomsRes
-     filterOptions.programs = programsRes.data || programsRes
-     filterOptions.academicYears = academicYearsRes.data || academicYearsRes
+     // Assign directly to existing refs
+     courses.value = coursesRes.data || coursesRes
+     lecturers.value = lecturersRes.data || lecturersRes
+     rooms.value = roomsRes.data || roomsRes
+     programStudies.value = programsRes.data || programsRes
+     academicYears.value = academicYearsRes.data || academicYearsRes
  
      // Set active academic year as default filter if active year data exists
      if (activeYearRes.success && activeYearRes.data) {
-        filters.academic_year_id = activeYearRes.data.id
+        selectedAcademicYear.value = activeYearRes.data.id
      }
 
      await fetchClasses(selectedDepartment.value)
