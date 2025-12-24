@@ -134,7 +134,11 @@ class ScheduleService
                     $query->whereDate('date', '<=', $value); // Corrected from end_date
                     break;
                 case 'conflict_status':
-                    $query->where('conflict_status', $value);
+                    if ($value === 'has_conflict') {
+                        $query->where('conflict_status', '!=', 'none');
+                    } else {
+                        $query->where('conflict_status', $value);
+                    }
                     break;
             }
         }

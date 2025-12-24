@@ -98,6 +98,8 @@ class Schedule extends Model
         'cancelled_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'conflict_details' => 'array',
+        'conflict_status' => 'string',
         'last_modified_at' => 'datetime',
         'materials' => 'array',
     ];

@@ -573,7 +573,8 @@
               <table class="w-full">
                 <thead class="bg-gray-50 border-b border-gray-200">
                   <!-- Header for Meetings Tab -->
-                  <tr v-if="activeTab === 'meetings'">
+                  <!-- Header for Meetings & Conflicts Tab -->
+                  <tr v-if="activeTab === 'meetings' || activeTab === 'conflicts'">
                     <th scope="col" class="px-6 py-4 text-left">
                       <input
                         type="checkbox"
@@ -593,6 +594,13 @@
                     </th>
                     <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Tipe
+                    </th>
+                    <th
+                      v-if="activeTab === 'conflicts'"
+                      scope="col"
+                      class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                    >
+                      Detail Bentrok
                     </th>
                     <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Aksi
@@ -625,7 +633,8 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                   <!-- Meetings Rows -->
-                  <template v-if="activeTab === 'meetings'">
+                  <!-- Meetings & Conflicts Rows -->
+                  <template v-if="activeTab === 'meetings' || activeTab === 'conflicts'">
                     <tr
                       v-for="(meeting, index) in schedules"
                       :key="meeting.id"
@@ -732,6 +741,18 @@
                           </div>
                         </div>
                       </td>
+                  <td v-if="activeTab === 'conflicts'" class="px-6 py-4">
+                    <div class="text-sm text-red-600">
+                        <ul class="list-disc list-inside">
+                            <li v-for="(detail, idx) in (meeting.conflict_details || [])" :key="idx">
+                                {{ detail }}
+                            </li>
+                            <li v-if="!meeting.conflict_details || meeting.conflict_details.length === 0">
+                                {{ meeting.conflict_status !== 'none' ? meeting.conflict_status : 'Tanpa detail' }}
+                            </li>
+                        </ul>
+                    </div>
+                  </td>
                       <td class="px-6 py-4 text-right text-sm font-medium">
                         <div class="flex items-center justify-end space-x-2">
                              <!-- Detail -->
@@ -1609,6 +1630,10 @@ const fetchSchedules = async (loadingAnimation = true) => {
     let response;
     if (activeTab.value === 'meetings') {
          response = await meetingService.getAll(params)
+    } else if (activeTab.value === 'conflicts') {
+         params.conflict_status = 'has_conflict'
+         params.is_active = true
+         response = await scheduleService.getAll(params)
     } else {
          params.is_active = true
          response = await scheduleService.getAll(params)
