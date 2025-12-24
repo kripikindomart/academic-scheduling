@@ -1465,6 +1465,7 @@ const dateFrom = ref('')
 const dateTo = ref('')
 const selectedAcademicYear = ref('')
 const academicYears = ref([])
+const isInitialized = ref(false)
 
 // Tab Management
 const activeTab = ref('active')
@@ -1581,11 +1582,10 @@ const displayedPages = computed(() => {
 })
 
 // Methods
-const fetchSchedules = async (showLoading = true) => {
+const fetchSchedules = async (loadingAnimation = true) => {
+  if (!isInitialized.value) return // Block fetch if filters not loaded
+  if (loadingAnimation) loading.value = true
   try {
-    if (showLoading) {
-      loading.value = true
-    }
     selectedItems.value = []
 
     if (activeTab.value === 'trash') {
@@ -2135,6 +2135,7 @@ const refreshData = async () => {
     fetchStats()
     fetchProgramStudies()
     // Only fetch manually if the watcher wasn't triggered (year didn't change)
+    isInitialized.value = true // Allow fetches now
     if (selectedAcademicYear.value === previousYear) {
         fetchSchedules()
     }
