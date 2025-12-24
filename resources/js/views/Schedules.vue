@@ -209,11 +209,15 @@
                   </div>
 
                   <div class="relative">
-                     <select v-model="selectedAcademicYear" class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                        <option value="">Semua Tahun Akademik</option>
-                        <option v-for="year in academicYears" :key="year.id" :value="year.id">{{ year.name }}</option>
-                     </select>
+                     <SearchableSelect
+                       v-model="selectedAcademicYear"
+                       :options="academicYears"
+                       label=""
+                       placeholder="Semua Tahun Akademik"
+                     />
                   </div>
+
+
 
                   <div class="relative">
                      <select v-model="selectedStatus" class="appearance-none w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
