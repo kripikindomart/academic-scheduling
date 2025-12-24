@@ -99,15 +99,9 @@ class ScheduleService
                     $query->where('semester', $value);
                     break;
                 case 'academic_year_id':
-                    $academicYear = \App\Models\AcademicYear::find($value);
-                    if ($academicYear) {
-                        $query->where(function($q) use ($value, $academicYear) {
-                             $q->whereHas('classSchedule', function($subQ) use ($value) {
-                                  $subQ->where('academic_year_id', $value);
-                             })
-                             ->orWhere('academic_year', $academicYear->name);
-                        });
-                    }
+                    $query->whereHas('classSchedule', function($q) use ($value) {
+                         $q->where('academic_year_id', $value);
+                    });
                     break;
                 case 'status':
                     $query->where('status', $value);

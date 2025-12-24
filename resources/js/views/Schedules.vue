@@ -1738,12 +1738,22 @@ const fetchTrashSchedules = async () => {
   }
 }
 
-const switchTab = (tab) => {
-  if (activeTab.value !== tab) {
-    activeTab.value = tab
+// Watchers for real-time filtering
+watch([selectedDepartment, selectedStatus, selectedCourse, selectedClass, selectedAcademicYear, dateFrom, dateTo], () => {
+    // Reset to first page when filter changes
     pagination.current_page = 1
     fetchSchedules()
-  }
+})
+
+watch(activeTab, (newTab) => {
+    selectedItems.value = []
+    pagination.current_page = 1
+    fetchSchedules()
+})
+
+const switchTab = (tab) => {
+  activeTab.value = tab
+  // fetchSchedules is handled by the watcher
 }
 
 const changePerPage = (value) => {
