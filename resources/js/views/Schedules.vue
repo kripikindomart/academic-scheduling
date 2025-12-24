@@ -1684,7 +1684,7 @@ const fetchSchedules = async (loadingAnimation = true) => {
       message: error.response?.data?.message || 'Gagal memuat data dosen'
     })
   } finally {
-    if (showLoading) {
+    if (loadingAnimation) {
       loading.value = false
     }
   }
