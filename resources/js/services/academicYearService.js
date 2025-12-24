@@ -96,6 +96,26 @@ class AcademicYearService {
   }
 
   /**
+  * Get active academic year
+  */
+  async getActive() {
+    try {
+      const response = await this.api.get('/active');
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to fetch active academic year',
+        errors: error.response?.data?.errors
+      };
+    }
+  }
+
+  /**
    * Set active academic year
    */
   async setActive(academicYearId) {

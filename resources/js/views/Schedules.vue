@@ -1406,6 +1406,7 @@ import classService from '@/services/classService'
 import courseService from '@/services/courseService'
 import lecturerService from '@/services/lecturerService'
 import roomService from '@/services/roomService'
+import academicYearService from '@/services/academicYearService'
 import Layout from '@/components/Layout.vue'
 import CreateClassScheduleModal from '@/components/modals/CreateClassScheduleModal.vue'
 import ScheduleDetailModal from '@/components/modals/ScheduleDetailModal.vue'
@@ -2073,25 +2074,33 @@ const fetchClasses = async (department = null) => {
 }
 
 const fetchFiltersData = async () => {
-  try {
-     const coursesRes = await courseService.getAll({ per_page: 200, status: 'active' })
-     
-     if (coursesRes.data) courses.value = Array.isArray(coursesRes.data) ? coursesRes.data : (coursesRes.data.data || []);
-     
-     // Fetch Lecturers and Rooms for Filter/Edit
-     const [lecRes, roomRes] = await Promise.all([
-         lecturerService.getAll({ per_page: 500, status: 'active' }),
-         roomService.getAll({ per_page: 500 }) // Assuming no status filter needed or 'available'
+   try {
+     const [coursesRes, lecturersRes, roomsRes, programsRes, academicYearsRes, activeYearRes] = await Promise.all([
+       courseService.getAll(),
+       lecturerService.getAll(),
+       roomService.getAll(),
+       programStudyService.getAll(),
+       academicYearService.getAll(),
+       academicYearService.getActive()
      ])
-     if (lecRes.data) lecturers.value = Array.isArray(lecRes.data) ? lecRes.data : (lecRes.data.data || [])
-     if (roomRes.data) rooms.value = Array.isArray(roomRes.data) ? roomRes.data : (roomRes.data.data || [])
+ 
+     filterOptions.courses = coursesRes.data || coursesRes
+     filterOptions.lecturers = lecturersRes.data || lecturersRes
+     filterOptions.rooms = roomsRes.data || roomsRes
+     filterOptions.programs = programsRes.data || programsRes
+     filterOptions.academicYears = academicYearsRes.data || academicYearsRes
+ 
+     // Set active academic year as default filter if active year data exists
+     if (activeYearRes.success && activeYearRes.data) {
+        filters.academic_year_id = activeYearRes.data.id
+     }
 
-     // Initial fetch classes (all or based on default selection)
      await fetchClasses(selectedDepartment.value)
-
-  } catch (error) {
+     
+   } catch (error) {
      console.error('Failed to fetch filter options', error)
-  }
+     toastStore.error('Error', 'Gagal memuat filter')
+   }
 }
 
 const refreshData = () => {

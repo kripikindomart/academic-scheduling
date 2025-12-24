@@ -371,6 +371,17 @@
                   <option value="ganjil">Ganjil</option>
                   <option value="genap">Genap</option>
                 </select>
+
+                 <!-- Academic Year Filter -->
+                <select
+                  v-model="filterAcademicYear"
+                  class="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                >
+                  <option value="">Semua Tahun Akademik</option>
+                  <option v-for="year in academicYears" :key="year.id" :value="year.id">
+                    {{ year.name }}
+                  </option>
+                </select>
               </div>
             </div>
 
@@ -727,12 +738,14 @@ import StudentEnrollModal from '@/components/modals/StudentEnrollModal.vue';
 import ViewStudentsModal from '@/components/modals/ViewStudentsModal.vue';
 import classService from '@/services/classService';
 import studentService from '@/services/studentService';
+import academicYearService from '@/services/academicYearService';
 
 // State management
 const loading = ref(false);
 const classes = ref([]);
 const stats = ref({});
 const programStudies = ref([]);
+const academicYears = ref([]);
 const batchYears = ref([]);
 const sidebarCollapsed = ref(false);
 
@@ -785,6 +798,7 @@ const sortOrder = ref('asc');
 const filterProgramStudy = ref('');
 const filterBatchYear = ref('');
 const filterSemester = ref('');
+const filterAcademicYear = ref('');
 
 // Pagination
 const currentPage = ref(1);
@@ -836,6 +850,10 @@ const filteredClasses = computed(() => {
 
   if (filterSemester.value) {
     filtered = filtered.filter(item => item.semester === filterSemester.value);
+  }
+
+  if (filterAcademicYear.value) {
+    filtered = filtered.filter(item => item.academic_year_id == filterAcademicYear.value);
   }
 
   // Sort
@@ -997,6 +1015,21 @@ const loadProgramStudies = async () => {
     programStudies.value = data.data || data;
   } catch (error) {
     console.error('Error loading program studies:', error);
+  }
+};
+
+const loadAcademicYears = async () => {
+  try {
+    const response = await academicYearService.getAll();
+    academicYears.value = response.data || [];
+    
+    // Auto Select Active Academic Year
+    const activeRes = await academicYearService.getActive();
+    if (activeRes.success && activeRes.data) {
+        filterAcademicYear.value = activeRes.data.id;
+    }
+  } catch (error) {
+    console.error('Error loading academic years:', error);
   }
 };
 
@@ -1400,6 +1433,7 @@ onMounted(async () => {
     loadClasses(),
     loadStatistics(),
     loadProgramStudies(),
+    loadAcademicYears(),
     loadBatchYears()
   ]);
 });
