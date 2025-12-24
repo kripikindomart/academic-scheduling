@@ -2118,11 +2118,13 @@ const fetchFiltersData = async () => {
    }
 }
 
-const refreshData = () => {
-  fetchSchedules()
+const refreshData = async () => {
+   // Fetch filters FIRST to get default active academic year
+  await fetchFiltersData()
   fetchStats()
   fetchProgramStudies()
-  fetchFiltersData()
+  // Now fetch schedules using the selected academic year
+  fetchSchedules()
 }
 
 const toggleSelectAll = () => {
@@ -2660,7 +2662,8 @@ const setDevToken = () => {
 };
 
 // Lifecycle
-onMounted(() => {
+// Lifecycle
+onMounted(async () => {
     // Check local storage for token first
     const token = localStorage.getItem('token');
     if (!token) {
@@ -2669,7 +2672,7 @@ onMounted(() => {
     }
     
     // Initial fetch
-    refreshData()
+    await refreshData()
 })
 </script>
 
