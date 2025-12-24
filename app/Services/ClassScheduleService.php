@@ -396,6 +396,7 @@ class ClassScheduleService
                             'lecturer_id' => $primaryLecturerId,
                             'room_id' => $currentRoomId,
                             'academic_year' => $classSchedule->academicYear->academic_calendar_year ?? '',
+                            'academic_year_id' => $classSchedule->academic_year_id,
                             'meeting_number' => $meetingNumber,
                             'session_number' => $sessionNumber,
                             'total_sessions' => $sessionsPerMeeting, // 2 for 8 meetings, 1 for 16+

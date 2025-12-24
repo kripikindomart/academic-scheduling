@@ -34,6 +34,10 @@ class Schedule extends Model
         'lecturer_id',
         'room_id',
 
+        'class_id',
+        'lecturer_id',
+        'room_id',
+        'academic_year_id',
         'academic_year',
         'week_number',
         'meeting_number',
@@ -114,6 +118,11 @@ class Schedule extends Model
         'cancelled_at',
         'last_modified_at',
     ];
+    
+    public function academicYear(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class);
+    }
 
     // Relationships
     public function course(): BelongsTo

@@ -40,7 +40,7 @@ class ScheduleService
 
         // Apply filters
         $this->applyFilters($query, $filters);
-
+        
         // Apply sorting
         $allowedSorts = ['date', 'start_time', 'end_time', 'title', 'status', 'schedule_type', 'created_at'];
         $sortBy = in_array($sortBy, $allowedSorts) ? $sortBy : 'date';
@@ -99,9 +99,7 @@ class ScheduleService
                     $query->where('semester', $value);
                     break;
                 case 'academic_year_id':
-                    $query->whereHas('classSchedule', function($q) use ($value) {
-                         $q->where('academic_year_id', $value);
-                    });
+                    $query->where('academic_year_id', $value);
                     break;
                 case 'status':
                     $query->where('status', $value);

@@ -2129,12 +2129,15 @@ const fetchFiltersData = async () => {
 }
 
 const refreshData = async () => {
-   // Fetch filters FIRST to get default active academic year
-  await fetchFiltersData()
-  fetchStats()
-  fetchProgramStudies()
-  // Now fetch schedules using the selected academic year
-  fetchSchedules()
+    const previousYear = selectedAcademicYear.value
+    // Fetch filters FIRST to get default active academic year
+    await fetchFiltersData()
+    fetchStats()
+    fetchProgramStudies()
+    // Only fetch manually if the watcher wasn't triggered (year didn't change)
+    if (selectedAcademicYear.value === previousYear) {
+        fetchSchedules()
+    }
 }
 
 const toggleSelectAll = () => {

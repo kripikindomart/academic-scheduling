@@ -35,6 +35,7 @@ class ScheduleController extends Controller
             'class_id' => $request->input('class_id'),
             'semester' => $request->input('semester'),
             'academic_year' => $request->input('academic_year'),
+            'academic_year_id' => $request->input('academic_year_id'),
             'status' => $request->input('status'),
             'schedule_type' => $request->input('schedule_type'),
             'session_type' => $request->input('session_type'),
