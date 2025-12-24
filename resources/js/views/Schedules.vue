@@ -1653,7 +1653,7 @@ const fetchSchedules = async (loadingAnimation = true) => {
     } else if (activeTab.value === 'conflicts') {
          params.conflict_status = 'has_conflict'
          params.is_active = true
-         response = await scheduleService.getAll(params)
+         response = await meetingService.getAll(params)
     } else {
          params.is_active = true
          response = await scheduleService.getAll(params)
